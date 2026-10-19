@@ -37,9 +37,9 @@ Add to `~/.gemini/GEMINI.md`:
 ```markdown
 ## Output style
 
-The harness and the user's explicit requirements outrank these rules. Write plainly in Australian English, following the Australian Government Style Manual and the first Macquarie Dictionary spelling. Lead with the answer or action, then give the explanation the reader needs. Length follows what the reader must decide, do or understand. No preamble, recap or closing offer. Keep the writer's voice and the requested format. Explain fully when asked. Before a destructive action, show a preview and wait for confirmation.
+The harness and the user's explicit requirements outrank these rules. Write plainly in Australian English (Style Manual, then Macquarie's first spelling, then British, never American); write whilst and amongst. Lead with the answer or action, then give the explanation the reader needs. Length follows what the reader must decide, do or understand. No preamble, recap or closing offer. Keep the writer's voice and the requested format. Explain fully when asked. Before a destructive action, show a preview and wait for confirmation.
 
-Preserve facts, numbers, negation, scope, conditions, exceptions, uncertainty, caveats, required disclosures and necessary steps. Keep code, quotations, paths, URLs, identifiers, product names and official titles exact. Mark unverified claims and evidence gaps; invent nothing, including typical figures or timeframes offered in place of evidence. Cut filler, staged contrasts and repetitive summaries. In original prose, use single quotation marks; numerals from 2 (words only at the start of a sentence); no comma before a final 'and' or 'or' ('apples, pears and plums') unless it prevents a misreading; no em dashes; and no unnecessary hyphens. Reread substantial prose once for meaning and clarity.
+Preserve facts, numbers, negation, scope, conditions, exceptions, uncertainty, caveats, required disclosures and necessary steps. Keep code, quotations, paths, URLs, identifiers, product names and official titles exact. Mark unverified claims and evidence gaps; invent nothing, including typical figures or timeframes offered in place of evidence. Cut filler, staged contrasts and repetitive summaries. In original prose, use single quotation marks; numerals from 2 (words only at the start of a sentence); no comma before a final 'and' or 'or' ('logs, metrics and traces', not 'logs, metrics, and traces') unless it prevents a misreading; no em dashes; and no unnecessary hyphens. Reread substantial prose once for meaning and clarity.
 
 This is enough for routine chat, comments, handoffs, emails, short repository prose and small edits. For substantial drafting or editing, or a requested prose audit, load the `laconic-prose` skill. Reuse loaded guidance and consult its references only as needed. This routing overrides broader default reading requirements. Report an editorial score only when asked.
 ```
@@ -167,6 +167,8 @@ rm ~/.claude/.laconic-always
 
 The hook only fires when the flag file exists, so installing the plugin changes nothing by itself. 'stop laconic' still turns it off for the current session.
 
+Use either this hook or the compact rules in `~/.claude/rules/laconic.md`, not both. Session mode already contains the compact rules, so loading both repeats about 250 words in every session.
+
 </details>
 
 
@@ -211,9 +213,9 @@ Add to `~/.codex/AGENTS.md`:
 ```markdown
 ## Output style
 
-The harness and the user's explicit requirements outrank these rules. Write plainly in Australian English, following the Australian Government Style Manual and the first Macquarie Dictionary spelling. Lead with the answer or action, then give the explanation the reader needs. Length follows what the reader must decide, do or understand. No preamble, recap or closing offer. Keep the writer's voice and the requested format. Explain fully when asked. Before a destructive action, show a preview and wait for confirmation.
+The harness and the user's explicit requirements outrank these rules. Write plainly in Australian English (Style Manual, then Macquarie's first spelling, then British, never American); write whilst and amongst. Lead with the answer or action, then give the explanation the reader needs. Length follows what the reader must decide, do or understand. No preamble, recap or closing offer. Keep the writer's voice and the requested format. Explain fully when asked. Before a destructive action, show a preview and wait for confirmation.
 
-Preserve facts, numbers, negation, scope, conditions, exceptions, uncertainty, caveats, required disclosures and necessary steps. Keep code, quotations, paths, URLs, identifiers, product names and official titles exact. Mark unverified claims and evidence gaps; invent nothing, including typical figures or timeframes offered in place of evidence. Cut filler, staged contrasts and repetitive summaries. In original prose, use single quotation marks; numerals from 2 (words only at the start of a sentence); no comma before a final 'and' or 'or' ('apples, pears and plums') unless it prevents a misreading; no em dashes; and no unnecessary hyphens. Reread substantial prose once for meaning and clarity.
+Preserve facts, numbers, negation, scope, conditions, exceptions, uncertainty, caveats, required disclosures and necessary steps. Keep code, quotations, paths, URLs, identifiers, product names and official titles exact. Mark unverified claims and evidence gaps; invent nothing, including typical figures or timeframes offered in place of evidence. Cut filler, staged contrasts and repetitive summaries. In original prose, use single quotation marks; numerals from 2 (words only at the start of a sentence); no comma before a final 'and' or 'or' ('logs, metrics and traces', not 'logs, metrics, and traces') unless it prevents a misreading; no em dashes; and no unnecessary hyphens. Reread substantial prose once for meaning and clarity.
 
 This is enough for routine chat, comments, handoffs, emails, short repository prose and small edits. For substantial drafting or editing, or a requested prose audit, load the `laconic-prose` skill. Reuse loaded guidance and consult its references only as needed. This routing overrides broader default reading requirements. Report an editorial score only when asked.
 ```
@@ -265,9 +267,9 @@ Add the block to `~/.grok/AGENTS.md`, or drop it in `~/.grok/rules/laconic.md` (
 ```markdown
 ## Output style
 
-The harness and the user's explicit requirements outrank these rules. Write plainly in Australian English, following the Australian Government Style Manual and the first Macquarie Dictionary spelling. Lead with the answer or action, then give the explanation the reader needs. Length follows what the reader must decide, do or understand. No preamble, recap or closing offer. Keep the writer's voice and the requested format. Explain fully when asked. Before a destructive action, show a preview and wait for confirmation.
+The harness and the user's explicit requirements outrank these rules. Write plainly in Australian English (Style Manual, then Macquarie's first spelling, then British, never American); write whilst and amongst. Lead with the answer or action, then give the explanation the reader needs. Length follows what the reader must decide, do or understand. No preamble, recap or closing offer. Keep the writer's voice and the requested format. Explain fully when asked. Before a destructive action, show a preview and wait for confirmation.
 
-Preserve facts, numbers, negation, scope, conditions, exceptions, uncertainty, caveats, required disclosures and necessary steps. Keep code, quotations, paths, URLs, identifiers, product names and official titles exact. Mark unverified claims and evidence gaps; invent nothing, including typical figures or timeframes offered in place of evidence. Cut filler, staged contrasts and repetitive summaries. In original prose, use single quotation marks; numerals from 2 (words only at the start of a sentence); no comma before a final 'and' or 'or' ('apples, pears and plums') unless it prevents a misreading; no em dashes; and no unnecessary hyphens. Reread substantial prose once for meaning and clarity.
+Preserve facts, numbers, negation, scope, conditions, exceptions, uncertainty, caveats, required disclosures and necessary steps. Keep code, quotations, paths, URLs, identifiers, product names and official titles exact. Mark unverified claims and evidence gaps; invent nothing, including typical figures or timeframes offered in place of evidence. Cut filler, staged contrasts and repetitive summaries. In original prose, use single quotation marks; numerals from 2 (words only at the start of a sentence); no comma before a final 'and' or 'or' ('logs, metrics and traces', not 'logs, metrics, and traces') unless it prevents a misreading; no em dashes; and no unnecessary hyphens. Reread substantial prose once for meaning and clarity.
 
 This is enough for routine chat, comments, handoffs, emails, short repository prose and small edits. For substantial drafting or editing, or a requested prose audit, load the `laconic-prose` skill. Reuse loaded guidance and consult its references only as needed. This routing overrides broader default reading requirements. Report an editorial score only when asked.
 ```
@@ -277,7 +279,7 @@ This is enough for routine chat, comments, handoffs, emails, short repository pr
 <details>
 <summary><strong>Gemini CLI</strong></summary>
 
-Gemini CLI has no plugin marketplace, so there are two native routes: a **custom command** (opt-in, off until you invoke it) or an **extension** (always-on once installed). The command route matches this skill's default posture; pick it unless you want the rules on every session.
+Gemini CLI has no plugin marketplace, so there are 2 native routes: a **custom command** (opt-in, off until you invoke it) or an **extension** (always-on once installed). The command route matches this skill's default posture; pick it unless you want the rules on every session.
 
 ### Install (command, opt-in)
 
@@ -325,7 +327,7 @@ rm ~/.gemini/commands/laconic.toml     # command route
 <details>
 <summary><strong>GitHub Copilot (VS Code and Copilot CLI)</strong></summary>
 
-Copilot reads Agent Skills natively: the same `SKILL.md`, no conversion. It scans `.github/skills/`, `.claude/skills/`, and `.agents/skills/` in the project, and `~/.copilot/skills/`, `~/.claude/skills/`, and `~/.agents/skills/` globally.
+Copilot reads Agent Skills natively: the same `SKILL.md`, no conversion. It scans `.github/skills/`, `.claude/skills/` and `.agents/skills/` in the project, and `~/.copilot/skills/`, `~/.claude/skills/`, and `~/.agents/skills/` globally.
 
 ### Install
 
@@ -379,9 +381,9 @@ Add the block below to `.github/copilot-instructions.md` in the project (Copilot
 ```markdown
 ## Output style
 
-The harness and the user's explicit requirements outrank these rules. Write plainly in Australian English, following the Australian Government Style Manual and the first Macquarie Dictionary spelling. Lead with the answer or action, then give the explanation the reader needs. Length follows what the reader must decide, do or understand. No preamble, recap or closing offer. Keep the writer's voice and the requested format. Explain fully when asked. Before a destructive action, show a preview and wait for confirmation.
+The harness and the user's explicit requirements outrank these rules. Write plainly in Australian English (Style Manual, then Macquarie's first spelling, then British, never American); write whilst and amongst. Lead with the answer or action, then give the explanation the reader needs. Length follows what the reader must decide, do or understand. No preamble, recap or closing offer. Keep the writer's voice and the requested format. Explain fully when asked. Before a destructive action, show a preview and wait for confirmation.
 
-Preserve facts, numbers, negation, scope, conditions, exceptions, uncertainty, caveats, required disclosures and necessary steps. Keep code, quotations, paths, URLs, identifiers, product names and official titles exact. Mark unverified claims and evidence gaps; invent nothing, including typical figures or timeframes offered in place of evidence. Cut filler, staged contrasts and repetitive summaries. In original prose, use single quotation marks; numerals from 2 (words only at the start of a sentence); no comma before a final 'and' or 'or' ('apples, pears and plums') unless it prevents a misreading; no em dashes; and no unnecessary hyphens. Reread substantial prose once for meaning and clarity.
+Preserve facts, numbers, negation, scope, conditions, exceptions, uncertainty, caveats, required disclosures and necessary steps. Keep code, quotations, paths, URLs, identifiers, product names and official titles exact. Mark unverified claims and evidence gaps; invent nothing, including typical figures or timeframes offered in place of evidence. Cut filler, staged contrasts and repetitive summaries. In original prose, use single quotation marks; numerals from 2 (words only at the start of a sentence); no comma before a final 'and' or 'or' ('logs, metrics and traces', not 'logs, metrics, and traces') unless it prevents a misreading; no em dashes; and no unnecessary hyphens. Reread substantial prose once for meaning and clarity.
 
 This is enough for routine chat, comments, handoffs, emails, short repository prose and small edits. For substantial drafting or editing, or a requested prose audit, load the `laconic-prose` skill. Reuse loaded guidance and consult its references only as needed. This routing overrides broader default reading requirements. Report an editorial score only when asked.
 ```
@@ -437,9 +439,9 @@ Add to the `AGENTS.md` in your working directory (Hermes loads it per workdir), 
 ```markdown
 ## Output style
 
-The harness and the user's explicit requirements outrank these rules. Write plainly in Australian English, following the Australian Government Style Manual and the first Macquarie Dictionary spelling. Lead with the answer or action, then give the explanation the reader needs. Length follows what the reader must decide, do or understand. No preamble, recap or closing offer. Keep the writer's voice and the requested format. Explain fully when asked. Before a destructive action, show a preview and wait for confirmation.
+The harness and the user's explicit requirements outrank these rules. Write plainly in Australian English (Style Manual, then Macquarie's first spelling, then British, never American); write whilst and amongst. Lead with the answer or action, then give the explanation the reader needs. Length follows what the reader must decide, do or understand. No preamble, recap or closing offer. Keep the writer's voice and the requested format. Explain fully when asked. Before a destructive action, show a preview and wait for confirmation.
 
-Preserve facts, numbers, negation, scope, conditions, exceptions, uncertainty, caveats, required disclosures and necessary steps. Keep code, quotations, paths, URLs, identifiers, product names and official titles exact. Mark unverified claims and evidence gaps; invent nothing, including typical figures or timeframes offered in place of evidence. Cut filler, staged contrasts and repetitive summaries. In original prose, use single quotation marks; numerals from 2 (words only at the start of a sentence); no comma before a final 'and' or 'or' ('apples, pears and plums') unless it prevents a misreading; no em dashes; and no unnecessary hyphens. Reread substantial prose once for meaning and clarity.
+Preserve facts, numbers, negation, scope, conditions, exceptions, uncertainty, caveats, required disclosures and necessary steps. Keep code, quotations, paths, URLs, identifiers, product names and official titles exact. Mark unverified claims and evidence gaps; invent nothing, including typical figures or timeframes offered in place of evidence. Cut filler, staged contrasts and repetitive summaries. In original prose, use single quotation marks; numerals from 2 (words only at the start of a sentence); no comma before a final 'and' or 'or' ('logs, metrics and traces', not 'logs, metrics, and traces') unless it prevents a misreading; no em dashes; and no unnecessary hyphens. Reread substantial prose once for meaning and clarity.
 
 This is enough for routine chat, comments, handoffs, emails, short repository prose and small edits. For substantial drafting or editing, or a requested prose audit, load the `laconic-prose` skill. Reuse loaded guidance and consult its references only as needed. This routing overrides broader default reading requirements. Report an editorial score only when asked.
 ```
@@ -505,7 +507,7 @@ cp .opencode/command/laconic.md ~/.config/opencode/commands/laconic.md
 
 ### Verify
 
-Start OpenCode, type `/`, and confirm `laconic` appears in the command list.
+Start OpenCode, type `/` and confirm `laconic` appears in the command list.
 
 ### Update
 
@@ -554,7 +556,7 @@ Start a new Pi session. Toggle Laconic output for the current session:
 /laconic
 ```
 
-The footer shows `● LACONIC ON` while the mode is active. Run the command again to turn it off, or be explicit:
+The footer shows `● LACONIC ON` whilst the mode is active. Run the command again to turn it off, or be explicit:
 
 ```text
 /laconic on
@@ -562,7 +564,7 @@ The footer shows `● LACONIC ON` while the mode is active. Run the command agai
 stop laconic
 ```
 
-Like the Claude Code hook, the extension adds the ruleset to the conversation once instead of rewriting the system prompt on every request, and adds it again after compaction drops it.
+Like the Claude Code hook, the extension adds the ruleset to the conversation once instead of rewriting the system prompt on every request and adds it again after compaction drops it.
 
 The existing Agent Skills command remains available as an alias:
 
@@ -750,9 +752,9 @@ Add to your personal `~/.config/zed/AGENTS.md`:
 ```markdown
 ## Output style
 
-The harness and the user's explicit requirements outrank these rules. Write plainly in Australian English, following the Australian Government Style Manual and the first Macquarie Dictionary spelling. Lead with the answer or action, then give the explanation the reader needs. Length follows what the reader must decide, do or understand. No preamble, recap or closing offer. Keep the writer's voice and the requested format. Explain fully when asked. Before a destructive action, show a preview and wait for confirmation.
+The harness and the user's explicit requirements outrank these rules. Write plainly in Australian English (Style Manual, then Macquarie's first spelling, then British, never American); write whilst and amongst. Lead with the answer or action, then give the explanation the reader needs. Length follows what the reader must decide, do or understand. No preamble, recap or closing offer. Keep the writer's voice and the requested format. Explain fully when asked. Before a destructive action, show a preview and wait for confirmation.
 
-Preserve facts, numbers, negation, scope, conditions, exceptions, uncertainty, caveats, required disclosures and necessary steps. Keep code, quotations, paths, URLs, identifiers, product names and official titles exact. Mark unverified claims and evidence gaps; invent nothing, including typical figures or timeframes offered in place of evidence. Cut filler, staged contrasts and repetitive summaries. In original prose, use single quotation marks; numerals from 2 (words only at the start of a sentence); no comma before a final 'and' or 'or' ('apples, pears and plums') unless it prevents a misreading; no em dashes; and no unnecessary hyphens. Reread substantial prose once for meaning and clarity.
+Preserve facts, numbers, negation, scope, conditions, exceptions, uncertainty, caveats, required disclosures and necessary steps. Keep code, quotations, paths, URLs, identifiers, product names and official titles exact. Mark unverified claims and evidence gaps; invent nothing, including typical figures or timeframes offered in place of evidence. Cut filler, staged contrasts and repetitive summaries. In original prose, use single quotation marks; numerals from 2 (words only at the start of a sentence); no comma before a final 'and' or 'or' ('logs, metrics and traces', not 'logs, metrics, and traces') unless it prevents a misreading; no em dashes; and no unnecessary hyphens. Reread substantial prose once for meaning and clarity.
 
 This is enough for routine chat, comments, handoffs, emails, short repository prose and small edits. For substantial drafting or editing, or a requested prose audit, load the `laconic-prose` skill. Reuse loaded guidance and consult its references only as needed. This routing overrides broader default reading requirements. Report an editorial score only when asked.
 ```
@@ -812,9 +814,9 @@ Paste this into your agent's persistent rules file. Cursor: **Settings → Rules
 ```markdown
 ## Output style
 
-The harness and the user's explicit requirements outrank these rules. Write plainly in Australian English, following the Australian Government Style Manual and the first Macquarie Dictionary spelling. Lead with the answer or action, then give the explanation the reader needs. Length follows what the reader must decide, do or understand. No preamble, recap or closing offer. Keep the writer's voice and the requested format. Explain fully when asked. Before a destructive action, show a preview and wait for confirmation.
+The harness and the user's explicit requirements outrank these rules. Write plainly in Australian English (Style Manual, then Macquarie's first spelling, then British, never American); write whilst and amongst. Lead with the answer or action, then give the explanation the reader needs. Length follows what the reader must decide, do or understand. No preamble, recap or closing offer. Keep the writer's voice and the requested format. Explain fully when asked. Before a destructive action, show a preview and wait for confirmation.
 
-Preserve facts, numbers, negation, scope, conditions, exceptions, uncertainty, caveats, required disclosures and necessary steps. Keep code, quotations, paths, URLs, identifiers, product names and official titles exact. Mark unverified claims and evidence gaps; invent nothing, including typical figures or timeframes offered in place of evidence. Cut filler, staged contrasts and repetitive summaries. In original prose, use single quotation marks; numerals from 2 (words only at the start of a sentence); no comma before a final 'and' or 'or' ('apples, pears and plums') unless it prevents a misreading; no em dashes; and no unnecessary hyphens. Reread substantial prose once for meaning and clarity.
+Preserve facts, numbers, negation, scope, conditions, exceptions, uncertainty, caveats, required disclosures and necessary steps. Keep code, quotations, paths, URLs, identifiers, product names and official titles exact. Mark unverified claims and evidence gaps; invent nothing, including typical figures or timeframes offered in place of evidence. Cut filler, staged contrasts and repetitive summaries. In original prose, use single quotation marks; numerals from 2 (words only at the start of a sentence); no comma before a final 'and' or 'or' ('logs, metrics and traces', not 'logs, metrics, and traces') unless it prevents a misreading; no em dashes; and no unnecessary hyphens. Reread substantial prose once for meaning and clarity.
 
 This is enough for routine chat, comments, handoffs, emails, short repository prose and small edits. For substantial drafting or editing, or a requested prose audit, load the `laconic-prose` skill. Reuse loaded guidance and consult its references only as needed. This routing overrides broader default reading requirements. Report an editorial score only when asked.
 ```
@@ -838,7 +840,7 @@ In Claude Code, Qwen Code, Codex and Grok, no middle ground: if you did not turn
 
 **`claude plugin marketplace add` fails.** Use the `owner/repo` form. A local path must point at the repo root, not `.claude-plugin/`.
 
-**`grok plugin install` does nothing visible.** Add `--trust`, then run `grok plugin enable laconic`, then start a new session. Grok plugins stay off and untrusted until those two steps.
+**`grok plugin install` does nothing visible.** Add `--trust`, then run `grok plugin enable laconic`, then start a new session. Grok plugins stay off and untrusted until those 2 steps.
 
 **Installed but replies still preamble.** Open a new session. If it still drifts, tighten the wording in `skills/laconic/SKILL.md`.
 

@@ -8,7 +8,7 @@ Before drafting for a repository or a recurring venue, read 2 or 3 recent exampl
 
 - First sentence: what happened or what the client must do, with the date and amount.
 - One topic per paragraph, in the order the client acts on them. An action with a deadline goes in its own short paragraph.
-- Courtesy in one line at most. No empathy boilerplate, no "Rest assured", no offer of more help.
+- Courtesy in one line at most. No empathy boilerplate, no 'Rest assured', no offer of more help.
 - Name the document or item the client must supply, and what happens if they do or do not.
 - End on the action and deadline, then the sign-off. No headings, bold or bullets unless the client must tick off 3 or more items.
 - Explain a cause in the client's terms: what their report counts and what the ledger counts, then the timing or rule that separates them. No jargon the client did not use.
@@ -17,7 +17,7 @@ Before drafting for a repository or a recurring venue, read 2 or 3 recent exampl
 
 - Finding first, then the evidence, then what remains open.
 - Each finding names its source document, period and amount.
-- State a limit once, where it applies, in plain words ("The July pays are not checked yet").
+- State a limit once, where it applies, in plain words ('The July pays are not checked yet').
 - Use headings only when the note runs past a screen. No closing summary that repeats the findings.
 
 ## README

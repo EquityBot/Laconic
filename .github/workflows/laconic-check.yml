@@ -8,6 +8,7 @@ on:
       - skills/**
       - rules/**
       - README.md
+      - INSTALL.md
       - AGENTS.md
       - evals/README.md
       - .github/workflows/laconic-check.yml
@@ -37,4 +38,5 @@ jobs:
         run: |
           cargo run --quiet -- lint \
             ../../skills/laconic/SKILL.md ../../skills/laconic-prose/SKILL.md \
-            ../../rules/laconic.md ../../README.md ../../AGENTS.md ../../evals/README.md
+            ../../rules/laconic.md ../../README.md ../../INSTALL.md ../../AGENTS.md \
+            ../../evals/README.md

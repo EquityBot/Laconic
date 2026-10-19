@@ -11,18 +11,27 @@ use std::process::ExitCode;
 
 mod lint;
 mod preserve;
+#[cfg(test)]
+mod seeded_faults;
 
 fn usage() -> ExitCode {
     eprintln!(
-        "usage:\n  laconic-check lint [--warn] <file.md>...\n  laconic-check preserve <original> <edited>\n\n\
+        "usage:\n  laconic-check lint [--warn] <file.md | ->...\n  laconic-check preserve <original> <edited>\n\n\
          lint exits 1 when it finds candidates, unless --warn is given.\n\
          preserve exits 1 when the edit dropped a protected item."
     );
     ExitCode::from(2)
 }
 
+/// Reads a file, or standard input when the path is `-`.
 fn read(path: &str) -> Result<String, ExitCode> {
-    fs::read_to_string(path).map_err(|e| {
+    let result = if path == "-" {
+        let mut text = String::new();
+        std::io::Read::read_to_string(&mut std::io::stdin(), &mut text).map(|_| text)
+    } else {
+        fs::read_to_string(path)
+    };
+    result.map_err(|e| {
         eprintln!("{path}: {e}");
         ExitCode::from(2)
     })
