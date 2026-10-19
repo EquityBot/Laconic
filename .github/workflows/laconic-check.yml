@@ -1,0 +1,40 @@
+name: laconic-check
+
+# Builds and tests the house-style checker, then lints Laconic's own original prose.
+on:
+  pull_request:
+    paths:
+      - tools/laconic-check/**
+      - skills/**
+      - rules/**
+      - README.md
+      - AGENTS.md
+      - evals/README.md
+      - .github/workflows/laconic-check.yml
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tools/laconic-check
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Format, lint and test
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets -- -D warnings
+          cargo test
+      - name: Lint Laconic's own prose
+        run: |
+          cargo run --quiet -- lint \
+            ../../skills/laconic/SKILL.md ../../skills/laconic-prose/SKILL.md \
+            ../../rules/laconic.md ../../README.md ../../AGENTS.md ../../evals/README.md

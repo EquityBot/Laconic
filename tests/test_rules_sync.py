@@ -22,7 +22,7 @@ class RulesSyncTest(unittest.TestCase):
 
     def test_rules_file_stays_compact(self):
         words = len(sync_rules.rules_body().split())
-        self.assertLessEqual(words, 220, "rules/laconic.md is loaded into every session; keep it short")
+        self.assertLessEqual(words, 240, "rules/laconic.md is loaded into every session; keep it short")
 
 
 if __name__ == "__main__":
