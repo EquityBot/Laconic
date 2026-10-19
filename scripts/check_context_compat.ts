@@ -3,8 +3,8 @@ import {
   latestMarkerIsActive,
 } from "../extensions/context-compat";
 
-const ACTIVE = "i-have-adhd-rules";
-const DISABLED = "i-have-adhd-disabled";
+const ACTIVE = "laconic-rules";
+const DISABLED = "laconic-disabled";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {

@@ -28,7 +28,7 @@ class ScenarioEvaluationTest(unittest.TestCase):
         self.root = pathlib.Path(temporary.name)
         self.args = argparse.Namespace(
             scenario=SCENARIO, condition="candidate",
-            condition_skill=ROOT / "skills/i-have-adhd/SKILL.md",
+            condition_skill=ROOT / "skills/laconic/SKILL.md",
             model="fixture", budget_usd=1.0, trial=1,
             output=self.root / "response.jsonl",
         )

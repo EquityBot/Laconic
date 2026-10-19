@@ -1,12 +1,12 @@
 {
-  "name": "i-have-adhd",
-  "version": "0.4.1",
-  "description": "Shape output for a reader with ADHD: lead with the next action, number multi-step work, restate state across turns, suppress tangents, give specific time estimates, make wins visible.",
+  "name": "laconic",
+  "version": "0.5.0",
+  "description": "Concise, answer-first output in correct Australian English. Leads with the answer, then justifies it; marks unverified claims as unverified; cuts preamble, recaps, closers and AI writing patterns without losing substance. Also writes, edits and audits prose.",
   "license": "MIT",
-  "homepage": "https://github.com/ayghri/i-have-adhd",
+  "homepage": "https://github.com/ryanduguid/laconic",
   "skills": "./skills/",
   "interface": {
-    "displayName": "I Have ADHD",
-    "shortDescription": "ADHD-friendly output shaping for Kimi Code CLI"
+    "displayName": "Laconic",
+    "shortDescription": "Concise, answer-first output for Kimi Code CLI"
   }
 }

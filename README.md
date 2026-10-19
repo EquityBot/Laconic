@@ -1,107 +1,86 @@
 <p align="center">
-  <img src="./logo.png" alt="i-have-adhd" width="140" />
+  <strong>Laconic: concise, answer-first output in correct Australian English.</strong>
 </p>
 <p align="center">
-  <strong align="center">ADHD-friendly outputs. No ADHD diagnosis needed!</strong>
-</p>
-<p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/ayghri/i-have-adhd?style=flat" alt="License"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/ryanduguid/laconic?style=flat" alt="Licence"></a>
 </p>
 
-<p align="center">
-  <strong title="English" aria-label="English">🇬🇧</strong> ·
-  <a href=".github/readme/README.zh-CN.md" title="简体中文" aria-label="简体中文">🇨🇳</a> ·
-  <a href=".github/readme/README.es.md" title="Español" aria-label="Español">🇪🇸</a> ·
-  <a href=".github/readme/README.pt-BR.md" title="Português (Brasil)" aria-label="Português (Brasil)">🇧🇷</a> ·
-  <a href=".github/readme/README.ja.md" title="日本語" aria-label="日本語">🇯🇵</a> ·
-  <a href=".github/readme/README.vi.md" title="Tiếng Việt" aria-label="Tiếng Việt">🇻🇳</a> ·
-  <a href=".github/readme/README.ko.md" title="한국어" aria-label="한국어">🇰🇷</a> ·
-  <a href=".github/readme/README.fa.md" title="فارسی" aria-label="فارسی">🇮🇷</a> ·
-  <a href=".github/readme/README.th.md" title="ภาษาไทย" aria-label="ภาษาไทย">🇹🇭</a> ·
-  <a href=".github/readme/README.ar.md" title="العربية" aria-label="العربية">🇸🇦</a> ·
-  <a href=".github/readme/README.fr.md" title="Français" aria-label="Français">🇫🇷</a>
-</p>
-
+Laconic is a skill for coding agents and chat assistants. It makes the model lead with the answer, mark what it has not verified, and stop when the answer is complete, without dropping a fact, step or caveat the reader needs. It instructs the model to write every original sentence to the Australian Government Style Manual, with the house overrides listed in the skill.
 
 ## Install
 
-Copy/paste into your CLI prompt:
+Paste this into your agent:
 
 ```text
-Install the i-have-adhd skill/plugin from https://github.com/ayghri/i-have-adhd, refer to the repo's AGENTS.md for instructions.
+Install the laconic skill/plugin from https://github.com/ryanduguid/laconic, following the repository's AGENTS.md.
 ```
 
-Or 🔗 [check the installation instructions](INSTALL.md).
+Or follow the [installation instructions](INSTALL.md) for your agent. For Claude Code:
 
-## What it does
+```bash
+claude plugin marketplace add ryanduguid/laconic
+claude plugin install laconic@laconic
+```
 
-A skill for your coding assistant that stops it from burying the answer. Action first. Steps numbered. No "Hope this helps!"
+Restart the agent, then type `/laconic`. It stays on for the session until you say 'stop laconic'.
 
-[Kacper Rutkiewicz | AI Made Simple](https://youtu.be/NEl8kPWZP_Y) has made a good breakdown of an earlier version of the skill.
 ## What changes
-
 
 <table>
 <tr>
 <td width="50%">
 
-## Before
+### Before
 
-> Great question! Let me think about this. Your auth flow has a few moving pieces: the middleware, the token verification, and the cookie handling. Looking at `src/auth.ts`, the `verifyToken` function (around lines 42-58) seems to be using an older `jsonwebtoken` API. One approach would be to update the package and rewrite that function. After making the change, you'd want to run the auth tests to confirm nothing breaks. By the way, you might also want to look at your dependency versions overall. Hope this helps! Let me know if you want to dig deeper.
+> Great question! Let me take a look. Your auth flow has a few moving pieces: the middleware, the token verification and the cookie handling. It's likely a caching issue, which typically resolves itself within an hour or so. Hope this helps! Let me know if you want to dig deeper.
 
 </td>
-
 <td width="50%">
 
-## After
+### After
 
-> Edit `src/auth.ts:42` to update the token validation.
+> The 401 comes from the missing `Authorization` header: the endpoint requires a bearer token and the request sends none.
 >
-> 1. Open `src/auth.ts`
-> 2. Replace `verifyToken` (lines 42–58) with the snippet below
-> 3. Run `npm test -- auth.spec.ts`
+> 1. Add `Authorization: Bearer <token>` at `src/api.ts:42`
+> 2. Run `npm test -- api.spec.ts`
 >
-> Next: paste the first failing line if any test fails.
+> Not verified: whether the token expires mid-session. The logs do not show it.
 
 </td>
 </tr>
 </table>
 
-
 ## The rules
 
-10 rules. Full text in [SKILL.md](./skills/i-have-adhd/SKILL.md).
+The full text is in [SKILL.md](skills/laconic/SKILL.md).
 
-1. Lead with the next action.
-2. Number multi-step tasks.
-3. End with one concrete next step.
-4. Suppress tangents.
-5. Restate state every turn.
-6. Specific time estimates (minutes, not "a bit").
-7. Make wins visible.
-8. Matter-of-fact errors.
-9. Cap lists to 5 items.
-10. No preamble. No recap. No closers.
+1. Answer first, then justify.
+2. Say what you know and how. Mark unverified claims; 'I cannot judge this from the evidence I have' is an acceptable answer.
+3. Length follows the question. Cut words, never substance.
+4. Number procedures.
+5. Stay on the current task.
+6. Keep state visible.
+7. State errors plainly.
+8. Estimate only with a basis.
+9. Group long lists, without dropping relevant items.
+10. No preamble, recap or closer.
 
-## Tune it
+It also applies Australian English (spelling, single quotation marks, commas, numbers, dates, no em dashes) and a plain writing pass against common AI writing patterns. For reports, documentation, emails and PR text, and for editing or auditing a draft, it loads the writing guidance in [references/writing.md](skills/laconic/references/writing.md).
 
-Fork, edit `skills/i-have-adhd/SKILL.md`, then swap your copy in:
+## Always on
+
+Laconic is off until you invoke it. To turn it on for every Claude Code session, create an empty flag file:
 
 ```bash
-claude plugin uninstall i-have-adhd            # drop the upstream copy first:
-claude plugin marketplace remove i-have-adhd   # fork and upstream share both names
-claude plugin marketplace add <your-username>/i-have-adhd
-claude plugin install i-have-adhd@i-have-adhd
+touch ~/.claude/.laconic-always
 ```
 
-Restart your coding assistant, then re-invoke `/i-have-adhd`.
+Delete the file to turn always-on off. [INSTALL.md](INSTALL.md) covers the other agents.
 
 ## Credits
 
-Loosely based on *The Adult ADHD Tool Kit* by J. Russell Ramsay and Anthony L. Rostain. Adapted for how an LLM should respond, not how a human should organize their day.
+Laconic is a fork of [i-have-adhd](https://github.com/ayghri/i-have-adhd) by Ayoub G. (MIT), which supplies the response rules, the platform adapters, the hooks and the evaluation harness. The writing guidance comes from No AI Slop, based on No AI Slop by Peter Yang and Stop Slop by Hardik Pandya, with material adapted from [humanizer](https://github.com/blader/humanizer), [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) and [Sepia](https://github.com/Nanako0129/sepia) (all MIT). The Australian English rules follow the [Australian Government Style Manual](https://www.stylemanual.gov.au/) (Commonwealth of Australia, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)); the copy in `skills/laconic/references/` was scraped from the site on 13 September 2026, with navigation, release notes and feedback widgets removed.
 
-## License
+## Licence
 
-[MIT](LICENSE).
-
-Star ⭐ if it saved you one scroll past one "Great question!"
+MIT, except the Style Manual material, which is CC BY 4.0. See [LICENSE](LICENSE).

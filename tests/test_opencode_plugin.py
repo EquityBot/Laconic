@@ -27,7 +27,7 @@ class OpenCodePluginTest(unittest.TestCase):
         self.plugin_root = Path(self.temp_dir.name).resolve() / "plugin"
         shutil.copytree(ROOT / ".opencode", self.plugin_root / ".opencode")
         shutil.copytree(ROOT / "skills", self.plugin_root / "skills")
-        # The plugin reads its flag from $XDG_CONFIG_HOME/opencode/.i-have-adhd-always.
+        # The plugin reads its flag from $XDG_CONFIG_HOME/opencode/.laconic-always.
         self.config_dir = Path(self.temp_dir.name) / "config"
         (self.config_dir / "opencode").mkdir(parents=True)
 
@@ -37,7 +37,7 @@ class OpenCodePluginTest(unittest.TestCase):
         args = [
             "node",
             str(ROOT / "tests" / "opencode_plugin_driver.mjs"),
-            str(self.plugin_root / ".opencode" / "plugins" / "i-have-adhd.mjs"),
+            str(self.plugin_root / ".opencode" / "plugins" / "laconic.mjs"),
         ]
         if mode:
             args.append(mode)
@@ -52,10 +52,10 @@ class OpenCodePluginTest(unittest.TestCase):
         )
 
     def opt_in(self):
-        (self.config_dir / "opencode" / ".i-have-adhd-always").touch()
+        (self.config_dir / "opencode" / ".laconic-always").touch()
 
     def write_skill(self, text):
-        (self.plugin_root / "skills" / "i-have-adhd" / "SKILL.md").write_text(text)
+        (self.plugin_root / "skills" / "laconic" / "SKILL.md").write_text(text)
 
     # --- always-on injection, asserted through both APIs ---
 
@@ -72,8 +72,8 @@ class OpenCodePluginTest(unittest.TestCase):
             with self.subTest(mode=mode):
                 result = self.run_plugin(mode)
                 self.assertEqual(0, result.returncode, result.stderr)
-                self.assertIn("ADHD MODE ACTIVE (always-on)", result.stdout)
-                self.assertIn("Working memory is small", result.stdout)
+                self.assertIn("LACONIC MODE ACTIVE (always-on)", result.stdout)
+                self.assertIn("Answer first, then justify", result.stdout)
 
     def test_strips_frontmatter_with_trailing_whitespace(self):
         self.write_skill("---   \nname: fixture\n--- \t\nFixture body.\n")
@@ -105,37 +105,37 @@ class OpenCodePluginTest(unittest.TestCase):
     def test_setup_registers_the_slash_command(self):
         # Regression test for #140: a global install (plugin loaded from a
         # path outside any checkout, no project-scope .opencode/command/
-        # directory in play) must still get /i-have-adhd, because OpenCode's
+        # directory in play) must still get /laconic, because OpenCode's
         # skill-sourced commands are not surfaced in the TUI's `/` menu.
         result = self.run_plugin(mode="command")
         self.assertEqual(0, result.returncode, result.stderr)
         command = json.loads(result.stdout)[0]
-        self.assertEqual("i-have-adhd", command["name"])
-        self.assertIn("ADHD", command["description"])
-        self.assertIn("stop adhd mode", command["template"])
+        self.assertEqual("laconic", command["name"])
+        self.assertIn("Australian English", command["description"])
+        self.assertIn("stop laconic", command["template"])
 
     def test_setup_registers_the_skill(self):
         result = self.run_plugin(mode="skill")
         self.assertEqual(0, result.returncode, result.stderr)
         skill = json.loads(result.stdout)[0]
-        self.assertEqual("i-have-adhd", skill["id"])
+        self.assertEqual("laconic", skill["id"])
         self.assertEqual(
-            str(self.plugin_root / "skills" / "i-have-adhd" / "SKILL.md"), skill["path"]
+            str(self.plugin_root / "skills" / "laconic" / "SKILL.md"), skill["path"]
         )
-        self.assertIn("ADHD", skill["description"])
+        self.assertIn("Australian English", skill["description"])
         self.assertNotIn("---", skill["content"])
 
     def test_missing_command_keeps_skill_registration(self):
-        (self.plugin_root / ".opencode/command/i-have-adhd.md").unlink()
+        (self.plugin_root / ".opencode/command/laconic.md").unlink()
         result = self.run_plugin(mode="command")
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual([], json.loads(result.stdout))
         result = self.run_plugin(mode="skill")
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertEqual("i-have-adhd", json.loads(result.stdout)[0]["id"])
+        self.assertEqual("laconic", json.loads(result.stdout)[0]["id"])
 
     def test_malformed_command_keeps_skill_registration(self):
-        command = self.plugin_root / ".opencode/command/i-have-adhd.md"
+        command = self.plugin_root / ".opencode/command/laconic.md"
         for text in ["---\n{broken}\n---\nBody", '---\n{"description":"unclosed"}\nBody']:
             with self.subTest(text=text):
                 command.write_text(text)
@@ -144,7 +144,7 @@ class OpenCodePluginTest(unittest.TestCase):
                 self.assertEqual([], json.loads(result.stdout))
                 result = self.run_plugin(mode="skill")
                 self.assertEqual(0, result.returncode, result.stderr)
-                self.assertEqual("i-have-adhd", json.loads(result.stdout)[0]["id"])
+                self.assertEqual("laconic", json.loads(result.stdout)[0]["id"])
 
     # --- V1 config registration ---
 
@@ -152,9 +152,9 @@ class OpenCodePluginTest(unittest.TestCase):
         result = self.run_plugin(mode="v1-config")
         self.assertEqual(0, result.returncode, result.stderr)
         config = json.loads(result.stdout)
-        command = config["command"]["i-have-adhd"]
-        self.assertIn("ADHD", command["description"])
-        self.assertIn("stop adhd mode", command["template"])
+        command = config["command"]["laconic"]
+        self.assertIn("Australian English", command["description"])
+        self.assertIn("stop laconic", command["template"])
 
     def test_v1_config_hook_registers_the_skills_path(self):
         result = self.run_plugin(mode="v1-config")
@@ -164,9 +164,9 @@ class OpenCodePluginTest(unittest.TestCase):
 
     def test_v1_config_preserves_existing_command(self):
         custom = {"description": "User command", "template": "Keep this", "agent": "plan"}
-        result = self.run_plugin("v1-config", {"command": {"i-have-adhd": custom}})
+        result = self.run_plugin("v1-config", {"command": {"laconic": custom}})
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertEqual(custom, json.loads(result.stdout)["command"]["i-have-adhd"])
+        self.assertEqual(custom, json.loads(result.stdout)["command"]["laconic"])
 
     def test_v1_repeated_config_does_not_duplicate_skill_paths(self):
         result = self.run_plugin("v1-config")
@@ -178,38 +178,38 @@ class OpenCodePluginTest(unittest.TestCase):
     def test_v1_command_preserves_metadata_and_trims_template(self):
         metadata = {"description": 'ADHD: "focus"\nnext line', "agent": "plan",
                     "model": "fixture/model", "subagent": True}
-        command = self.plugin_root / ".opencode/command/i-have-adhd.md"
+        command = self.plugin_root / ".opencode/command/laconic.md"
         command.write_bytes(("---  \r\n" + json.dumps(metadata) +
                              "\r\n--- \t\r\n\r\nUse the skill.\r\n\r\n").encode())
         result = self.run_plugin("v1-config")
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual({**metadata, "template": "Use the skill."},
-                         json.loads(result.stdout)["command"]["i-have-adhd"])
+                         json.loads(result.stdout)["command"]["laconic"])
 
     def test_v1_missing_command_keeps_skill_discovery(self):
-        (self.plugin_root / ".opencode/command/i-have-adhd.md").unlink()
+        (self.plugin_root / ".opencode/command/laconic.md").unlink()
         result = self.run_plugin("v1-config")
         self.assertEqual(0, result.returncode, result.stderr)
         config = json.loads(result.stdout)
-        self.assertNotIn("i-have-adhd", config["command"])
+        self.assertNotIn("laconic", config["command"])
         self.assertEqual([str(self.plugin_root / "skills")], config["skills"]["paths"])
 
     def test_v1_malformed_command_does_not_leak_frontmatter_into_prompt(self):
-        command = self.plugin_root / ".opencode/command/i-have-adhd.md"
+        command = self.plugin_root / ".opencode/command/laconic.md"
         for text in ["---\n{broken}\n---\nBody", '---\n{"description":"unclosed"}\nBody']:
             with self.subTest(text=text):
                 command.write_text(text)
                 result = self.run_plugin("v1-config")
                 self.assertEqual(0, result.returncode, result.stderr)
                 config = json.loads(result.stdout)
-                self.assertNotIn("i-have-adhd", config["command"])
+                self.assertNotIn("laconic", config["command"])
                 self.assertEqual([str(self.plugin_root / "skills")], config["skills"]["paths"])
 
 
     def test_js_mirror_reexports_the_implementation(self):
         # Discovery uses .js; re-exporting must preserve the module identity.
-        mirror = ROOT / ".opencode" / "plugins" / "i-have-adhd.js"
-        impl = ROOT / ".opencode" / "plugins" / "i-have-adhd.mjs"
+        mirror = ROOT / ".opencode" / "plugins" / "laconic.js"
+        impl = ROOT / ".opencode" / "plugins" / "laconic.mjs"
         self.assertTrue(mirror.is_file(), "missing V2 auto-discovery mirror")
         self.assertTrue(impl.is_file())
 
@@ -229,7 +229,7 @@ class OpenCodePluginTest(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         mirror_export = json.loads(result.stdout)
         self.assertTrue(mirror_export["same"], "mirror does not re-export the implementation")
-        self.assertEqual("i-have-adhd", mirror_export["id"])
+        self.assertEqual("laconic", mirror_export["id"])
         self.assertEqual(["id", "server", "setup"], mirror_export["keys"])
 
 

@@ -1,14 +1,14 @@
 {
-  "name": "i-have-adhd",
+  "name": "laconic",
   "interface": {
-    "displayName": "I Have ADHD"
+    "displayName": "Laconic"
   },
   "plugins": [
     {
-      "name": "i-have-adhd",
+      "name": "laconic",
       "source": {
         "source": "url",
-        "url": "https://github.com/ayghri/i-have-adhd.git",
+        "url": "https://github.com/ryanduguid/laconic.git",
         "ref": "main"
       },
       "policy": {

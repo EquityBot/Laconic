@@ -1,0 +1,7 @@
+interface:
+  display_name: "Laconic"
+  short_description: "Concise, answer-first output in Australian English"
+  default_prompt: "Use $laconic to answer first, mark anything unverified and write in Australian English."
+
+policy:
+  allow_implicit_invocation: false

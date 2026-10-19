@@ -24,7 +24,7 @@ python3 scripts/run_evals.py run \
 python3 scripts/run_evals.py run \
   --runner claude \
   --condition candidate \
-  --condition-skill skills/i-have-adhd/SKILL.md \
+  --condition-skill skills/laconic/SKILL.md \
   --trials 3 \
   --budget-usd 12.50 \
   --output evals/results/responses.jsonl
@@ -32,7 +32,7 @@ python3 scripts/run_evals.py run \
 
 The default Claude runner reports dollar cost and receives the remaining condition budget on every call. Runners without cost reporting are rejected unless `--allow-unmetered` is supplied; use that flag only when the provider account has its own hard cap.
 
-Both example runners isolate the call from the operator's own agent configuration: `--setting-sources ""` for Claude, `--ignore-user-config --ephemeral` for Codex. Keep that isolation when adding runners: without it, user-level plugins, hooks, memory, and output styles leak into every condition and shape the responses being judged. The sharpest case is this repo's own always-on flag (`~/.claude/.i-have-adhd-always`), which would inject the full i-have-adhd ruleset into the **baseline** condition and make the comparison measure the skill against itself.
+Both example runners isolate the call from the operator's own agent configuration: `--setting-sources ""` for Claude, `--ignore-user-config --ephemeral` for Codex. Keep that isolation when adding runners: without it, user-level plugins, hooks, memory and output styles leak into every condition and shape the responses being judged. The sharpest case is this repo's own always-on flag (`~/.claude/.laconic-always`), which would inject the full laconic ruleset into the **baseline** condition and make the comparison measure the skill against itself.
 
 Isolation also drops the operator's saved model and effort settings, so the claude runner pins `--model` explicitly. Keep a pin when editing the runner: without one, the eval silently runs whatever the operator (or the CLI release) defaults to; the model would vary between operators and over time, and per-token cost varies with it. The pinned model is part of the result: record it with published numbers, as below.
 
@@ -40,7 +40,7 @@ Runs are resumable: rerun the same command after a provider failure and complete
 
 ## Measure
 
-Aggregate token usage, reported cost, and response length from the completed responses file:
+Aggregate token usage, reported cost and response length from the completed responses file:
 
 ```bash
 python3 scripts/run_evals.py measure evals/results/responses.jsonl
@@ -57,7 +57,7 @@ comparability is unverified. Check the original model/CLI settings yourself;
 a matching runner alias alone does not establish the same model or configuration.
 
 Missing costs or token counts produce `null` totals and deltas, not zero. Invalid
-negative, boolean, non-finite, or fractional token counts are rejected. A zero
+negative, boolean, non-finite or fractional token counts are rejected. A zero
 baseline has no meaningful percentage change, so that percentage is `null`.
 Claude input totals include cache creation/read tokens; Codex cached input is
 already part of its input count and is not added again.
@@ -93,8 +93,8 @@ leak the vocabulary the blinding exists to hide. Keep anything condition-identif
 outside that block.
 
 Runs are resumable the same way generation is: groups already present in the
-output file are skipped. A group missing a condition cannot be scored — the
-conditions would no longer be judged on identical rows — so it is reported on
+output file are skipped. A group missing a condition cannot be scored, because the
+conditions would no longer be judged on identical rows. It is reported on
 stderr and left out rather than silently dropped.
 
 Judging by hand instead is still supported: blind the `condition` field
@@ -110,4 +110,4 @@ Either way, apply the release gate:
 python3 scripts/run_evals.py score evals/results/scores.jsonl
 ```
 
-Record the exact CLI and model versions with published results, including measured token and cost numbers. Do not compare conditions produced with different cases, models, trial counts, or rubrics.
+Record the exact CLI and model versions with published results, including measured token and cost numbers. Do not compare conditions produced with different cases, models, trial counts or rubrics.

@@ -30,11 +30,11 @@ def validate_package_manifest() -> None:
         )
 
     assert package.get("pi") == {
-        "extensions": ["./extensions/i-have-adhd.ts"],
+        "extensions": ["./extensions/laconic.ts"],
         "skills": ["./skills"],
     }
     assert package.get("omp") == {
-        "extensions": ["./extensions/i-have-adhd.ts"],
+        "extensions": ["./extensions/laconic.ts"],
     }
 
 
@@ -176,7 +176,7 @@ def status_texts(events: list[dict[str, Any]]) -> list[str | None]:
         for event in events
         if event.get("type") == "extension_ui_request"
         and event.get("method") == "setStatus"
-        and event.get("statusKey") == "i-have-adhd"
+        and event.get("statusKey") == "laconic"
     ]
 
 
@@ -194,16 +194,16 @@ def latest_enabled(entries_response: dict[str, Any]) -> bool:
         entry.get("data", {}).get("enabled")
         for entry in entries_response["data"]["entries"]
         if entry.get("type") == "custom"
-        and entry.get("customType") == "i-have-adhd-state"
+        and entry.get("customType") == "laconic-state"
     ]
     if not states or not isinstance(states[-1], bool):
-        raise AssertionError("No persisted i-have-adhd state found")
+        raise AssertionError("No persisted laconic state found")
     return states[-1]
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Smoke-test the i-have-adhd extension without a model request."
+        description="Smoke-test the laconic extension without a model request."
     )
     parser.add_argument(
         "--runtime",
@@ -222,7 +222,7 @@ def main() -> None:
         raise RuntimeError(f"{args.runtime} executable is not available")
 
     with tempfile.TemporaryDirectory(
-        prefix=f"i-have-adhd-{args.runtime}-"
+        prefix=f"laconic-{args.runtime}-"
     ) as agent_dir:
         env = build_isolated_env(agent_dir)
         if args.runtime == "omp":
@@ -276,7 +276,7 @@ export default function (pi: ExtensionAPI) {
             *extension_args,
             "-e",
             str(reload_probe),
-            "--adhd",
+            "--laconic",
         )
         if args.runtime == "omp":
             try:
@@ -289,10 +289,10 @@ export default function (pi: ExtensionAPI) {
                     command["name"]
                     for command in command_event["commands"]
                 }
-                assert "i-have-adhd" in command_names
-                assert "skill:i-have-adhd" in command_names
+                assert "laconic" in command_names
+                assert "skill:laconic" in command_names
                 assert any(
-                    "ADHD ON" in (text or "")
+                    "LACONIC ON" in (text or "")
                     for text in status_texts(startup_events)
                 )
             finally:
@@ -304,75 +304,75 @@ export default function (pi: ExtensionAPI) {
         try:
             commands, startup_events = client.request("commands", {"type": "get_commands"})
             command_names = {command["name"] for command in commands["data"]["commands"]}
-            assert "i-have-adhd" in command_names
-            assert "skill:i-have-adhd" in command_names
-            assert any("ADHD ON" in (text or "") for text in status_texts(startup_events))
+            assert "laconic" in command_names
+            assert "skill:laconic" in command_names
+            assert any("LACONIC ON" in (text or "") for text in status_texts(startup_events))
 
             entries, _ = client.request("entries-startup", {"type": "get_entries"})
-            assert message_count(entries, "i-have-adhd-rules") == 1
-            assert message_count(entries, "i-have-adhd-disabled") == 0
+            assert message_count(entries, "laconic-rules") == 1
+            assert message_count(entries, "laconic-disabled") == 0
 
             reloaded, reload_events = client.request(
                 "reload-enabled",
                 {"type": "prompt", "message": "/reload-probe"},
             )
             assert reloaded["success"] is True
-            assert any("ADHD ON" in (text or "") for text in status_texts(reload_events))
+            assert any("LACONIC ON" in (text or "") for text in status_texts(reload_events))
 
             entries, _ = client.request("entries-reloaded", {"type": "get_entries"})
-            assert message_count(entries, "i-have-adhd-rules") == 1, (
+            assert message_count(entries, "laconic-rules") == 1, (
                 "Rules were injected twice for one active session"
             )
 
             toggled_off, toggle_off_events = client.request(
                 "toggle-off",
-                {"type": "prompt", "message": "/i-have-adhd"},
+                {"type": "prompt", "message": "/laconic"},
             )
             assert toggled_off["success"] is True
             assert None in status_texts(toggle_off_events)
 
             entries, _ = client.request("entries-toggled-off", {"type": "get_entries"})
             assert latest_enabled(entries) is False
-            assert message_count(entries, "i-have-adhd-disabled") == 1
+            assert message_count(entries, "laconic-disabled") == 1
 
             reloaded, reload_events = client.request(
                 "reload-disabled",
                 {"type": "prompt", "message": "/reload-probe"},
             )
             assert reloaded["success"] is True
-            assert not any("ADHD ON" in (text or "") for text in status_texts(reload_events))
+            assert not any("LACONIC ON" in (text or "") for text in status_texts(reload_events))
 
             entries, _ = client.request("entries-reload-disabled", {"type": "get_entries"})
-            assert message_count(entries, "i-have-adhd-rules") == 1
-            assert message_count(entries, "i-have-adhd-disabled") == 1
+            assert message_count(entries, "laconic-rules") == 1
+            assert message_count(entries, "laconic-disabled") == 1
 
             toggled_on, toggle_on_events = client.request(
                 "toggle-on",
-                {"type": "prompt", "message": "/i-have-adhd"},
+                {"type": "prompt", "message": "/laconic"},
             )
             assert toggled_on["success"] is True
-            assert any("ADHD ON" in (text or "") for text in status_texts(toggle_on_events))
+            assert any("LACONIC ON" in (text or "") for text in status_texts(toggle_on_events))
 
             entries, _ = client.request("entries-toggled-on", {"type": "get_entries"})
             assert latest_enabled(entries) is True
-            assert message_count(entries, "i-have-adhd-rules") == 2
+            assert message_count(entries, "laconic-rules") == 2
 
             explicit_off, _ = client.request(
                 "explicit-off",
-                {"type": "prompt", "message": "/i-have-adhd off"},
+                {"type": "prompt", "message": "/laconic off"},
             )
             assert explicit_off["success"] is True
 
             skill, skill_events = client.request(
                 "skill-alias",
-                {"type": "prompt", "message": "/skill:i-have-adhd"},
+                {"type": "prompt", "message": "/skill:laconic"},
             )
             assert skill["success"] is True
             assert not any(event.get("type") == "agent_start" for event in skill_events)
 
             entries, _ = client.request("entries-enabled", {"type": "get_entries"})
             assert latest_enabled(entries) is True
-            assert message_count(entries, "i-have-adhd-rules") == 3
+            assert message_count(entries, "laconic-rules") == 3
 
             stopped, stop_events = client.request(
                 "stop-phrase",
@@ -402,7 +402,7 @@ export default function (pi: ExtensionAPI) {
             client.close()
 
         if args.runtime == "pi":
-            Path(agent_dir, ".i-have-adhd-always").touch()
+            Path(agent_dir, ".laconic-always").touch()
             always_on = RpcClient(
                 executable,
                 env,
@@ -415,7 +415,7 @@ export default function (pi: ExtensionAPI) {
                     {"type": "get_state"},
                 )
                 assert any(
-                    "ADHD ON" in (text or "")
+                    "LACONIC ON" in (text or "")
                     for text in status_texts(always_on_events)
                 )
             finally:

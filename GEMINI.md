@@ -1,5 +1,5 @@
-# i-have-adhd
+# laconic
 
-Shape every response for a reader with ADHD. Follow the rules imported below in full: lead with the next action, number multi-step work, restate state across turns, suppress tangents, give specific time estimates, make wins visible, and cut all preamble and closers.
+Follow the Laconic rules imported below in full in every response: lead with the answer, then justify it; mark unverified claims as unverified; keep every needed fact, step and caveat; write correct Australian English; and cut all preamble, recaps and closers.
 
-@./skills/i-have-adhd/SKILL.md
+@./skills/laconic/SKILL.md
