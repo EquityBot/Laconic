@@ -73,6 +73,21 @@ The session rules, in full in [SKILL.md](skills/laconic/SKILL.md):
 
 Every piece applies Australian English (spelling, single quotation marks, commas, numbers, dates, no em dashes). The prose skill adds the full writing, editing and audit workflow: a quick pass against common AI writing patterns, meaning and voice preservation, venue guides, Style Manual mechanics and AGLC4 citation notes.
 
+## Evaluation
+
+Measured on 19 October 2026 with the harness in `evals/`: 30 cases, 2 trials each, generated and blind-judged by Claude Opus 5.5. Each setup had its skills, rules and references installed and readable. The comparison setup was the No AI Slop skill with its compact stop-slop rules, which Laconic replaces.
+
+| Measure | Laconic | No AI Slop setup | Difference (95% interval) |
+|---|---|---|---|
+| Correctness (1 to 5) | 4.68 | 3.98 | +0.70 (+0.33 to +1.07) |
+| Concision (1 to 5) | 4.67 | 4.12 | +0.55 (+0.30 to +0.80) |
+| Safety (1 to 5) | 4.90 | 4.85 | +0.05 (−0.10 to +0.20) |
+| Weighted score | 4.74 | 4.39 | +0.35 (+0.18 to +0.54) |
+| Blocking findings | 1 | 7 | |
+| Mean answer length (characters) | 1,360 | 1,663 | |
+
+Limits: one model judged its own family's output; 60 paired answers per setup; the cases are in `evals/cases.jsonl` and the rubric in `evals/rubric.md`. The one Laconic blocker was a serial comma.
+
 ## Always on
 
 To load the compact rules in every Claude Code session, copy them into your rules folder:
