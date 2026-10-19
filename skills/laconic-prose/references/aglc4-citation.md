@@ -12,8 +12,8 @@ The disagreements that actually bite:
 
 | Point | AGLC inside a citation | Style Manual in prose |
 | --- | --- | --- |
-| Spans | Unspaced en dash: `ss 42–9`, `[50]–[59]` | Words: "from 2017 to 2019", en dash only for financial years and the other listed exceptions |
-| Shortened forms | `ibid`, `(n 46)`, `cf`, `eg` in citations | Prefer English: "for example", "that is" |
+| Spans | Unspaced en dash: `ss 42–9`, `[50]–[59]` | Words: 'from 2017 to 2019', en dash only for financial years and the other listed exceptions |
+| Shortened forms | `ibid`, `(n 46)`, `cf`, `eg` in citations | Prefer English: 'for example', 'that is' |
 | Number spans | Shortened: `121–7`, `312–13` | Its own number rules apply to body text |
 | Full stops in abbreviations | None: `ss`, `reg`, `No`, `Cth` | Also none |
 
@@ -32,7 +32,7 @@ Rules that catch people out:
 - The year is the year of original enactment, never the year of the amendment or the compilation you are reading. An `Income Tax Assessment Act 1997` citation stays 1997 no matter which compilation applies.
 - Cite the principal Act, not the amending Act, unless you are deliberately showing legislative history.
 - Jurisdiction abbreviations: Cth, ACT, NSW, NT, Qld, SA, Tas, Vic, WA.
-- Where Parliament numbered two Acts with the same name, keep the number: *Financial Framework Legislation Amendment Act (No 2) 2012* (Cth).
+- Where Parliament numbered 2 Acts with the same name, keep the number: *Financial Framework Legislation Amendment Act (No 2) 2012* (Cth).
 - Bills follow the same shape but take no italics, and usually take `cl` rather than `s`.
 - The Constitution is cited as *Australian Constitution* s 51(ii), with no year and no jurisdiction.
 
@@ -66,7 +66,7 @@ The abbreviation goes before the number with a space; the subsection goes in par
 
 - Plural abbreviation once, at the front: `ss 5, 7, 9, 28`.
 - Consecutive pinpoints take an unspaced en dash: `ss 42–9`, `sub-ss (2)–(7)`, `divs 2–3`.
-- Non-consecutive pinpoints take commas, never "and": `ss 92(1), (4), (7)`.
+- Non-consecutive pinpoints take commas, never 'and': `ss 92(1), (4), (7)`.
 - Alphanumeric and decimal sections are written out in full on both sides: `ss 2A–2D`, not `ss 2A–D`; `ss 3.2.1–3.2.2`, not `ss 3.2.1–2`.
 - Paragraph spans keep both sets of brackets: `[56]–[59]`, not `[56–9]`.
 
@@ -92,7 +92,7 @@ Points to get right:
 - Include the document number only when it appears on the instrument, and reproduce its abbreviations exactly with no full stops.
 - The date is the date the instrument takes effect, not the date you downloaded it.
 - Name the office, never the person holding it. Add the jurisdiction in parentheses after a department or officer: Minister for Immigration and Border Protection (Cth).
-- A body such as the ASX or a professional association drops Pty, Ltd, Inc and a leading "the", and where there is no document number takes `(at Full Date)` instead.
+- A body such as the ASX or a professional association drops Pty, Ltd, Inc and a leading 'the', and where there is no document number takes `(at Full Date)` instead.
 
 ## Explanatory memoranda
 
@@ -100,11 +100,11 @@ Explanatory Memorandum, Bill Citation pinpoint.
 
 - Explanatory Memorandum, Treasury Laws Amendment Bill 2024 (Cth) 12 [1.24]
 
-Use "Explanatory Statement" or "Explanatory Notes" where that jurisdiction does. The Bill citation follows the Bill rules, so no italics. Second reading speeches are parliamentary debates, cited under a different rule.
+Use 'Explanatory Statement' or 'Explanatory Notes' where that jurisdiction does. The Bill citation follows the Bill rules, so no italics. Second reading speeches are parliamentary debates, cited under a different rule.
 
 ## Legislative history
 
-Link the two Acts with a comma and the exact expression; the terms are not interchangeable.
+Link the 2 Acts with a comma and the exact expression; the terms are not interchangeable.
 
 - *Income Tax Assessment Act 1936* (Cth) s 109D, as amended by *Treasury Laws Amendment Act 2020* (Cth) sch 1 item 4
 - *Income Tax Assessment Act 1936* (Cth) s 109D, as at 30 June 2024

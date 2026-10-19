@@ -58,6 +58,30 @@ const US_WORDS: &[(&str, &str)] = &[
     ("acknowledgment", "acknowledgement"),
 ];
 
+/// Words the Style Manual replaces with a plainer form.
+const WORD_CHOICES: &[(&str, &str)] = &[("whilst", "while"), ("amongst", "among")];
+
+/// Words that open a subordinate clause; a comma closing one is not a list comma.
+const SUBORDINATORS: &[&str] = &[
+    "if", "when", "because", "although", "though", "while", "after", "before", "since", "unless",
+    "once", "whenever",
+];
+
+const MONTHS: [&str; 12] = [
+    "january",
+    "february",
+    "march",
+    "april",
+    "may",
+    "june",
+    "july",
+    "august",
+    "september",
+    "october",
+    "november",
+    "december",
+];
+
 /// Words that end in -ize but are not US spellings of -ise words.
 const IZE_EXCEPTIONS: &[&str] = &[
     "size", "sizes", "sized", "sizing", "seize", "seized", "seizes", "prize", "prizes", "capsize",
@@ -234,9 +258,19 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
                         message: format!("'{word}': Australian form is '{au}'"),
                     });
                 }
+                if let Some((_, plain)) = WORD_CHOICES.iter().find(|(w, _)| *w == word) {
+                    findings.push(Finding {
+                        line,
+                        column: s + 1,
+                        rule: "word-choice",
+                        message: format!("'{word}': the Style Manual prefers '{plain}'"),
+                    });
+                }
+                // A number word inside a hyphenated compound (forty-five) is a fixed form.
                 if let Some(numeral) = number_word(&word)
                     && !starts_sentence(&lower_chars, s)
                     && !lower_chars.get(k).is_some_and(|c| *c == '-')
+                    && !(s > 0 && lower_chars[s - 1] == '-')
                 {
                     findings.push(Finding {
                         line,
@@ -250,6 +284,7 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
             _ => {}
         }
     }
+    check_dates_times_latin(&lower, line, findings);
     // Serial comma candidates: ", and" or ", or" with another comma earlier in the same clause.
     for (k, window) in lower_chars.windows(6).enumerate() {
         let text: String = window.iter().collect();
@@ -272,8 +307,101 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
         // So may a list whose earlier items contain 'and' or 'or'.
         let earlier: String = lower_chars[clause_start..k].iter().collect();
         let compound_earlier = earlier.contains(" and ") || earlier.contains(" or ");
-        if earlier.contains(',') && !compound_final && !compound_earlier {
+        // 'If it fails, rerun it, and report' joins 2 clauses after an introductory clause.
+        let first_word = earlier
+            .split(|c: char| !c.is_alphabetic())
+            .find(|w| !w.is_empty())
+            .unwrap_or("");
+        let introductory = SUBORDINATORS.contains(&first_word) && earlier.matches(',').count() == 1;
+        if earlier.contains(',') && !compound_final && !compound_earlier && !introductory {
             findings.push(Finding { line, column: k + 1, rule: "serial-comma", message: "possible comma before a final 'and' or 'or'; keep it only if it prevents a misreading".into() });
+        }
+    }
+}
+
+/// Dates, times and Latin abbreviations that break the Style Manual forms.
+fn check_dates_times_latin(lower: &str, line: usize, findings: &mut Vec<Finding>) {
+    let tokens: Vec<(usize, &str)> = lower
+        .split_whitespace()
+        .map(|w| (w.as_ptr() as usize - lower.as_ptr() as usize, w))
+        .collect();
+    let core = |w: &str| -> String {
+        w.trim_matches(|c: char| matches!(c, ',' | ';' | '(' | ')' | '*' | '_'))
+            .to_string()
+    };
+    let digits = |w: &str| !w.is_empty() && w.chars().all(|c| c.is_ascii_digit());
+    let ordinal = |w: &str| {
+        ["st", "nd", "rd", "th"]
+            .iter()
+            .any(|s| w.strip_suffix(s).is_some_and(digits))
+    };
+    let mut push = |at: usize, rule: &'static str, message: &str| {
+        findings.push(Finding {
+            line,
+            column: lower[..at].chars().count() + 1,
+            rule,
+            message: message.into(),
+        })
+    };
+    for (i, &(at, raw)) in tokens.iter().enumerate() {
+        let word = core(raw);
+        let bare = word.trim_end_matches(['.', ':']);
+        let prev = i.checked_sub(1).map(|j| core(tokens[j].1));
+        let next = tokens.get(i + 1).map(|t| core(t.1));
+        if word.starts_with("e.g.") || word.starts_with("i.e.") || bare == "eg" || bare == "ie" {
+            push(
+                at,
+                "latin",
+                "Latin abbreviation; write 'for example' or 'that is'",
+            );
+        }
+        // 9am, 9:30pm, 9.30am, 9 a.m.: write 9:30 am.
+        let time = bare
+            .strip_suffix("am")
+            .or_else(|| bare.strip_suffix("pm"))
+            .filter(|t| {
+                !t.is_empty()
+                    && t.chars()
+                        .all(|c| c.is_ascii_digit() || c == ':' || c == '.')
+            })
+            .is_some_and(|t| t.starts_with(|c: char| c.is_ascii_digit()));
+        let dotted = matches!(word.as_str(), "a.m." | "p.m." | "a.m" | "p.m");
+        let period_separator = word.contains('.')
+            && word.split('.').count() == 2
+            && word.split('.').all(digits)
+            && next
+                .as_deref()
+                .is_some_and(|n| matches!(n.trim_end_matches('.'), "am" | "pm"));
+        if time || dotted || period_separator {
+            push(at, "time", "write times as 9:30 am or 9 am");
+        }
+        if MONTHS.contains(&word.trim_end_matches('.')) {
+            let month = word.trim_end_matches('.');
+            let prev_day = prev.as_deref().filter(|p| digits(p) || ordinal(p));
+            if prev_day.is_some_and(ordinal) {
+                push(at, "date", "no ordinal in dates: write 19 October 2026");
+            }
+            if prev_day.is_some()
+                && raw.ends_with(',')
+                && next.as_deref().is_some_and(|n| {
+                    let n = n.trim_end_matches(['.', ',']);
+                    digits(n) && n.len() == 4
+                })
+            {
+                push(
+                    at,
+                    "date",
+                    "no comma before the year: write 19 October 2026",
+                );
+            }
+            if month != "may"
+                && next.as_deref().is_some_and(|n| {
+                    let n = n.trim_end_matches(['.', ',']);
+                    (digits(n) && n.len() <= 2) || ordinal(n)
+                })
+            {
+                push(at, "date", "day before month: write 19 October 2026");
+            }
         }
     }
 }
@@ -314,9 +442,23 @@ fn starts_sentence(chars: &[char], s: usize) -> bool {
     previous.is_none_or(|c| matches!(c, '.' | '!' | '?' | ':'))
 }
 
+/// US forms mined from the Style Manual by `mine_us_words.py`, one "us au" pair per line.
+const MINED_US_WORDS: &str = include_str!("us_words.txt");
+
 fn au_form(word: &str) -> Option<String> {
     if let Some((_, au)) = US_WORDS.iter().find(|(us, _)| *us == word) {
         return Some((*au).to_string());
+    }
+    if let Some(au) = MINED_US_WORDS
+        .lines()
+        .filter(|l| !l.starts_with('#'))
+        .find_map(|l| {
+            l.split_once(' ')
+                .filter(|(us, _)| *us == word)
+                .map(|(_, au)| au)
+        })
+    {
+        return Some(au.to_string());
     }
     if IZE_EXCEPTIONS.contains(&word) || word.len() < 6 {
         return None;
@@ -386,6 +528,35 @@ mod tests {
     #[test]
     fn a_comma_joining_two_clauses_is_not_a_serial_comma() {
         assert!(rules("The build passed, and the deploy started.").is_empty());
+    }
+
+    #[test]
+    fn flags_style_manual_word_choices_dates_times_and_latin() {
+        assert_eq!(
+            rules("Whilst amongst friends."),
+            vec!["word-choice", "word-choice"]
+        );
+        assert_eq!(
+            rules("Leave at 9.30am on 5th October, 2026."),
+            vec!["time", "date", "date"]
+        );
+        assert_eq!(
+            rules("Due October 5 at 9 a.m. today."),
+            vec!["date", "time"]
+        );
+        assert_eq!(
+            rules("Use e.g. a token, i.e. the key."),
+            vec!["latin", "latin"]
+        );
+        assert!(
+            rules("Meet on 19 October 2026 at 9:30 am or 5 pm. It may 5 times fail.").is_empty()
+        );
+    }
+
+    #[test]
+    fn hyphenated_numbers_and_introductory_clauses_are_not_findings() {
+        assert!(rules("We funded forty-five places.").is_empty());
+        assert!(rules("If the tool is available, run it, and fix each finding.").is_empty());
     }
 
     #[test]

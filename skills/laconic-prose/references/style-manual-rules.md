@@ -16,7 +16,7 @@ For legislation, cases, ATO rulings and explanatory memoranda, read [aglc4-citat
 
 Use the first spelling in the Macquarie Dictionary. Record deliberate departures. Prefer acknowledgement, lodgement and judgement; legal material uses judgment. Keep explicit user choices and protected quotations, names, code, paths, URLs and identifiers exact.
 
-Choose forms by meaning and grammatical role: licence is a noun, license a verb; practice is a noun, practise a verb; dependant is a person, dependent an adjective. Prefer focused, focusing and adviser; focussed and focussing remain accepted variants. Preserve Advisor in official titles. Write wellbeing. Inspect grammatical pairs individually; do not use global replacement. Read the detailed Spelling section for its complete confused-pair list and fixed forms when proofreading them. Use that for essential clauses and which with a comma pair for non-essential clauses.
+Choose forms by meaning and grammatical role: licence is a noun, license a verb; practice is a noun, practise a verb; dependant is a person, dependent an adjective. Prefer focused, focusing and adviser; focussed and focussing remain accepted variants. Preserve Advisor in official titles. Write wellbeing. Inspect grammatical pairs individually; do not use global replacement. Write while and among, not 'whilst' and 'amongst'. Read the detailed Spelling section for its complete confused-pair list and fixed forms when proofreading them.
 
 ### Capitals
 
@@ -28,7 +28,7 @@ Write per cent, never percent, in prose; percentage is the noun. Use numerals wi
 
 ### Punctuation
 
-Use only punctuation needed for grammar and meaning, with one space after a sentence. No full stops after headings, headers, footers, captions or between acronym letters, or after most abbreviations and contractions. Put quotation punctuation inside when it belongs to the quotation, outside when it belongs to the sentence. Read the detailed section for attribution and competing punctuation.
+Use only punctuation needed for grammar and meaning, with one space after a sentence. Use no comma before the final 'and' or 'or' in a list, except when the final item itself joins 2 words with 'and' ('retail trade, wholesale trade, and accommodation and food services') or a defining phrase applies only to that item. Use that for essential clauses and which with a comma pair for non-essential clauses. No full stops after headings, headers, footers, captions or between acronym letters, or after most abbreviations and contractions. Put quotation punctuation inside when it belongs to the quotation, outside when it belongs to the sentence. Read the detailed section for attribution and competing punctuation.
 
 ### Dashes
 
@@ -58,7 +58,7 @@ Use day month year with no commas: 22 July 2024. Use a non-breaking space betwee
 
 Define unfamiliar acronyms on first use; reverse the definition for a widely known form such as DNA. NT, ACT, am, pm, Qantas, BHP, radar and scuba need no definition. Keep terms spelt out when used only once or twice. A full agency name followed by its generic noun can be clearer than an acronym. Repeat definitions where readers may enter long content midway; add a glossary for numerous specialist terms.
 
-No full stops in acronyms, initialisms or contractions, except sentence punctuation. Avoid plurals or possessives at first definition. Prefer for example and that is to Latin abbreviations. If e.g. or i.e. is necessary, retain both full stops and add no comma. Contractions suit standard and informal prose; avoid them in formal content. Read the full section for exceptions.
+No full stops in acronyms, initialisms or contractions, except sentence punctuation. Avoid plurals or possessives at first definition. Prefer for example and that is to Latin abbreviations. If 'e.g.' or 'i.e.' is necessary, retain both full stops and add no comma. Contractions suit standard and informal prose; avoid them in formal content. Read the full section for exceptions.
 
 ## Register, structure and specialist editing
 

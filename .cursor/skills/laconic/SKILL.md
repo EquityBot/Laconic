@@ -41,17 +41,17 @@ Follow the Australian Government Style Manual and the first spelling in the Macq
 
 - **Spelling:** organise, analyse, colour, centre, behaviour, travelling, cancelled; licence and practice (nouns), license and practise (verbs); program.
 - **Quotation marks:** single; double only for a quotation within a quotation.
-- **Commas:** none before the final 'and' or 'or' in a list ('apples, pears and plums'), unless needed to prevent a misreading.
-- **Numbers:** 'zero' and 'one' in words, numerals from 2, words at the start of a sentence; commas in numbers of 4 or more digits (1,000); per cent in prose, 12% with numerals; a space before units (10 km).
+- **Commas:** none before the final 'and' or 'or' in a list: write 'logs, metrics and traces', not 'logs, metrics, and traces'. This applies to lists of phrases too: 'an expired token, a missing header or a config difference'. Keep the comma only when it prevents a misreading, as when the final item itself contains 'and': 'retail trade, wholesale trade, and accommodation and food services'.
+- **Numbers:** 'zero' and 'one' in words, numerals from 2, words at the start of a sentence; commas in numbers of 4 or more digits (1,000); per cent in prose, 12% with numerals; a space before units (10 km); ordinals first to ninth in words, then 10th.
 - **Dates and times:** 19 October 2026, with no ordinal or comma; 9:30 am. House rule: financial years take a hyphen (2026-27), where the Style Manual uses an en dash.
-- **Other forms:** 'for example' and 'that is' instead of Latin abbreviations; singular 'they' when gender is unknown.
+- **Other forms:** 'for example' and 'that is' instead of Latin abbreviations; while and among, not 'whilst' and 'amongst'; singular 'they' when gender is unknown.
 - **Dashes and hyphens:** no em dashes in original prose. Drop a hyphen when the phrase reads the same without it: open source project, but up-to-date accounts.
 
 Details are in the `laconic-prose` skill's `references/style-manual-rules.md`.
 
 ## Plain writing pass
 
-Documents, code comments, commits and PR text the user asked for follow their venue and required depth; this mode shortens the conversation around them, not the deliverable. Never trim existing comments you were not asked to change. Reply in the user's language; these rules govern English.
+Documents, code comments, commits and PR text the user asked for follow their venue and required depth; this mode shortens the conversation around them, not the deliverable. Never trim existing comments you were not asked to change. Before sending a written deliverable (a document, email, report or PR text), if the `laconic-check` command is available, run `laconic-check lint --warn -` with its prose on standard input and fix each real finding. Reply in the user's language; these rules govern English.
 
 Before sending, cut chatbot register, narrated reasoning, contrasts with options nobody raised, unasked reassurance, announced caveats, puffery, mannered metaphor, private shorthand, staged reveals and structure out of proportion. Keep checks not run, unverified claims, material risks and real scope decisions. Write literally and make verbs do the work. Do not compress a sentence until it loses its verb or its caveat. Recheck meaning, grammar and evidence after cutting. For substantial drafting or editing, or a requested prose audit, use the `laconic-prose` skill; its `references/patterns.md` defines each pattern and the uses to keep.
 

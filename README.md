@@ -102,11 +102,19 @@ Limits: 30 to 60 answers per setup from one generating model; the cases are in `
 
 ## Checker
 
-`tools/laconic-check` is a small Rust CLI with no dependencies. `lint` flags candidates in Markdown prose: em dashes, US spellings, double quotation marks, possible serial commas and chatbot closers, skipping code, URLs and quoted text. `preserve` reports numbers, inline code, URLs and words such as 'not', 'must' and 'only' that an edit dropped. A finding is a reason to look, not proof of a defect.
+`tools/laconic-check` is a small Rust CLI with no dependencies. `lint` flags candidates in Markdown prose: em dashes, US spellings, 'whilst' and 'amongst', double quotation marks, possible serial commas, numbers written as words, dates and times in non-Style Manual forms, Latin abbreviations and chatbot closers, skipping code, URLs and quoted text. `preserve` reports numbers, inline code, URLs and words such as 'not', 'must' and 'only' that an edit dropped. A finding is a reason to look, not proof of a defect.
 
 ```bash
 cargo run --manifest-path tools/laconic-check/Cargo.toml -- lint README.md
 cargo run --manifest-path tools/laconic-check/Cargo.toml -- preserve original.md edited.md
+```
+
+`lint -` reads standard input, so an agent can check a draft without saving it. When `laconic-check` is on the PATH, both skills run it on written deliverables before sending. Its US-to-Australian word list combines a hand-written list with pairs mined from the Style Manual (`tools/laconic-check/mine_us_words.py`).
+
+`tools/laconic-check/mcp/server.mjs` exposes `lint` and `preserve` as MCP tools, with no dependencies beyond Node:
+
+```bash
+claude mcp add --scope user laconic-check -- node /path/to/laconic/tools/laconic-check/mcp/server.mjs
 ```
 
 ## Always on
@@ -123,7 +131,7 @@ To start every Claude Code session in full session mode instead, create an empty
 touch ~/.claude/.laconic-always
 ```
 
-Delete the file to turn session mode off. [INSTALL.md](INSTALL.md) covers the other agents.
+Delete the file to turn session mode off. Choose one or the other: session mode already contains the compact rules, so loading both repeats about 250 words in every session. [INSTALL.md](INSTALL.md) covers the other agents.
 
 ## Credits
 
