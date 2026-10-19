@@ -4,6 +4,9 @@
 //! masked before the rules run, so protected text never produces a finding, except
 //! that a double-quoted span in prose is itself a finding.
 
+use std::collections::HashMap;
+use std::sync::OnceLock;
+
 #[derive(Debug, PartialEq)]
 pub struct Finding {
     pub line: usize,
@@ -160,6 +163,27 @@ fn mask(chars: &[char]) -> (Vec<char>, Vec<usize>) {
             i = end;
             continue;
         }
+        // Link text that names its own target ([humanizer](https://github.com/x/humanizer))
+        // is a name, not prose.
+        if c == '['
+            && let Some(close) = find(chars, i + 1, |x| x == ']')
+            && chars.get(close + 1) == Some(&'(')
+            && let Some(end) = find(chars, close + 2, |x| x == ')')
+        {
+            let text: String = chars[i + 1..close]
+                .iter()
+                .collect::<String>()
+                .to_lowercase();
+            let url: String = chars[close + 2..end]
+                .iter()
+                .collect::<String>()
+                .to_lowercase();
+            if !text.is_empty() && url.contains(&text) {
+                blank(&mut out, i, end + 1);
+                i = end + 1;
+                continue;
+            }
+        }
         if c == ']'
             && chars.get(i + 1) == Some(&'(')
             && let Some(end) = find(chars, i + 2, |x| x == ')')
@@ -250,7 +274,11 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
             (None, true) => start = Some(k),
             (Some(s), false) => {
                 let word: String = lower_chars[s..k].iter().collect();
-                if let Some(au) = au_form(&word) {
+                // A capital inside a sentence marks a proper noun (the Labor Party, Pearl
+                // Harbor), whose spelling is not a house-style choice.
+                let proper_noun = masked.get(s).is_some_and(|c| c.is_uppercase())
+                    && !starts_sentence(&lower_chars, s);
+                if let Some(au) = au_form(&word).filter(|_| !proper_noun) {
                     findings.push(Finding {
                         line,
                         column: s + 1,
@@ -442,23 +470,27 @@ fn starts_sentence(chars: &[char], s: usize) -> bool {
     previous.is_none_or(|c| matches!(c, '.' | '!' | '?' | ':'))
 }
 
-/// US forms mined from the Style Manual by `mine_us_words.py`, one "us au" pair per line.
-const MINED_US_WORDS: &str = include_str!("us_words.txt");
+/// US forms with their Australian spelling, generated from the English Speller Database
+/// by `gen_au_words.py`, one "us au" pair per line.
+const ESDB_US_WORDS: &str = include_str!("us_words.txt");
+
+fn esdb_us_words() -> &'static HashMap<&'static str, &'static str> {
+    static MAP: OnceLock<HashMap<&'static str, &'static str>> = OnceLock::new();
+    MAP.get_or_init(|| {
+        ESDB_US_WORDS
+            .lines()
+            .filter(|l| !l.starts_with('#'))
+            .filter_map(|l| l.split_once(' '))
+            .collect()
+    })
+}
 
 fn au_form(word: &str) -> Option<String> {
     if let Some((_, au)) = US_WORDS.iter().find(|(us, _)| *us == word) {
         return Some((*au).to_string());
     }
-    if let Some(au) = MINED_US_WORDS
-        .lines()
-        .filter(|l| !l.starts_with('#'))
-        .find_map(|l| {
-            l.split_once(' ')
-                .filter(|(us, _)| *us == word)
-                .map(|(_, au)| au)
-        })
-    {
-        return Some(au.to_string());
+    if let Some(au) = esdb_us_words().get(word) {
+        return Some((*au).to_string());
     }
     if IZE_EXCEPTIONS.contains(&word) || word.len() < 6 {
         return None;

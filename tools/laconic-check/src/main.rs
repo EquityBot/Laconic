@@ -11,6 +11,8 @@ use std::process::ExitCode;
 
 mod lint;
 mod preserve;
+#[cfg(test)]
+mod seeded_faults;
 
 fn usage() -> ExitCode {
     eprintln!(
