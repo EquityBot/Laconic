@@ -61,8 +61,14 @@ const US_WORDS: &[(&str, &str)] = &[
     ("acknowledgment", "acknowledgement"),
 ];
 
-/// Words the Style Manual replaces with a plainer form.
-const WORD_CHOICES: &[(&str, &str)] = &[("whilst", "while"), ("amongst", "among")];
+/// House overrides of the Style Manual, which prefers while and among.
+const WORD_CHOICES: &[(&str, &str)] = &[("while", "whilst"), ("among", "amongst")];
+
+/// Words before 'while' that make it a noun: a while, a short while, worth your while.
+const WHILE_NOUN_BEFORE: &[&str] = &[
+    "a", "the", "this", "that", "short", "long", "little", "good", "great", "whole", "my", "your",
+    "his", "her", "its", "our", "their",
+];
 
 /// Words that open a subordinate clause; a comma closing one is not a list comma.
 const SUBORDINATORS: &[&str] = &[
@@ -286,12 +292,17 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
                         message: format!("'{word}': Australian form is '{au}'"),
                     });
                 }
-                if let Some((_, plain)) = WORD_CHOICES.iter().find(|(w, _)| *w == word) {
+                let noun_while = word == "while"
+                    && (WHILE_NOUN_BEFORE.contains(&word_before(&lower_chars, s).as_str())
+                        || word_after(&lower_chars, k) == "away");
+                if let Some((_, house)) = WORD_CHOICES.iter().find(|(w, _)| *w == word)
+                    && !noun_while
+                {
                     findings.push(Finding {
                         line,
                         column: s + 1,
                         rule: "word-choice",
-                        message: format!("'{word}': the Style Manual prefers '{plain}'"),
+                        message: format!("'{word}': the house style prefers '{house}'"),
                     });
                 }
                 // A number word inside a hyphenated compound (forty-five) is a fixed form.
@@ -460,6 +471,34 @@ fn number_word(word: &str) -> Option<u8> {
     WORDS.iter().position(|w| *w == word).map(|i| i as u8 + 2)
 }
 
+/// The word before position `s`, lower case, or an empty string.
+fn word_before(chars: &[char], s: usize) -> String {
+    let end = chars[..s]
+        .iter()
+        .rposition(|c| c.is_alphabetic())
+        .map_or(0, |e| e + 1);
+    let gap = &chars[end..s];
+    if !gap.iter().all(|c| c.is_whitespace()) {
+        return String::new();
+    }
+    let start = chars[..end]
+        .iter()
+        .rposition(|c| !c.is_alphabetic())
+        .map_or(0, |b| b + 1);
+    chars[start..end].iter().collect()
+}
+
+/// The word starting after position `k` past spaces, lower case, or an empty string.
+fn word_after(chars: &[char], k: usize) -> String {
+    let start = (k..chars.len())
+        .find(|&j| !chars[j].is_whitespace())
+        .unwrap_or(chars.len());
+    chars[start..]
+        .iter()
+        .take_while(|c| c.is_alphabetic())
+        .collect()
+}
+
 /// True when the word at `s` begins a sentence (or the line).
 fn starts_sentence(chars: &[char], s: usize) -> bool {
     // Skip spaces and Markdown markers (list bullets, emphasis, headings, table pipes).
@@ -565,8 +604,12 @@ mod tests {
     #[test]
     fn flags_style_manual_word_choices_dates_times_and_latin() {
         assert_eq!(
-            rules("Whilst amongst friends."),
+            rules("While among friends."),
             vec!["word-choice", "word-choice"]
+        );
+        assert!(
+            rules("Whilst amongst friends we waited a while. It was worth your while to while away an hour.")
+                .is_empty()
         );
         assert_eq!(
             rules("Leave at 9.30am on 5th October, 2026."),

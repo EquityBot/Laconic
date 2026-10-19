@@ -74,7 +74,7 @@ Style Manual's substitution table, high-value rows. Replace only when the plain 
 | subsequently | after |
 | until such time as | until |
 | utilise | use |
-| whilst, amongst | while, among |
+| whilst, amongst | 'while', 'among' (Laconic overrides this row: keep whilst and amongst) |
 
 Note the overlap with this skill's own inspect list: leverage, utilise and impact appear in both. Style Manual bans them by default in government content; the core skill still protects precise technical uses such as financial leverage.
 

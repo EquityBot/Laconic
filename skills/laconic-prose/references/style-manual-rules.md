@@ -16,7 +16,7 @@ For legislation, cases, ATO rulings and explanatory memoranda, read [aglc4-citat
 
 Use the first spelling in the Macquarie Dictionary. Record deliberate departures. Prefer acknowledgement, lodgement and judgement; legal material uses judgment. Keep explicit user choices and protected quotations, names, code, paths, URLs and identifiers exact.
 
-Choose forms by meaning and grammatical role: licence is a noun, license a verb; practice is a noun, practise a verb; dependant is a person, dependent an adjective. Prefer focused, focusing and adviser; focussed and focussing remain accepted variants. Preserve Advisor in official titles. Write wellbeing. Inspect grammatical pairs individually; do not use global replacement. Write while and among, not 'whilst' and 'amongst'. Read the detailed Spelling section for its complete confused-pair list and fixed forms when proofreading them.
+Choose forms by meaning and grammatical role: licence is a noun, license a verb; practice is a noun, practise a verb; dependant is a person, dependent an adjective. Prefer focused, focusing and adviser; focussed and focussing remain accepted variants. Preserve Advisor in official titles. Write wellbeing. Inspect grammatical pairs individually; do not use global replacement. House override: write whilst and amongst, where the Style Manual prefers 'while' and 'among'; keep noun uses such as 'a while' and 'worth your while'. Where the Style Manual and Macquarie do not settle a form, use British English, never American. Read the detailed Spelling section for its complete confused-pair list and fixed forms when proofreading them.
 
 ### Capitals
 

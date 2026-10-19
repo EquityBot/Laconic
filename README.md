@@ -71,7 +71,7 @@ The session rules, in full in [SKILL.md](skills/laconic/SKILL.md):
 9. Group long lists, without dropping relevant items.
 10. No preamble, recap or closer.
 
-Every piece applies Australian English (spelling, single quotation marks, commas, numbers, dates, no em dashes). The prose skill adds the full writing, editing and audit workflow: a quick pass against common AI writing patterns, meaning and voice preservation, venue guides, Style Manual mechanics and AGLC4 citation notes.
+Every piece applies Australian English (spelling, single quotation marks, commas, numbers, dates, no em dashes), falling back to British English, never American, where Australian sources do not settle a form. House rule: whilst and amongst, where the Style Manual prefers 'while' and 'among'. The prose skill adds the full writing, editing and audit workflow: a quick pass against common AI writing patterns, meaning and voice preservation, venue guides, Style Manual mechanics and AGLC4 citation notes.
 
 ## Evaluation
 
@@ -102,7 +102,7 @@ Limits: 30 to 60 answers per setup from one generating model; the cases are in `
 
 ## Checker
 
-`tools/laconic-check` is a small Rust CLI with no dependencies. `lint` flags candidates in Markdown prose: em dashes, US spellings, 'whilst' and 'amongst', double quotation marks, possible serial commas, numbers written as words, dates and times in non-Style Manual forms, Latin abbreviations and chatbot closers, skipping code, URLs and quoted text. `preserve` reports numbers, inline code, URLs and words such as 'not', 'must' and 'only' that an edit dropped. A finding is a reason to look, not proof of a defect.
+`tools/laconic-check` is a small Rust CLI with no dependencies. `lint` flags candidates in Markdown prose: em dashes, US spellings, 'while' and 'among' as conjunction and preposition, double quotation marks, possible serial commas, numbers written as words, dates and times in non-Style Manual forms, Latin abbreviations and chatbot closers, skipping code, URLs and quoted text. `preserve` reports numbers, inline code, URLs and words such as 'not', 'must' and 'only' that an edit dropped. A finding is a reason to look, not proof of a defect.
 
 ```bash
 cargo run --manifest-path tools/laconic-check/Cargo.toml -- lint README.md

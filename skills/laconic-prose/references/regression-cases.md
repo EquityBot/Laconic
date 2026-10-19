@@ -15,7 +15,7 @@ Use these cases when changing the skill; they are not a benchmark of general wri
 | Edit: 'Experts agree that this feature reduces errors.' | Flag missing evidence; never return an unqualified effectiveness claim. |
 | Edit: 'Thanks for sending this through. I can review it on Tuesday.' | Leave the clean draft and ordinary courtesy intact. |
 | Edit prose around `--dry-run`, `client_id` and `https://example.com/a-b`. | Preserve all 3 literals exactly. |
-| A repository task requires this skill while drafting a PR description. | Use the agent's own draft; return the requested PR format without asking for another draft or adding an editing report. |
+| A repository task requires this skill whilst drafting a PR description. | Use the agent's own draft; return the requested PR format without asking for another draft or adding an editing report. |
 | Edit: 'The organization will analyze the color settings in the center panel.' | Use organisation, analyse, colour and centre; preserve the action and meaning. |
 | Edit: 'The license allows you to practice using the program.' | Use licence as the noun and practise as the verb; retain program. |
 | Edit surrounding prose containing the quotation 'Choose a color', CSS `color` and the official title 'World Health Organization'. | Keep the quotation, code and official title exact; use Australian English in surrounding original prose. |
@@ -27,7 +27,7 @@ These cases cover short replies as well as longer documents.
 
 | Input or request | Required behaviour |
 | --- | --- |
-| A user requests a terse register while asking for an edit. | Honour that register and response shape while preserving qualifiers, facts and accessibility; add no invented personality. |
+| A user requests a terse register whilst asking for an edit. | Honour that register and response shape whilst preserving qualifiers, facts and accessibility; add no invented personality. |
 | A draft includes technical or legal wording marked verbatim. | Preserve the required wording exactly unless its modification is explicitly authorised. |
 | Audit only: 'The data tells us the process improved.' No supporting analysis or actor is supplied. | Identify the unclear support or agency without rewriting the source or inventing a person or mechanism. |
 | A user asks for an editorial score on supplied prose. | Read the optional rubric, cite supporting spans, label scores subjective and keep factual preservation failures visible. Infer no authorship. |
@@ -41,7 +41,7 @@ These exercise [style-manual-rules.md](style-manual-rules.md). Each row pairs a 
 | Check | Defective example and expected action | Protected counterexample |
 | --- | --- | --- |
 | Scope of the manual | A ministerial brief drafted in an informal voice with idioms. Apply the register rules: standard or formal tone, no idiom or metaphor. | A personal blog post in the writer's own voice. Apply the mechanics only. Never impose government register on a draft whose voice is the point. |
-| Wordy forms | 'Please submit the form prior to 5 pm and commence the review whilst we wait.' Use before, start and while. | 'The claim is made pursuant to section 8 of the Act.' Preserve a legal citation and any quoted wording exactly. |
+| Wordy forms | 'Please submit the form prior to 5 pm and commence the review whilst we wait.' Use before and start; keep whilst, the house form. | 'The claim is made pursuant to section 8 of the Act.' Preserve a legal citation and any quoted wording exactly. |
 | Time of day | 'We'll meet at 7:30am tomorrow morning.' Space before am and remove the duplicated meaning: '7:30 am tomorrow'. | 'The morning session runs long.' Keep morning where no am or pm duplicates it. |
 | Spans | 'Applications ran from 2017–2019.' Write 'from 2017 to 2019'; never mix from or between with a dash. | 'the 2024-25 financial year' and 'Caroline Chisholm (1808–1877)'. Keep the house hyphen for financial years, and the unspaced en dash for terms of office and lifespans. |
 | Numerals and words | 'Only 1 person applied and 3 objected.' Write one as a word: 'Only one person applied and 3 objected.' | '1 in 5 people, and 1 in 7 young people'. Keep numerals in a comparison or a series of related numbers. |
@@ -70,7 +70,7 @@ The remaining cases protect existing contextual decisions.
 | Function beyond a phrase list | 'The export includes CSV. A whole new chapter of possibility begins.' Remove the empty second sentence; add no capability. | 'The export includes CSV. The next chapter explains its encoding.' Keep the useful navigation. |
 | Technical context | 'Leverage this robust solution to elevate the process.' Identify the vague action; add no mechanism or measurement. | 'We estimated robust standard errors and measured financial leverage.' Keep both terms and actions. |
 | Revision-induced voice | A rewrite turns 'The retry failed.' into 'Retry failed. Yep. Classic.' Remove the added reaction and manufactured voice. | The writer supplies 'Yep. Classic. The retry failed again.' Preserve that voice and the recurrence. |
-| Meaning-bearing limits | A rewrite changes 'Process over 3,000 records, up to four at once, only after approval' to 'Process 3,000 records, four in total'. Restore the threshold, concurrency limit and approval condition. | Leave the original instruction's limits intact while editing unrelated filler. |
+| Meaning-bearing limits | A rewrite changes 'Process over 3,000 records, up to four at once, only after approval' to 'Process 3,000 records, four in total'. Restore the threshold, concurrency limit and approval condition. | Leave the original instruction's limits intact whilst editing unrelated filler. |
 | Headings and next actions | 'Ready to transform everything?' heads instructions to download a CSV. Use a heading grounded in the supplied download action. | 'How do I download the CSV?' is a genuine FAQ heading. Keep it and a relevant download link. |
 | Redaction before quoting | Audit only: a line reads `api_key = "sk-live-4f2a9c"` beside empty marketing copy. Quote the weak prose and replace the key with a placeholder; never reproduce the literal value in a finding. | 'The service retries with the stored token.' No literal value appears, so quote the sentence as written and keep the technical term. |
 | GitHub reply | 'Great catch, thanks so much! You're asking why the build fails. There could be several factors. Hope this helps!' Answer first, drop the praise, restatement and sign-off, and name the likely cause and its check only if the thread supplies them. | 'Thanks for your first PR. Blocking: this skips the retry path, see #388.' Keep the warranted thanks, the severity label and the reference. |
