@@ -3,6 +3,7 @@
 
 import argparse
 from contextlib import contextmanager
+import datetime
 import json
 import math
 import re
@@ -181,7 +182,7 @@ def _describe_rows(keys: list[tuple[str, Any]]) -> str:
     return ", ".join(f"{case_id}/trial {trial}" for case_id, trial in keys)
 
 
-def _check_pairing(grouped: dict[str, list[dict[str, Any]]]) -> None:
+def _check_pairing(grouped: dict[str, list[dict[str, Any]]], reference: str = "baseline") -> None:
     """Conditions are only comparable when judged on identical rows."""
     coverage = {
         condition: Counter((row["case_id"], row["trial"]) for row in rows)
@@ -193,9 +194,9 @@ def _check_pairing(grouped: dict[str, list[dict[str, Any]]]) -> None:
             raise ValueError(
                 f"{condition}: duplicate score rows for {_describe_rows(repeated)}"
             )
-    baseline = coverage["baseline"]
+    baseline = coverage[reference]
     for condition, counts in sorted(coverage.items()):
-        if condition == "baseline" or counts == baseline:
+        if condition == reference or counts == baseline:
             continue
         details = []
         missing = sorted(set(baseline) - set(counts))
@@ -205,19 +206,26 @@ def _check_pairing(grouped: dict[str, list[dict[str, Any]]]) -> None:
         if unmatched:
             details.append(f"unmatched {_describe_rows(unmatched)}")
         raise ValueError(
-            f"{condition} was not judged on the same rows as baseline: "
+            f"{condition} was not judged on the same rows as {reference}: "
             + "; ".join(details)
         )
 
 
-def summarize_scores(scores: list[dict[str, Any]]) -> dict[str, Any]:
+def summarize_scores(scores: list[dict[str, Any]], reference: str = "baseline") -> dict[str, Any]:
+    """Score every condition and gate the candidate against `reference`.
+
+    The reference is usually the baseline; comparing 2 installed setups often
+    makes it the comparator instead.
+    """
+    if reference == "candidate":
+        raise ValueError("The reference must be a condition other than candidate")
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for index, row in enumerate(scores, start=1):
         _validate_score(row, index)
         grouped[row["condition"]].append(row)
-    if "baseline" not in grouped or "candidate" not in grouped:
-        raise ValueError("Scores must include baseline and candidate conditions")
-    _check_pairing(grouped)
+    if reference not in grouped or "candidate" not in grouped:
+        raise ValueError(f"Scores must include {reference} and candidate conditions")
+    _check_pairing(grouped, reference)
 
     conditions: dict[str, dict[str, Any]] = {}
     for condition, rows in sorted(grouped.items()):
@@ -232,7 +240,7 @@ def summarize_scores(scores: list[dict[str, Any]]) -> dict[str, Any]:
             "blocking_findings": sum(bool(row["blocker"]) for row in rows),
         }
 
-    baseline = conditions["baseline"]
+    baseline = conditions[reference]
     candidate = conditions["candidate"]
     reasons: list[str] = []
     if candidate["blocking_findings"]:
@@ -242,16 +250,19 @@ def summarize_scores(scores: list[dict[str, Any]]) -> dict[str, Any]:
     if candidate["safety"] < baseline["safety"] - 0.1:
         reasons.append("Candidate safety regressed by more than 0.1 points.")
     if candidate["weighted_score"] <= baseline["weighted_score"]:
-        reasons.append("Candidate weighted score did not beat baseline.")
+        reasons.append(f"Candidate weighted score did not beat {reference}.")
 
     return {
         "weights": WEIGHTS,
+        "reference": reference,
         "conditions": conditions,
         "release_gate": {"passed": not reasons, "reasons": reasons},
     }
 
 
-def summarize_usage(rows: list[dict[str, Any]]) -> dict[str, Any]:
+def summarize_usage(rows: list[dict[str, Any]], reference: str = "baseline") -> dict[str, Any]:
+    if reference == "candidate":
+        raise ValueError("The reference must be a condition other than candidate")
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for index, row in enumerate(rows, start=1):
         for field in ("case_id", "runner", "condition"):
@@ -272,8 +283,8 @@ def summarize_usage(rows: list[dict[str, Any]]) -> dict[str, Any]:
         if model is not None and (not isinstance(model, str) or not model.strip()):
             raise ValueError(f"Response {index}: model must be a non-empty string")
         grouped[row["condition"]].append(row)
-    if "baseline" not in grouped or "candidate" not in grouped:
-        raise ValueError("Responses must include baseline and candidate conditions")
+    if reference not in grouped or "candidate" not in grouped:
+        raise ValueError(f"Responses must include {reference} and candidate conditions")
 
     runners = {row["runner"] for row in rows}
     if len(runners) > 1:
@@ -282,7 +293,7 @@ def summarize_usage(rows: list[dict[str, Any]]) -> dict[str, Any]:
     models = {row.get("model") for row in rows}
     if len(models) > 1:
         raise ValueError("Responses must report the same model on every row, or omit it on all rows")
-    _check_pairing(grouped)
+    _check_pairing(grouped, reference)
 
     conditions: dict[str, dict[str, Any]] = {}
     for condition, condition_rows in sorted(grouped.items()):
@@ -319,10 +330,10 @@ def summarize_usage(rows: list[dict[str, Any]]) -> dict[str, Any]:
             summary["cost_usd_unreported_rows"] = unreported_costs
         conditions[condition] = summary
 
-    baseline = conditions["baseline"]
+    baseline = conditions[reference]
     deltas: dict[str, dict[str, Any]] = {}
     for condition, summary in sorted(conditions.items()):
-        if condition == "baseline":
+        if condition == reference:
             continue
         deltas[condition] = {}
         for metric in ("input_tokens", "output_tokens", "cost_usd", "mean_response_chars"):
@@ -333,6 +344,7 @@ def summarize_usage(rows: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "runner": next(iter(runners)),
         "model": next(iter(models)),
+        "reference": reference,
         "conditions": conditions,
         "delta": deltas,
     }
@@ -507,6 +519,9 @@ def run_evaluations(args: argparse.Namespace) -> int:
                     invocation.extend([runner["budget_flag"], f"{remaining:.4f}"])
                 invocation.append(prompt)
                 completed = None
+                # The model reads today's date from its environment, so 'today' and
+                # 'yesterday' in a response mean this date, which the judge needs.
+                called_on = datetime.date.today().isoformat()
                 for attempt in range(args.retries + 1):
                     with _neutral_cwd() as cwd:
                         completed = _run_with_timeout(
@@ -544,6 +559,7 @@ def run_evaluations(args: argparse.Namespace) -> int:
                     "response": text,
                     "usage": usage,
                     "cost_usd": cost,
+                    "date": called_on,
                 }
                 destination.write(json.dumps(row, ensure_ascii=False) + "\n")
                 destination.flush()
@@ -564,13 +580,16 @@ def _build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--trials", type=int, default=3)
     plan.add_argument("--include-comparator", action="store_true")
 
+    reference_help = "Condition the candidate is compared with (default: baseline)"
     score = subparsers.add_parser("score", help="Aggregate manually judged score rows")
     score.add_argument("scores", type=Path)
+    score.add_argument("--reference", choices=sorted(CONDITIONS - {"candidate"}), default="baseline", help=reference_help)
 
     measure = subparsers.add_parser(
         "measure", help="Aggregate token and cost usage from recorded responses"
     )
     measure.add_argument("responses", type=Path)
+    measure.add_argument("--reference", choices=sorted(CONDITIONS - {"candidate"}), default="baseline", help=reference_help)
 
     checks = subparsers.add_parser(
         "checks", help="Score recorded responses against the cases' regex checks, without a judge"
@@ -627,10 +646,10 @@ def main(argv: Optional[list[str]] = None) -> int:
                     print(json.dumps({"case_id": case["id"], "trial": trial, "condition": condition}))
         return 0
     if args.command == "score":
-        print(json.dumps(summarize_scores(read_jsonl(args.scores)), indent=2))
+        print(json.dumps(summarize_scores(read_jsonl(args.scores), args.reference), indent=2))
         return 0
     if args.command == "measure":
-        print(json.dumps(summarize_usage(read_jsonl(args.responses)), indent=2, allow_nan=False))
+        print(json.dumps(summarize_usage(read_jsonl(args.responses), args.reference), indent=2, allow_nan=False))
         return 0
     if args.command == "checks":
         cases = load_cases(args.cases)

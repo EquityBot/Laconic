@@ -547,6 +547,36 @@ fn check_dates_times_latin(lower: &str, line: usize, findings: &mut Vec<Finding>
                     "no comma before the year: write 19 October 2026",
                 );
             }
+            // 'Wednesday 22 October 2026' names a weekday the calendar can check.
+            let year = next
+                .as_deref()
+                .map(|n| n.trim_end_matches(['.', ',']))
+                .filter(|n| digits(n) && n.len() == 4)
+                .and_then(|n| n.parse::<i32>().ok());
+            let day = prev_day
+                .filter(|p| digits(p))
+                .and_then(|p| p.parse::<u32>().ok());
+            let named = i
+                .checked_sub(2)
+                .map(|j| core(tokens[j].1))
+                .and_then(|w| WEEKDAYS.iter().position(|d| *d == w));
+            if let (Some(year), Some(day), Some(named)) = (year, day, named) {
+                let month_index = MONTHS.iter().position(|m| *m == month).unwrap_or(0) as u32 + 1;
+                if let Some(actual) = weekday(year, month_index, day)
+                    && actual != named
+                {
+                    push(
+                        tokens[i - 2].0,
+                        "weekday",
+                        &format!(
+                            "{day} {} {year} is a {}, not a {}",
+                            capitalise(month),
+                            capitalise(WEEKDAYS[actual]),
+                            capitalise(WEEKDAYS[named])
+                        ),
+                    );
+                }
+            }
             if month != "may"
                 && next.as_deref().is_some_and(|n| {
                     let n = n.trim_end_matches(['.', ',']);
@@ -557,6 +587,51 @@ fn check_dates_times_latin(lower: &str, line: usize, findings: &mut Vec<Finding>
             }
         }
     }
+}
+
+const WEEKDAYS: [&str; 7] = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+];
+
+/// Day of the week (0 is Sunday) for a Gregorian date, or None if the date does not exist.
+fn weekday(year: i32, month: u32, day: u32) -> Option<usize> {
+    let leap = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+    let length = [
+        31,
+        if leap { 29 } else { 28 },
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ];
+    if !(1..=12).contains(&month) || day == 0 || day > length[month as usize - 1] {
+        return None;
+    }
+    // Sakamoto's method.
+    const OFFSETS: [i32; 12] = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4];
+    let y = if month < 3 { year - 1 } else { year };
+    let d = y + y / 4 - y / 100 + y / 400 + OFFSETS[month as usize - 1] + day as i32;
+    Some(d.rem_euclid(7) as usize)
+}
+
+fn capitalise(word: &str) -> String {
+    let mut chars = word.chars();
+    chars
+        .next()
+        .map(|c| c.to_uppercase().chain(chars).collect())
+        .unwrap_or_default()
 }
 
 /// Numbers from 2 to 20 written as words. 'Zero' and 'one' stay as words.
@@ -760,6 +835,36 @@ mod tests {
             rules("Due October 5 at 9 a.m. today."),
             vec!["date", "time"]
         );
+    }
+
+    #[test]
+    fn flags_a_weekday_that_does_not_match_its_date() {
+        let found = lint("Reply by Wednesday 22 October 2026, please.");
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].rule, "weekday");
+        assert_eq!(found[0].column, 10);
+        assert_eq!(
+            found[0].message,
+            "22 October 2026 is a Thursday, not a Wednesday"
+        );
+        assert_eq!(rules("Lodge by Friday, 31 October 2026."), vec!["weekday"]);
+        // Correct weekdays, leap days and dates without a year or weekday pass.
+        assert!(rules("Reply by Thursday 22 October 2026.").is_empty());
+        assert!(rules("It was Tuesday 29 February 2028.").is_empty());
+        assert!(rules("Reply by Wednesday 22 October.").is_empty());
+        assert!(rules("Reply by 22 October 2026.").is_empty());
+        // A date that does not exist is not checked against a weekday.
+        assert!(rules("Monday 30 February 2026 is not a date.").is_empty());
+    }
+
+    #[test]
+    fn weekday_follows_the_gregorian_calendar() {
+        assert_eq!(weekday(2026, 10, 19), Some(1));
+        assert_eq!(weekday(2000, 1, 1), Some(6));
+        assert_eq!(weekday(1900, 3, 1), Some(4));
+        assert_eq!(weekday(2024, 2, 29), Some(4));
+        assert_eq!(weekday(2025, 2, 29), None);
+        assert_eq!(weekday(2026, 13, 1), None);
         assert_eq!(
             rules("Use e.g. a token, i.e. the key."),
             vec!["latin", "latin"]

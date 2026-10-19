@@ -2,6 +2,7 @@
 """Blind-judge paired evaluation responses and emit scorable rows."""
 
 import argparse
+import datetime
 import hashlib
 import json
 import subprocess
@@ -52,22 +53,42 @@ def grader_rubric(rubric: str) -> str:
     return rubric.split(JUDGE_BEGIN, 1)[1].split(JUDGE_END, 1)[0].strip()
 
 
+def _long_date(iso: str) -> str:
+    day = datetime.date.fromisoformat(iso)
+    return f"{day.day} {day:%B %Y}"
+
+
 def build_judge_prompt(
     case: dict[str, Any],
     responses: dict[str, str],
     labels: dict[str, str],
     rubric: str,
+    dates: Optional[dict[str, str]] = None,
 ) -> str:
     """Render one blind grading prompt covering every response for a case.
 
     Responses appear under opaque labels in label order, so nothing in the
-    prompt reveals which system produced which answer.
+    prompt reveals which system produced which answer. Each response's
+    generation date, when recorded, appears with it: a run that crosses
+    midnight, or a judge run on a later day, would otherwise mark a correct
+    'today' or 'yesterday' as a factual error.
     """
     by_label = {labels[condition]: text for condition, text in responses.items()}
+    dated = {labels[condition]: _long_date(day) for condition, day in (dates or {}).items() if day}
     sections = [
         "You are grading assistant responses to the same task. Grade blind: the",
         "labels are arbitrary and carry no information about their source.",
         "",
+    ]
+    if dated:
+        sections.extend(
+            [
+                "Each response was written on the date shown with it. Judge 'today',",
+                "'yesterday', weekdays and day counts against that date, not your own.",
+                "",
+            ]
+        )
+    sections += [
         "## Rubric",
         "",
         rubric.strip(),
@@ -82,7 +103,8 @@ def build_judge_prompt(
     sections.extend(f"- {item}" for item in case.get("criteria", []))
     sections.append("")
     for label in sorted(by_label):
-        sections.extend([f"## Response {label}", "", by_label[label].strip(), ""])
+        heading = f"## Response {label}" + (f" (written on {dated[label]})" if label in dated else "")
+        sections.extend([heading, "", by_label[label].strip(), ""])
     sections.extend(
         [
             "## Output",
@@ -147,6 +169,15 @@ def group_responses(rows: list[dict[str, Any]]) -> dict[tuple, dict[str, str]]:
     groups: dict[tuple, dict[str, str]] = defaultdict(dict)
     for row in rows:
         groups[(row["case_id"], row["trial"])][row["condition"]] = row["response"]
+    return dict(groups)
+
+
+def group_dates(rows: list[dict[str, Any]]) -> dict[tuple, dict[str, str]]:
+    """Collect recorded generation dates as {(case_id, trial): {condition: date}}."""
+    groups: dict[tuple, dict[str, str]] = defaultdict(dict)
+    for row in rows:
+        if row.get("date"):
+            groups[(row["case_id"], row["trial"])][row["condition"]] = row["date"]
     return dict(groups)
 
 
@@ -256,6 +287,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         raise ValueError(f"{args.responses}: no responses to judge")
 
     groups = group_responses(rows)
+    dates = group_dates(rows)
     required = set(args.conditions)
     observed = {row["condition"] for row in rows}
     missing = sorted(required - observed)
@@ -296,7 +328,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             if case_id not in cases:
                 raise ValueError(f"{case_id}: response has no matching case in {args.cases}")
             labels = assign_labels(key, sorted(groups[key]))
-            prompt = build_judge_prompt(cases[case_id], groups[key], labels, rubric)
+            prompt = build_judge_prompt(cases[case_id], groups[key], labels, rubric, dates.get(key))
             try:
                 scored, cost = _judge_group(
                     command, response_format, prompt, key, labels, args.retries, args.call_timeout
