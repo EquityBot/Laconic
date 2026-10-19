@@ -104,7 +104,20 @@ Further checks on 20 October 2026:
 - **Real use:** in the author's own Claude Code sessions on the day Laconic replaced the old setup, assistant messages with no `laconic-check` findings rose from 26% to 42%; numbers written as words fell from 5.7 to 3.6 per 1,000 words.
 - **Agent cost:** on 5 small repository fixes (`evals/agent_bench.py`, 2 trials), every setup passed every task. Session mode cost about 27% more per task than the compact rules, mostly because of its larger always-loaded prompt; a separate agent-guidance section saved nothing and was removed.
 
-Limits: 18 to 60 answers per setup from one generating model; the cases are in `evals/cases.jsonl` and the rubric in `evals/rubric.md`. Serial commas remain the most common slip.
+A terse control on 20 October 2026 (45 cases, 2 trials, Opus 5.5 generating and blind-judging) compared installed setups: the compact rules with the prose skill, before and after the stock-phrase, added-qualification and financial-year changes, against the single instruction 'Answer concisely.':
+
+| Measure | Laconic | Laconic before these changes | 'Answer concisely.' |
+|---|---|---|---|
+| Weighted score | 4.63 | 4.63 | 4.07 |
+| Correctness (1 to 5) | 4.52 | 4.56 | 3.41 |
+| Blocking findings | 6 | 5 | 29 |
+| Regex checks passed | 18 of 18 | 16 of 18 | 16 of 18 |
+| Answers with no `laconic-check` findings | 67 of 90 | 69 of 90 | 41 of 90 |
+| Mean answer length (characters) | 1,232 | 1,148 | 1,022 |
+
+Laconic beats the plain instruction by 0.56 weighted. The changes are neutral on judged quality and fix the financial-year hyphen, which both other setups missed; none of the blocking findings comes from the changed guidance.
+
+Limits: 18 to 90 answers per setup from one generating model; the cases are in `evals/cases.jsonl` and the rubric in `evals/rubric.md`. Serial commas remain the most common slip.
 
 ## Checker
 
