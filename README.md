@@ -96,7 +96,9 @@ A second, blind judge from another model family (GPT-6 Pro) agreed on the direct
 | Laconic compact rules | 40 | 13 | 15 | 1 |
 | Laconic session mode (`/laconic`) | 51 | 12 | 3 | 0 |
 
-Limits: 60 paired answers per setup from one generating model; the cases are in `evals/cases.jsonl` and the rubric in `evals/rubric.md`. Serial commas remain the most common slip. Later rule changes (numerals in the compact rules, the destructive-action preview and the state rule) have not been re-measured.
+A follow-up run on 20 October 2026 (30 cases, 1 trial) measured the later rule changes. With the numeral rule added to the compact rules, numbers written as words fell from 5 to 0 and answers with no findings rose from 18 to 23 of 30. Session mode scored 4.71 weighted with no blocking findings, against 4.59 for the compact rules alone. A shortened session skill (849 words instead of 1,153) scored lower (4.61) with 3 blockers, so the full wording stays.
+
+Limits: 30 to 60 answers per setup from one generating model; the cases are in `evals/cases.jsonl` and the rubric in `evals/rubric.md`. Serial commas remain the most common slip.
 
 ## Checker
 
