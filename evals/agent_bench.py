@@ -79,6 +79,10 @@ def run(rules: str, root: pathlib.Path) -> dict:
 
 
 def main() -> None:
+    if len(sys.argv) != 5:
+        sys.exit("usage: python -I agent_bench.py <rules-a.md> <rules-b.md> <trials> <out.jsonl>")
+    if not shutil.which("claude"):
+        sys.exit("agent_bench: the claude CLI is not on PATH")
     rules = {"A": sys.argv[1], "B": sys.argv[2]}
     trials = int(sys.argv[3])
     out = pathlib.Path(sys.argv[4])
