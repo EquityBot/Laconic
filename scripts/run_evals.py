@@ -106,14 +106,21 @@ def _validate_checks(checks: Any) -> list[str]:
     example and reject every known-bad one, so a broken check fails before a paid run."""
     if not isinstance(checks, dict):
         return ["checks must be an object"]
-    errors: list[str] = []
+
+    def strings(field: str) -> bool:
+        value = checks.get(field, [])
+        return isinstance(value, list) and all(isinstance(item, str) for item in value)
+
+    errors = [f"{field} must be a list of strings" for field in ("must_include", "must_not_include", "pass", "fail") if not strings(field)]
+    if errors:
+        return errors
     patterns = [*checks.get("must_include", []), *checks.get("must_not_include", [])]
     if not patterns:
         errors.append("checks need at least one must_include or must_not_include pattern")
     for pattern in patterns:
         try:
-            re.compile(pattern)
-        except (re.error, TypeError) as exc:
+            re.compile(pattern, re.I)
+        except re.error as exc:
             errors.append(f"bad check pattern {pattern!r}: {exc}")
     if errors:
         return errors

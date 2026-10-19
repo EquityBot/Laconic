@@ -127,8 +127,8 @@ fn every_seeded_fault_is_caught_exactly_once() {
 
 /// Findings on the scraped Style Manual, about 208,700 words of human Australian
 /// Government prose. Many are the manual's own examples of forms to avoid or its
-/// 'while' and 'among', which the house style overrides. The ceiling only moves down:
-/// a rule change that raises it adds false findings on human text.
+/// 'while' and 'among', which the house style overrides. The ceiling only moves down;
+/// it guards against a net increase on this corpus, not against every new false finding.
 const STYLE_MANUAL_CEILING: usize = 83;
 
 #[test]
@@ -138,11 +138,17 @@ fn human_corpus_findings_stay_under_the_ceiling() {
         "/../../skills/laconic-prose/references/australian-government-style-manual.md"
     );
     let text = std::fs::read_to_string(path).expect("Style Manual copy");
-    let found = lint(&text).len();
+    let findings = lint(&text);
     assert!(
-        found <= STYLE_MANUAL_CEILING,
-        "{found} findings on the Style Manual, ceiling {STYLE_MANUAL_CEILING}"
+        findings.len() <= STYLE_MANUAL_CEILING,
+        "{} findings on the Style Manual, ceiling {STYLE_MANUAL_CEILING}",
+        findings.len()
     );
+    let stock: Vec<_> = findings
+        .iter()
+        .filter(|f| f.rule == "stock-phrase")
+        .collect();
+    assert!(stock.is_empty(), "stock phrases in human prose: {stock:?}");
 }
 
 #[test]

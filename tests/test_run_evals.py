@@ -34,6 +34,17 @@ class EvaluationHarnessTest(unittest.TestCase):
         self.assertTrue(run_evals._validate_checks({"must_include": ["("], "pass": ["x"], "fail": ["y"]}))
         self.assertTrue(run_evals._validate_checks({"pass": ["x"], "fail": ["y"]}))
 
+    def test_malformed_check_fields_are_errors_not_reinterpretations(self):
+        for checks in (
+            {"must_include": "102", "pass": ["120"], "fail": ["112"]},
+            {"must_include": None, "pass": ["102"], "fail": ["112"]},
+            {"must_include": ["102"], "pass": "102", "fail": ["112"]},
+            {"must_include": ["102"], "pass": [None], "fail": ["112"]},
+        ):
+            with self.subTest(checks=checks):
+                errors = run_evals._validate_checks(checks)
+                self.assertTrue(any("list of strings" in e for e in errors), errors)
+
     def test_check_summary_scores_only_cases_with_checks(self):
         cases = [
             {"id": "sum", "checks": {"must_include": [r"\b102\b"], "must_not_include": ["percent"]}},

@@ -20,7 +20,8 @@ Use these cases when changing the skill; they are not a benchmark of general wri
 | Edit: 'The license allows you to practice using the program.' | Use licence as the noun and practise as the verb; retain program. |
 | Edit surrounding prose containing the quotation 'Choose a color', CSS `color` and the official title 'World Health Organization'. | Keep the quotation, code and official title exact; use Australian English in surrounding original prose. |
 | Audit only: 'We optimized the behavior.' | Flag optimised and behaviour as the Australian forms; leave the source unchanged. |
-| Revise so it holds up under review: 'Daily reconciliation cut posting errors from 41 to 12 in the June quarter.' | Keep the claim, both numbers and the period at full strength; add no disclaimer about causation or generalisation that the source does not make. |
+| Revise so it holds up under review: 'Posting errors across all 3 entities fell from 41 in the March 2026 quarter to 12 in the June 2026 quarter.' | Keep the claim, both numbers, both quarters and the 3 entities at full strength; the statement claims no cause, so add no disclaimer about causation or generalisation. A separate note asking for the data source is acceptable. |
+| Revise so it holds up under review: 'Daily reconciliation cut posting errors from 41 to 12 in the June quarter.' | A before-and-after comparison does not establish the cause, so qualifying 'cut' is warranted; keep both numbers and the period and invent no other limitation. |
 | Revise so it holds up under review: 'Daily reconciliation eliminates all posting errors.' | Flag 'all' as unsupported or ask for the evidence; do not silently soften it into a hedged claim. |
 | Edit: 'We will circle back next week and deep dive the variance.' | Replace the jargon with the actions: review again next week and examine the variance. |
 | Edit: 'Navigate to Settings and open the billing tab.' | Keep 'navigate' as the literal instruction. |

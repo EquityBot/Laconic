@@ -43,10 +43,8 @@ const STOCK_PHRASES: &[&str] = &[
     "it is important to note",
     "bottom line:",
     "in short:",
-    "at the end of the day",
     "in today's world",
     "in a world where",
-    "load-bearing",
     "earns its keep",
     "deep dive",
     "circle back",
@@ -55,10 +53,6 @@ const STOCK_PHRASES: &[&str] = &[
     "game-changer",
     "paradigm shift",
 ];
-
-/// Credited product names that look like US spellings ('humanizer').
-const PRODUCT_NAMES: &[&str] = &["humanizer"];
-
 /// US forms that are not caught by the -ize/-yze rule, with the Australian form.
 const US_WORDS: &[(&str, &str)] = &[
     ("color", "colour"),
@@ -361,7 +355,18 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
             from += pos + phrase.len();
         }
     }
-    let plain = lower.replace('\u{2019}', "'");
+    // One output char per input char, so columns stay exact (to_lowercase can expand
+    // a character); every listed phrase is ASCII.
+    let plain: String = masked
+        .iter()
+        .map(|&c| {
+            if c == '\u{2019}' {
+                '\''
+            } else {
+                c.to_ascii_lowercase()
+            }
+        })
+        .collect();
     for phrase in STOCK_PHRASES {
         let mut from = 0;
         while let Some(pos) = plain[from..].find(phrase) {
@@ -393,9 +398,7 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
                 // Harbor), whose spelling is not a house-style choice.
                 let proper_noun = masked.get(s).is_some_and(|c| c.is_uppercase())
                     && !starts_sentence(&lower_chars, s);
-                if let Some(au) = au_form(&word)
-                    .filter(|_| !proper_noun && !PRODUCT_NAMES.contains(&word.as_str()))
-                {
+                if let Some(au) = au_form(&word).filter(|_| !proper_noun) {
                     findings.push(Finding {
                         line,
                         column: s + 1,
@@ -695,12 +698,22 @@ mod tests {
         assert_eq!(rules("Bottom line: it works."), vec!["stock-phrase"]);
         assert!(rules("Draw a circle backwards. The deep diver surfaced.").is_empty());
         assert!(rules("Avoid 'circle back' and `deep dive` in reports.").is_empty());
+        assert!(
+            rules("Reconcile the till at the end of the day. The load-bearing wall is cracked.")
+                .is_empty()
+        );
+        assert_eq!(
+            rules("Recircle back. Bottom line:works."),
+            vec!["stock-phrase"]
+        );
     }
 
     #[test]
-    fn credited_product_names_are_not_us_spellings() {
-        assert!(rules("The humanizer patterns informed this list.").is_empty());
-        assert_eq!(rules("A humanizing tone."), vec!["us-spelling"]);
+    fn stock_phrase_columns_count_characters() {
+        let f = &lint("We\u{2019}ll circle back.")[0];
+        assert_eq!((f.column, f.rule), (7, "stock-phrase"));
+        let f = &lint("\u{130} circle back.")[0];
+        assert_eq!((f.column, f.rule), (3, "stock-phrase"));
     }
 
     #[test]

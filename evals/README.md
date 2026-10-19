@@ -54,7 +54,7 @@ A case may carry `checks`: `must_include` and `must_not_include` regular express
 python3 scripts/run_evals.py checks evals/results/responses.jsonl
 ```
 
-The same responses always get the same result, so checks can be fixed and rescored without new calls. A check sees only what its patterns test: read the failures before citing a pass rate, and keep the blind judge for everything else.
+The same responses always get the same result, so checks can be fixed and rescored without new calls. A check sees only what its patterns test: read the failures before citing a pass rate, and keep the blind judge for everything else. The summary does not enforce matching coverage, so confirm that conditions share the same checked case and trial pairs before comparing their rates.
 
 ## Compare whole setups
 
