@@ -50,11 +50,11 @@ Separate what the source or your checks establish from what you infer. Mark an u
 
 Resolve conflicts in this order: the user's explicit requirements, factual fidelity, reader comprehension, a human writer's voice, then stylistic preferences.
 
-Before editing, note what must survive: names, quantities, units, dates, sources, quotations, negation, scope, exceptions, uncertainty and obligations. Preserve may versus must, some versus all, and association versus causation. Check conditions, comparisons, sequence and concurrency: 'over 3,000' is not '3,000', and 'up to 4 at once' is not '4 in total'. Editing a claim does not verify it.
+Before editing, note what must survive: names, quantities, units, dates, sources, quotations, negation, scope, exceptions, uncertainty and obligations. Preserve may versus must, some versus all and association versus causation. Check conditions, comparisons, sequence and concurrency: 'over 3,000' is not '3,000', and 'up to 4 at once' is not '4 in total'. Editing a claim does not verify it.
 
 Never turn vague copy into invented evidence. 'The integration improved efficiency' contains no result to substitute; flag the missing support. 'Review time fell from 30 minutes to 8, significantly improving productivity' can become 'Review time fell from 30 minutes to 8.' Never fill a gap with a plausible guess, a typical timeframe or a likely cause.
 
-Flag doubtful or unsupported claims separately. Do not silently delete them, strip their attribution to present them as established, or invent a source. Report internal contradictions without choosing a version.
+Flag doubtful or unsupported claims separately. Do not silently delete them, invent a source or strip their attribution to present them as established. Report internal contradictions without choosing a version.
 
 Use a supplied writing sample to match cadence, vocabulary and formality without importing its facts. Otherwise take a human writer's voice from their draft. Preserve useful bluntness, humour, uncertainty and digressions. Never add opinions, jokes, vulnerability or anecdotes to perform personality.
 

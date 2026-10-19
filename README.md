@@ -5,7 +5,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/ryanduguid/laconic?style=flat" alt="Licence"></a>
 </p>
 
-Laconic is a skill for coding agents and chat assistants. It makes the model lead with the answer, mark what it has not verified, and stop when the answer is complete, without dropping a fact, step or caveat the reader needs. It instructs the model to write every original sentence to the Australian Government Style Manual, with the house overrides listed in the skill.
+Laconic is a skill for coding agents and chat assistants. It makes the model lead with the answer, mark what it has not verified and stop when the answer is complete, without dropping a fact, step or caveat the reader needs. It instructs the model to write every original sentence to the Australian Government Style Manual, with the house overrides listed in the skill.
 
 ## Install
 
@@ -86,7 +86,26 @@ Measured on 19 October 2026 with the harness in `evals/`: 30 cases, 2 trials eac
 | Blocking findings | 1 | 7 | |
 | Mean answer length (characters) | 1,360 | 1,663 | |
 
-Limits: one model judged its own family's output; 60 paired answers per setup; the cases are in `evals/cases.jsonl` and the rubric in `evals/rubric.md`. The one Laconic blocker was a serial comma.
+A second, blind judge from another model family (GPT-6 Pro) agreed on the direction with a smaller margin: weighted score 4.63 against 4.46 (difference +0.17, 95% interval +0.05 to +0.30) and correctness +0.33 (+0.12 to +0.58). It applied the house mechanics far more strictly and found serial commas and numbers written as words in many answers from both setups.
+
+`tools/laconic-check` counts those slips without a judge. Across the same 60 answers per setup:
+
+| Setup | Answers with no findings | Serial comma candidates | Numbers as words | Double quotation marks |
+|---|---|---|---|---|
+| No AI Slop setup | 30 | 32 | 17 | 67 |
+| Laconic compact rules | 40 | 13 | 15 | 1 |
+| Laconic session mode (`/laconic`) | 51 | 12 | 3 | 0 |
+
+Limits: 60 paired answers per setup from one generating model; the cases are in `evals/cases.jsonl` and the rubric in `evals/rubric.md`. Serial commas remain the most common slip. Later rule changes (numerals in the compact rules, the destructive-action preview and the state rule) have not been re-measured.
+
+## Checker
+
+`tools/laconic-check` is a small Rust CLI with no dependencies. `lint` flags candidates in Markdown prose: em dashes, US spellings, double quotation marks, possible serial commas and chatbot closers, skipping code, URLs and quoted text. `preserve` reports numbers, inline code, URLs and words such as 'not', 'must' and 'only' that an edit dropped. A finding is a reason to look, not proof of a defect.
+
+```bash
+cargo run --manifest-path tools/laconic-check/Cargo.toml -- lint README.md
+cargo run --manifest-path tools/laconic-check/Cargo.toml -- preserve original.md edited.md
+```
 
 ## Always on
 

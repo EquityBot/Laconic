@@ -19,6 +19,7 @@ Agents can access the complete project by reading repository-relative files afte
 | Canonical skill | `skills/laconic/SKILL.md` | The source of truth for the response rules and Australian English rules. |
 | Prose skill | `skills/laconic-prose/SKILL.md` | Model-invocable writing, editing and audit skill; replaces No AI Slop. |
 | Compact rules | `rules/laconic.md`, `scripts/sync_rules.py` | Always-loaded prose rules; the source for every always-on snippet in `INSTALL.md`. |
+| House-style checker | `tools/laconic-check/` | Rust CLI: `lint` flags style candidates in Markdown prose; `preserve` reports numbers, code, URLs and negations an edit dropped. CI lints the skills, rules and READMEs. |
 | Skill mirror | `.cursor/skills/` | Cursor-compatible copy of both skill folders; keep it synchronised with `skills/`. |
 | Claude and Codex metadata | `.claude-plugin/`, `.codex-plugin/`, `.agents/plugins/` | Plugin manifests and marketplace metadata. |
 | Shared hooks | `hooks/hooks.json`, `hooks/always-on.*` | Hook declarations and cross-platform always-on behaviour. |
