@@ -1,6 +1,6 @@
 # Pattern catalogue
 
-Apply these patterns in context using the meaning, voice and protected text rules in [writing.md](writing.md).
+Apply these patterns in context using the meaning, voice and protected text rules in [SKILL.md](../SKILL.md).
 
 ## Words to inspect
 
@@ -98,11 +98,19 @@ Phrases that are often empty include it's worth noting, it's important to note, 
 
 **Gutted drafts.** After cutting slop, a piece can be left with no point, a dangling pointer ("Details below.", "See how it works 👇") or no answer. Rebuild it from the facts the draft supplies, remove any pointer whose target is not supplied, and list the facts the piece needs before it can go out. Never pad it back with new claims.
 
+**Vague declaratives.** 'The implications are significant.' 'The reasons are structural.' Name the specific implication or reason the source supports, or cut the sentence. Keep a summary sentence that the next sentence immediately makes specific.
+
+**Narrator from a distance.** 'Nobody designed this.' 'Somewhere along the way, teams stopped testing.' Name who did what, and address the reader directly where the venue allows. Keep historical narration when the source does not identify the actor, and say so.
+
+**Lazy extremes.** 'Every team struggles with this.' 'Developers always forget the cache.' Replace an absolute that does vague work with the supported scope ('3 of the 5 teams surveyed'), or cut it. Keep absolutes the source states as fact: 'The API always returns UTC.'
+
+**Meta-joiners.** 'The rest of this essay explains why.' 'With that in mind, let's turn to pricing.' Delete the joiner and let the next point start. Keep navigation that helps in a long document, such as a contents line or a cross-reference to a named section.
+
 ## Additional contextual checks
 
 **Pressure phrases.** "Let that sink in" and "Full stop" can demand a reaction without supporting the point. Remove them when they add only emphasis; preserve the underlying claim, qualification or consequence.
 
-**Forensic residue.** Unfilled placeholders ("Hi [Client name],"), citation artefacts (`oaicite`, `contentReference`), `utm_source=chatgpt.com` in links, and zero-width characters. Remove them before anything is sent. Keep placeholders in a template meant to be filled.
+**Forensic residue.** Unfilled placeholders ("Hi [Client name],"), citation artefacts (`oaicite`, `contentReference`), `utm_source=chatgpt.com` in links, and zero-width characters. Remove them before anything is sent. Keep placeholders in a template meant to be filled, or clearly labelled ones in an unfinished draft returned for review.
 
 **Knowledge-cutoff disclaimers.** "As of my last update", "based on my training data", "at the time of writing" with no date. Remove the disclaimer. If currency matters, state the date or source of the fact, or flag it as unverified; never drop the caveat in a way that makes stale information look current.
 
@@ -119,4 +127,4 @@ Do not flag these as AI patterns. Adapted from [Sepia](https://github.com/Nanako
 - Bullets or tables for genuinely enumerable items.
 - Terse, unadorned replies in developer venues, where brevity is the human default.
 - Clean grammar and conventional sentence structure.
-- The writer's own verified habits. Edit toward their voice, not a generic human one.
+- The writer's own verified habits. Edit towards their voice, not a generic human one.

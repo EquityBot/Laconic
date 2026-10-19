@@ -50,32 +50,44 @@ Restart the agent, then type `/laconic`. It stays on for the session until you s
 </tr>
 </table>
 
-## The rules
+## What it includes
 
-The full text is in [SKILL.md](skills/laconic/SKILL.md).
+| Piece | Path | When it applies |
+|---|---|---|
+| Session mode | `skills/laconic/SKILL.md` | After you type `/laconic`, for the rest of the session, until 'stop laconic' |
+| Prose skill | `skills/laconic-prose/SKILL.md` | Loaded by the model for drafting, editing and prose audits; affects that task only |
+| Compact rules | `rules/laconic.md` | Always loaded, if you add it to your agent's rules (about 200 words) |
+
+The session rules, in full in [SKILL.md](skills/laconic/SKILL.md):
 
 1. Answer first, then justify.
 2. Say what you know and how. Mark unverified claims; 'I cannot judge this from the evidence I have' is an acceptable answer.
-3. Length follows the question. Cut words, never substance.
+3. Length follows what the reader must decide, do or understand. Cut words, never substance.
 4. Number procedures.
 5. Stay on the current task.
 6. Keep state visible.
-7. State errors plainly.
+7. State errors plainly: the error, the known cause and the fix or next check.
 8. Estimate only with a basis.
 9. Group long lists, without dropping relevant items.
 10. No preamble, recap or closer.
 
-It also applies Australian English (spelling, single quotation marks, commas, numbers, dates, no em dashes) and a plain writing pass against common AI writing patterns. For reports, documentation, emails and PR text, and for editing or auditing a draft, it loads the writing guidance in [references/writing.md](skills/laconic/references/writing.md).
+Every piece applies Australian English (spelling, single quotation marks, commas, numbers, dates, no em dashes). The prose skill adds the full writing, editing and audit workflow: a quick pass against common AI writing patterns, meaning and voice preservation, venue guides, Style Manual mechanics and AGLC4 citation notes.
 
 ## Always on
 
-Laconic is off until you invoke it. To turn it on for every Claude Code session, create an empty flag file:
+To load the compact rules in every Claude Code session, copy them into your rules folder:
+
+```bash
+mkdir -p ~/.claude/rules && cp rules/laconic.md ~/.claude/rules/laconic.md
+```
+
+To start every Claude Code session in full session mode instead, create an empty flag file:
 
 ```bash
 touch ~/.claude/.laconic-always
 ```
 
-Delete the file to turn always-on off. [INSTALL.md](INSTALL.md) covers the other agents.
+Delete the file to turn session mode off. [INSTALL.md](INSTALL.md) covers the other agents.
 
 ## Credits
 

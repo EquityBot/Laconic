@@ -7,12 +7,15 @@
       "--output-format",
       "json",
       "--no-session-persistence",
+      "--strict-mcp-config",
       "--setting-sources",
       "",
       "--model",
-      "claude-opus-4-8",
+      "claude-opus-5-5",
       "--tools",
-      ""
+      "",
+      "--append-system-prompt",
+      "You have no tools in this conversation. Answer in text only; never attempt a tool call."
     ],
     "response_format": "claude-json",
     "budget_flag": "--max-budget-usd"

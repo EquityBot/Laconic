@@ -6,7 +6,7 @@ This file is the map for agents working with [laconic](https://github.com/ryandu
 
 1. Read `README.md` for the purpose and user-facing behaviour.
 2. Read `INSTALL.md` for installation paths and platform-specific setup.
-3. Read `skills/laconic/SKILL.md` for the canonical skill behaviour.
+3. Read `skills/laconic/SKILL.md` (session mode), `skills/laconic-prose/SKILL.md` (writing, editing and audits) and `rules/laconic.md` (compact always-loaded rules) for the canonical behaviour.
 4. Read `CONTRIBUTING.md` and `.github/pull_request_template.md` before proposing changes.
 5. Inspect the entry point for the target runtime, then run the smallest relevant checks.
 
@@ -17,13 +17,15 @@ Agents can access the complete project by reading repository-relative files afte
 | Area | Location | Purpose |
 | --- | --- | --- |
 | Canonical skill | `skills/laconic/SKILL.md` | The source of truth for the response rules and Australian English rules. |
-| Skill mirror | `.cursor/skills/laconic/` | Cursor-compatible copy of the whole skill folder; keep it synchronised with the canonical skill. |
+| Prose skill | `skills/laconic-prose/SKILL.md` | Model-invocable writing, editing and audit skill; replaces No AI Slop. |
+| Compact rules | `rules/laconic.md`, `scripts/sync_rules.py` | Always-loaded prose rules; the source for every always-on snippet in `INSTALL.md`. |
+| Skill mirror | `.cursor/skills/` | Cursor-compatible copy of both skill folders; keep it synchronised with `skills/`. |
 | Claude and Codex metadata | `.claude-plugin/`, `.codex-plugin/`, `.agents/plugins/` | Plugin manifests and marketplace metadata. |
 | Shared hooks | `hooks/hooks.json`, `hooks/always-on.*` | Hook declarations and cross-platform always-on behaviour. |
 | Pi and OMP | `package.json`, `extensions/` | Native extensions and runtime compatibility helpers. |
 | OpenCode | `.opencode/` | Auto-discovered plugin and command entry points for V1 (1.18.29+) and V2. |
 | Other runtimes | `qwen-extension.json`, `kimi.plugin.json`, `gemini-extension.json`, `GEMINI.md`, `plugin.json` | Qwen, Kimi, Gemini and additional plugin metadata. |
-| Writing references | `skills/laconic/references/` | Writing, editing and audit modes, patterns, venues, Style Manual rules and regression cases. |
+| Writing references | `skills/laconic-prose/references/` | Writing, editing and audit modes, patterns, venues, Style Manual rules and regression cases. |
 | Documentation | `README.md`, `INSTALL.md` | User-facing overview and installation. |
 | Verification | `tests/`, `scripts/` | Unit tests, compatibility checks and evaluation tooling. |
 | Contribution workflow | `CONTRIBUTING.md`, `.github/pull_request_template.md` | Authorship, labels, safety, review and PR requirements. |
@@ -44,7 +46,7 @@ When debugging or changing one integration, begin with its entry point:
 
 ## Source-of-truth rules
 
-- Change `skills/laconic/SKILL.md` first when changing skill behaviour, then synchronise the `.cursor` mirror.
+- Change the canonical file first (`skills/laconic/SKILL.md`, `skills/laconic-prose/SKILL.md` or `rules/laconic.md`), then run `python scripts/sync_rules.py` and synchronise the `.cursor` mirror.
 - Treat manifests and hook declarations as runtime contracts. Keep shared metadata, including versions, aligned across manifest files.
 - Keep installation and behaviour claims in `README.md`, `INSTALL.md`, accurate.
 - Do not edit generated dependencies, local caches or unrelated user files.

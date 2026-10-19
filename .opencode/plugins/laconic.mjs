@@ -9,9 +9,11 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillsDir = path.resolve(__dirname, '../../skills');
 const skillPath = path.join(skillsDir, 'laconic', 'SKILL.md');
+const proseSkillPath = path.join(skillsDir, 'laconic-prose', 'SKILL.md');
 const commandPath = path.join(__dirname, '..', 'command', 'laconic.md');
 
 const SKILL_ID = 'laconic';
+const PROSE_SKILL_ID = 'laconic-prose';
 const FALLBACK_DESCRIPTION =
   'Concise, answer-first output in correct Australian English: lead with ' +
   'the answer, mark unverified claims, cut filler without losing substance.';
@@ -31,11 +33,22 @@ const flagPath = path.join(
 );
 
 // Match the shared hooks' frontmatter stripping and newline handling.
-function rulesetBody() {
-  return fs
-    .readFileSync(skillPath, 'utf8')
+function stripFrontmatter(text) {
+  return text
     .replace(/^---[^\S\r\n]*\r?\n[\s\S]*?\r?\n---[^\S\r\n]*(?:\r?\n|$)/, '')
     .replace(/(?:\r?\n)+$/, '');
+}
+
+function rulesetBody() {
+  return stripFrontmatter(fs.readFileSync(skillPath, 'utf8'));
+}
+
+// Register the prose skill with its canonical description, which carries the
+// routine-writing exemption that limits when it loads.
+function frontmatterDescription(text) {
+  const match = text.match(/^---[^\S\r\n]*\r?\n[\s\S]*?^description:[^\S\r\n]*(.+)$/m);
+  if (!match) throw new Error('Missing skill description');
+  return match[1].trim();
 }
 
 function alwaysOnInjection() {
@@ -65,6 +78,19 @@ export default {
           description: FALLBACK_DESCRIPTION,
           path: skillPath,
           content,
+        });
+      });
+      const proseRaw = fs.readFileSync(proseSkillPath, 'utf8');
+      const proseContent = stripFrontmatter(proseRaw);
+      const proseDescription = frontmatterDescription(proseRaw);
+      await ctx.skill.transform((editor) => {
+        if (editor.get(PROSE_SKILL_ID)) return;
+        editor.add({
+          id: PROSE_SKILL_ID,
+          name: PROSE_SKILL_ID,
+          description: proseDescription,
+          path: proseSkillPath,
+          content: proseContent,
         });
       });
     } catch {

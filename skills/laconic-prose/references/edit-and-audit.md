@@ -1,6 +1,6 @@
 # Edit and audit modes
 
-Read this in full before editing a supplied draft or auditing prose. Apply the shared meaning, voice and workflow rules in [writing.md](writing.md).
+Read this in full before editing a supplied draft or auditing prose. Apply the shared meaning, voice and workflow rules in [SKILL.md](../SKILL.md).
 
 **Edit.** For a supplied draft, make the minimum effective edit and return the edited text with a short note of what changed and any open evidence gaps, unless the user asks for text only. Keep the note to a few lines; it is for the writer, not a changelog. Leave a clean draft unchanged and say so in one line. When cuts leave a piece that no longer does its job (a post with no point, an email with no answer), rebuild it from the facts the draft supplies, and say which claims need evidence before it goes out. Never keep a pointer to content that is not supplied ("Details below", "See how it works"). When something you write for the writer asserts new knowledge ("I don't know yet", a date, a cause), flag it for them to confirm.
 

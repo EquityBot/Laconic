@@ -125,6 +125,17 @@ class OpenCodePluginTest(unittest.TestCase):
         self.assertIn("Australian English", skill["description"])
         self.assertNotIn("---", skill["content"])
 
+    def test_setup_registers_the_prose_skill_with_its_routing_limits(self):
+        result = self.run_plugin(mode="skill")
+        self.assertEqual(0, result.returncode, result.stderr)
+        skills = {skill["id"]: skill for skill in json.loads(result.stdout)}
+        prose = skills["laconic-prose"]
+        self.assertEqual(
+            str(self.plugin_root / "skills" / "laconic-prose" / "SKILL.md"), prose["path"]
+        )
+        self.assertIn("small edits need only the compact Laconic rules", prose["description"])
+        self.assertNotIn("---", prose["content"])
+
     def test_missing_command_keeps_skill_registration(self):
         (self.plugin_root / ".opencode/command/laconic.md").unlink()
         result = self.run_plugin(mode="command")

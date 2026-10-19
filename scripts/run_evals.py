@@ -312,6 +312,18 @@ def _strip_frontmatter(text: str) -> str:
     return text
 
 
+def _run_with_timeout(invocation: list[str], timeout: float, **kwargs: Any) -> subprocess.CompletedProcess:
+    """Run one model call, turning a hang into an ordinary failed attempt.
+
+    A CLI that silently waits on provider retries would otherwise stall the
+    whole condition with no output.
+    """
+    try:
+        return subprocess.run(invocation, check=False, capture_output=True, text=True, timeout=timeout, **kwargs)
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(invocation, 124, "", f"Timed out after {timeout:g} seconds")
+
+
 def _condition_prompt(task: str, condition: str, skill_path: Optional[Path]) -> str:
     if condition == "baseline":
         return task
@@ -427,13 +439,8 @@ def run_evaluations(args: argparse.Namespace) -> int:
                 completed = None
                 for attempt in range(args.retries + 1):
                     with _neutral_cwd() as cwd:
-                        completed = subprocess.run(
-                            invocation,
-                            check=False,
-                            capture_output=True,
-                            text=True,
-                            cwd=cwd,
-                            stdin=subprocess.DEVNULL,
+                        completed = _run_with_timeout(
+                            invocation, getattr(args, "call_timeout", 300.0), cwd=cwd, stdin=subprocess.DEVNULL
                         )
                     if completed.returncode == 0:
                         break
@@ -504,6 +511,7 @@ def _build_parser() -> argparse.ArgumentParser:
     run.add_argument("--case", action="append")
     run.add_argument("--trials", type=int, default=3)
     run.add_argument("--retries", type=int, default=2)
+    run.add_argument("--call-timeout", type=float, default=300.0, help="Seconds before one model call counts as failed")
     run.add_argument("--budget-usd", type=float, default=25.0)
     run.add_argument("--allow-unmetered", action="store_true")
     run.add_argument("--output", type=Path, required=True)

@@ -169,7 +169,7 @@ def assign_labels(group_key: tuple, conditions: list[str]) -> dict[str, str]:
 
 
 def invoke_judge(
-    command: list[str], response_format: str, prompt: str, retries: int
+    command: list[str], response_format: str, prompt: str, retries: int, call_timeout: float = 300.0
 ) -> tuple[str, Optional[float]]:
     """Run the judge runner once, retrying transient failures.
 
@@ -181,14 +181,7 @@ def invoke_judge(
     completed = None
     for attempt in range(retries + 1):
         with run_evals._neutral_cwd() as cwd:
-            completed = subprocess.run(
-                list(command),
-                check=False,
-                capture_output=True,
-                text=True,
-                input=prompt,
-                cwd=cwd,
-            )
+            completed = run_evals._run_with_timeout(list(command), call_timeout, input=prompt, cwd=cwd)
         if completed.returncode == 0:
             break
         if attempt < retries:
@@ -208,6 +201,7 @@ def _judge_group(
     group_key: tuple,
     labels: dict[str, str],
     retries: int,
+    call_timeout: float = 300.0,
 ) -> tuple[list[dict[str, Any]], Optional[float]]:
     """Invoke the judge and parse its verdict, retrying a malformed reply.
 
@@ -217,7 +211,7 @@ def _judge_group(
     """
     last_error: Optional[ValueError] = None
     for attempt in range(retries + 1):
-        text, cost = invoke_judge(command, response_format, prompt, retries)
+        text, cost = invoke_judge(command, response_format, prompt, retries, call_timeout)
         try:
             return parse_judge_scores(text, group_key, labels), cost
         except ValueError as exc:
@@ -248,6 +242,7 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("--retries", type=int, default=2)
+    parser.add_argument("--call-timeout", type=float, default=300.0, help="Seconds before one judge call counts as failed")
     parser.add_argument("--output", type=Path, required=True)
     return parser
 
@@ -304,7 +299,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             prompt = build_judge_prompt(cases[case_id], groups[key], labels, rubric)
             try:
                 scored, cost = _judge_group(
-                    command, response_format, prompt, key, labels, args.retries
+                    command, response_format, prompt, key, labels, args.retries, args.call_timeout
                 )
             except (ValueError, RuntimeError) as exc:
                 # One unusable verdict must not discard the groups already

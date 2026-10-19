@@ -4,7 +4,7 @@
 
 1. Does the first sentence give the answer, result or required action?
 2. Did every fact, number, date, negation, condition and obligation survive, with nothing invented or guessed?
-3. Did the plain writing pass, the extra checks and the scan in [writing.md](writing.md) leave only justified uses?
+3. Did the quick pass and the final scan in [SKILL.md](../SKILL.md) leave only justified uses?
 4. Are the format and length proportional to the content and right for the venue?
 5. Are required disclosures intact: checks not run, unverified claims, material risks?
 6. Australian English, word forms chosen for their grammatical role, consistent preferred spellings, no em dashes and only necessary hyphens? Preserve fixed compounds, meaningful prefixes and protected literals.

@@ -6,7 +6,7 @@ same Claude session. The baseline receives the same tasks without the skill.
 The existing prompt helper strips skill metadata before injection.
 
 This evaluates topic-switch persistence, stopping code suggestions after three
-reported failures, and the stop acknowledgment. It does not establish internal
+reported failures, and the stop acknowledgement. It does not establish internal
 mode state, behaviour after stopping, plugin loading or compaction handling.
 Existing Pi smoke tests cover native enable/disable state separately.
 

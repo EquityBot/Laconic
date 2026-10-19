@@ -526,5 +526,19 @@ class EvaluationHarnessTest(unittest.TestCase):
         )
 
 
+class CallTimeoutTest(unittest.TestCase):
+    def test_a_hung_call_becomes_a_failed_attempt(self):
+        result = run_evals._run_with_timeout(
+            [sys.executable, "-c", "import time; time.sleep(5)"], 0.5
+        )
+        self.assertEqual(124, result.returncode)
+        self.assertIn("Timed out after 0.5 seconds", result.stderr)
+
+    def test_a_finished_call_keeps_its_result(self):
+        result = run_evals._run_with_timeout([sys.executable, "-c", "print('ok')"], 30)
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("ok", result.stdout.strip())
+
+
 if __name__ == "__main__":
     unittest.main()

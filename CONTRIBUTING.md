@@ -65,11 +65,11 @@ Preserve existing installation methods, invocation names, file locations, opt-in
 
 A breaking change requires an issue, migration path, updated documentation, and a compatibility or deprecation plan. Prefer additive, staged changes.
 
-`skills/laconic/` is canonical. When anything in it changes, synchronise the Cursor copy:
+`skills/` is canonical. When anything in it changes, synchronise the Cursor copy:
 
 ```sh
-rm -rf .cursor/skills/laconic && cp -R skills/laconic .cursor/skills/laconic
-diff -r skills/laconic .cursor/skills/laconic
+rm -rf .cursor/skills && cp -R skills .cursor/skills
+diff -r skills .cursor/skills
 ```
 
 Review platform-specific manifests and documentation whenever shared names, descriptions, paths or behaviour change.
