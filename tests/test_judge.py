@@ -156,6 +156,28 @@ class PromptTest(unittest.TestCase):
         self.assertIn("States 102.", prompt)
         self.assertNotIn("baseline", prompt.lower())
         self.assertNotIn("candidate", prompt.lower())
+        self.assertNotIn("written on", prompt)
+
+    def test_prompt_dates_each_response_so_today_is_judged_against_it(self):
+        # A run that crosses midnight leaves conditions with different 'today's.
+        responses = {"baseline": "Yesterday was 18 October.", "candidate": "Yesterday was 19 October."}
+        labels = {"baseline": "B", "candidate": "A"}
+        dates = {"baseline": "2026-10-19", "candidate": "2026-10-20"}
+
+        prompt = judge.build_judge_prompt(self.CASE, responses, labels, "RUBRIC", dates)
+
+        self.assertIn("## Response A (written on 20 October 2026)", prompt)
+        self.assertIn("## Response B (written on 19 October 2026)", prompt)
+        self.assertIn("not your own", prompt)
+        self.assertEqual(
+            {("direct-answer", 1): {"baseline": "2026-10-19"}},
+            judge.group_dates(
+                [
+                    {"case_id": "direct-answer", "trial": 1, "condition": "baseline", "date": "2026-10-19"},
+                    {"case_id": "direct-answer", "trial": 1, "condition": "candidate"},
+                ]
+            ),
+        )
 
 
 class NeutralWorkingDirectoryTest(unittest.TestCase):

@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import json
 import subprocess
 import sys
@@ -157,6 +158,25 @@ class EvaluationHarnessTest(unittest.TestCase):
         self.assertAlmostEqual(3.0, summary["conditions"]["baseline"]["weighted_score"])
         self.assertAlmostEqual(4.0, summary["conditions"]["candidate"]["weighted_score"])
         self.assertTrue(summary["release_gate"]["passed"])
+
+    def test_a_reference_condition_can_replace_the_baseline(self):
+        scores = [self._score_row("direct-answer", "comparator", 3), self._score_row("direct-answer", "candidate", 4)]
+        with self.assertRaisesRegex(ValueError, "baseline and candidate"):
+            run_evals.summarize_scores(scores)
+        summary = run_evals.summarize_scores(scores, "comparator")
+        self.assertEqual("comparator", summary["reference"])
+        self.assertTrue(summary["release_gate"]["passed"])
+        with self.assertRaisesRegex(ValueError, "other than candidate"):
+            run_evals.summarize_scores(scores, "candidate")
+
+        usage = {"input_tokens": 10, "output_tokens": 5}
+        rows = [
+            self._usage_row("direct-answer", "comparator", "abcd", 1.0, usage),
+            self._usage_row("direct-answer", "candidate", "ab", 0.5, usage),
+        ]
+        measured = run_evals.summarize_usage(rows, "comparator")
+        self.assertAlmostEqual(-50, measured["delta"]["candidate"]["cost_usd_pct"])
+        self.assertNotIn("comparator", measured["delta"])
 
     def test_candidate_blocker_fails_release_gate(self):
         rows = []
@@ -516,6 +536,9 @@ class EvaluationHarnessTest(unittest.TestCase):
             args.allow_unmetered = True
             self.assertEqual(0, run_evals.run_evaluations(args))
             self.assertTrue(marker.exists())
+            # The judge reads this date to resolve 'today' and 'yesterday' in the response.
+            [row] = run_evals.read_jsonl(tmp_path / "out.jsonl")
+            self.assertEqual(datetime.date.today().isoformat(), row["date"])
 
     def test_generation_runs_outside_the_repository(self):
         # An agent CLI adopts its working directory as project context. Run it

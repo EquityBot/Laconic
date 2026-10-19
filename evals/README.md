@@ -65,7 +65,7 @@ python3 scripts/run_evals.py run --runner-config setups.json --runner setup-curr
 python3 scripts/run_evals.py run --runner-config setups.json --runner setup-laconic   --condition candidate --no-injection --trials 2 --budget-usd 8 --output evals/results/setups.jsonl
 ```
 
-Judge with `--conditions candidate comparator`. Give every setup the same tools and the same reachable files, or the comparison measures access rather than instructions.
+Judge with `--conditions candidate comparator`, then score and measure with `--reference comparator`, which compares the candidate with the comparator in place of a baseline. Give every setup the same tools and the same reachable files, or the comparison measures access rather than instructions.
 
 ## Agent cost benchmark
 
@@ -130,6 +130,8 @@ Only the region of `rubric.md` between the `<!-- judge:begin -->` and
 those markers name the conditions, and sending them to a blind grader would
 leak the vocabulary the blinding exists to hide. Keep anything condition-identifying
 outside that block.
+
+Each response row records the date it was generated, and the judge sees that date beside the response. A model reads today's date from its environment. Without the recorded date, a run that crosses midnight or a judge run on a later day would mark a correct 'today' or 'yesterday' as a factual error. Rows from older runs have no date and are judged as before.
 
 Runs are resumable the same way generation is: groups already present in the
 output file are skipped. A group missing a condition cannot be scored, because the

@@ -121,7 +121,7 @@ Limits: 18 to 90 answers per setup from one generating model; the cases are in `
 
 ## Checker
 
-`tools/laconic-check` is a small Rust CLI with no dependencies. `lint` flags candidates in Markdown prose: em dashes, US spellings, 'while' and 'among' as conjunction and preposition, double quotation marks, possible serial commas, numbers written as words, dates and times in non-Style Manual forms, Latin abbreviations, chatbot closers and stock phrases such as 'Bottom line:' or 'circle back', skipping code, URLs and quoted text. It also flags chat-tool residue, such as zero-width characters, citation markers and ChatGPT tracking tags, including inside links. `preserve` reports numbers, inline code, URLs and words such as 'not', 'must' and 'only' that an edit dropped. A finding is a reason to look, not proof of a defect.
+`tools/laconic-check` is a small Rust CLI with no dependencies. `lint` flags candidates in Markdown prose: em dashes, US spellings, 'while' and 'among' as conjunction and preposition, double quotation marks, possible serial commas, numbers written as words, dates and times in non-Style Manual forms, weekdays that do not match their date, Latin abbreviations, chatbot closers and stock phrases such as 'Bottom line:' or 'circle back', skipping code, URLs and quoted text. It also flags chat-tool residue, such as zero-width characters, citation markers and ChatGPT tracking tags, including inside links. `preserve` reports numbers, inline code, URLs and words such as 'not', 'must' and 'only' that an edit dropped. A finding is a reason to look, not proof of a defect.
 
 ```bash
 cargo run --manifest-path tools/laconic-check/Cargo.toml -- lint README.md
