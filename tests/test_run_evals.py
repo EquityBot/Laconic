@@ -23,6 +23,33 @@ class EvaluationHarnessTest(unittest.TestCase):
         self.assertGreaterEqual(len(cases), 12)
         self.assertGreaterEqual(len({case["category"] for case in cases}), 8)
 
+    def test_regex_checks_must_accept_good_and_reject_bad_examples(self):
+        good = {"must_include": [r"\b102\b"], "pass": ["102."], "fail": ["112."]}
+        self.assertEqual([], run_evals._validate_checks(good))
+
+        wrong = {**good, "pass": ["112."]}
+        self.assertTrue(any("pass example" in e for e in run_evals._validate_checks(wrong)))
+        lax = {**good, "fail": ["It is 102."]}
+        self.assertTrue(any("passes every check" in e for e in run_evals._validate_checks(lax)))
+        self.assertTrue(run_evals._validate_checks({"must_include": ["("], "pass": ["x"], "fail": ["y"]}))
+        self.assertTrue(run_evals._validate_checks({"pass": ["x"], "fail": ["y"]}))
+
+    def test_check_summary_scores_only_cases_with_checks(self):
+        cases = [
+            {"id": "sum", "checks": {"must_include": [r"\b102\b"], "must_not_include": ["percent"]}},
+            {"id": "free"},
+        ]
+        responses = [
+            {"case_id": "sum", "trial": 1, "condition": "candidate", "response": "102"},
+            {"case_id": "sum", "trial": 2, "condition": "candidate", "response": "102 percent"},
+            {"case_id": "free", "trial": 1, "condition": "candidate", "response": "anything"},
+        ]
+
+        summary = run_evals.summarize_checks(cases, responses)["candidate"]
+
+        self.assertEqual((2, 1, 0.5), (summary["checked"], summary["passed"], summary["pass_rate"]))
+        self.assertEqual(["contains 'percent'"], summary["failures"][0]["failed"])
+
 
     def test_parse_response_tolerates_output_after_the_json_document(self):
         """The CLI can emit a notice after its JSON result; the first document still wins."""

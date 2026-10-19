@@ -38,6 +38,24 @@ Isolation also drops the operator's saved model and effort settings, so the clau
 
 Runs are resumable: rerun the same command after a provider failure and completed `(case, trial, condition, runner)` rows are skipped. Each incomplete call is retried twice by default, and the final provider error is preserved.
 
+## Terse control
+
+A skill should beat a plain 'be brief' instruction, not only no instruction at all; comparing against an empty prompt credits the skill with the generic effect of asking for brevity. `evals/controls/terse.md` holds that instruction ('Answer concisely.'). Run it as the comparator, either injected or as a whole setup:
+
+```bash
+python3 scripts/run_evals.py run --runner claude --condition comparator --condition-skill evals/controls/terse.md --trials 2 --budget-usd 8 --output evals/results/responses.jsonl
+```
+
+## Regex checks
+
+A case may carry `checks`: `must_include` and `must_not_include` regular expressions (case-insensitive search) with known-good `pass` and known-bad `fail` example answers. `validate` rejects a case whose checks reject a good example or accept a bad one, so a broken check fails before a paid run. Score recorded responses without a judge:
+
+```bash
+python3 scripts/run_evals.py checks evals/results/responses.jsonl
+```
+
+The same responses always get the same result, so checks can be fixed and rescored without new calls. A check sees only what its patterns test: read the failures before citing a pass rate, and keep the blind judge for everything else.
+
 ## Compare whole setups
 
 To compare installed setups instead of injected skill text, give each setup its own runner in a runner config (for example `--plugin-dir`, `--add-dir` and `--append-system-prompt-file` for Claude Code), then run each with `--no-injection` so the task is sent unchanged:

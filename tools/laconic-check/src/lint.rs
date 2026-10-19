@@ -25,6 +25,40 @@ const CLOSERS: &[&str] = &[
     "don't hesitate",
 ];
 
+/// Stock phrases from the pattern catalogue that rarely carry meaning: staged
+/// openers, emphasis crutches, summary labels and business jargon. Matched as whole
+/// words, so 'circle backwards' is not a finding.
+const STOCK_PHRASES: &[&str] = &[
+    "here's the thing",
+    "let me be clear",
+    "make no mistake",
+    "let that sink in",
+    "the uncomfortable truth",
+    "here's what nobody tells you",
+    "the part everyone misses",
+    "it's worth noting",
+    "it is worth noting",
+    "worth flagging",
+    "it's important to note",
+    "it is important to note",
+    "bottom line:",
+    "in short:",
+    "at the end of the day",
+    "in today's world",
+    "in a world where",
+    "load-bearing",
+    "earns its keep",
+    "deep dive",
+    "circle back",
+    "double down",
+    "game changer",
+    "game-changer",
+    "paradigm shift",
+];
+
+/// Credited product names that look like US spellings ('humanizer').
+const PRODUCT_NAMES: &[&str] = &["humanizer"];
+
 /// US forms that are not caught by the -ize/-yze rule, with the Australian form.
 const US_WORDS: &[(&str, &str)] = &[
     ("color", "colour"),
@@ -327,6 +361,26 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
             from += pos + phrase.len();
         }
     }
+    let plain = lower.replace('\u{2019}', "'");
+    for phrase in STOCK_PHRASES {
+        let mut from = 0;
+        while let Some(pos) = plain[from..].find(phrase) {
+            let at = from + pos;
+            let end = at + phrase.len();
+            let bounded = !plain[..at].ends_with(|c: char| c.is_alphanumeric())
+                && (phrase.ends_with(':')
+                    || !plain[end..].starts_with(|c: char| c.is_alphanumeric()));
+            if bounded {
+                findings.push(Finding {
+                    line,
+                    column: plain[..at].chars().count() + 1,
+                    rule: "stock-phrase",
+                    message: format!("stock phrase '{phrase}'; state the point directly"),
+                });
+            }
+            from = end;
+        }
+    }
     // Words, for spelling.
     let mut start = None;
     for k in 0..=lower_chars.len() {
@@ -339,7 +393,9 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
                 // Harbor), whose spelling is not a house-style choice.
                 let proper_noun = masked.get(s).is_some_and(|c| c.is_uppercase())
                     && !starts_sentence(&lower_chars, s);
-                if let Some(au) = au_form(&word).filter(|_| !proper_noun) {
+                if let Some(au) = au_form(&word)
+                    .filter(|_| !proper_noun && !PRODUCT_NAMES.contains(&word.as_str()))
+                {
                     findings.push(Finding {
                         line,
                         column: s + 1,
@@ -628,6 +684,23 @@ mod tests {
             vec!["serial-comma"]
         );
         assert_eq!(rules("Hope this helps!"), vec!["closer"]);
+    }
+
+    #[test]
+    fn flags_stock_phrases_as_whole_words_only() {
+        assert_eq!(
+            rules("Here\u{2019}s the thing: we should circle back."),
+            vec!["stock-phrase", "stock-phrase"]
+        );
+        assert_eq!(rules("Bottom line: it works."), vec!["stock-phrase"]);
+        assert!(rules("Draw a circle backwards. The deep diver surfaced.").is_empty());
+        assert!(rules("Avoid 'circle back' and `deep dive` in reports.").is_empty());
+    }
+
+    #[test]
+    fn credited_product_names_are_not_us_spellings() {
+        assert!(rules("The humanizer patterns informed this list.").is_empty());
+        assert_eq!(rules("A humanizing tone."), vec!["us-spelling"]);
     }
 
     #[test]

@@ -12,17 +12,19 @@ Replace empty or inflated uses with plain wording. Preserve precise technical or
 
 Adverbs that are often empty include just, literally, honestly, simply, actually, truly, fundamentally, importantly, crucially, inherently and inevitably. Cut them when they add nothing; retain real emphasis, uncertainty or characteristic voice.
 
-Phrases that are often empty include it's worth noting, it's important to note, at the end of the day, when it comes to, at its core, in today's world, the reality is, the truth is, in terms of, with regard to, in order to, going forward and let's dive in. Remove delay and repetition without erasing meaning or ordinary spoken language.
+Phrases that are often empty include it's worth noting, it's important to note, at the end of the day, when it comes to, at its core, in today's world, in a world where, in the age of, in the world of, in this article, the reality is, the truth is, in terms of, with regard to, in order to, going forward and let's dive in. Remove delay and repetition without erasing meaning or ordinary spoken language.
+
+Business jargon stands in for a plain verb: navigate (a problem), unpack, lean into, double down, deep dive, take a step back, circle back, on the same page and moving forward. Write what happens: 'handle the backlog', 'explain the variance', 'review it again on Friday'. Keep literal uses ('navigate to Settings', 'the diver made a deep dive').
 
 ## Patterns to repair
 
-**Binary contrasts and negative listing.** 'This is not X. It's Y.' / 'Not a X. Not a Y. A Z.' State the point directly when the rejected alternatives only add drama. Preserve informative distinctions and material exclusions: 'The fee is refundable, not transferable.'
+**Binary contrasts and negative listing.** 'This is not X. It's Y.' / 'Not a X. Not a Y. A Z.' / 'It stops being X and starts being Y.' / 'X is a feature, not a bug.' State the point directly when the rejected alternatives only add drama. Preserve informative distinctions and material exclusions: 'The fee is refundable, not transferable.'
 
 **Phantom alternatives.** 'The script reads the export directly, rather than calling the API.' 'I patched the parser instead of rewriting the importer.' The rejected option usually comes from the conversation or the writer's own reasoning, which the reader never saw. Ask whether a reader who had never heard of it would lose anything if it were cut. Keep it when it was the previous behaviour ('GST is now rounded once per invoice, not per line'), a real option the reader is weighing, a likely misreading or a scope decision a later reader would otherwise reopen. In a handoff, 'XLSX export is out of scope: the user asked only for CSV' stops the next agent building it.
 
 **Unasked reassurance.** 'I didn't touch the CI config, and existing behaviour remains unchanged.' 'No other files were modified.' Cut statements about what was not done or stays the same unless the reader asked or would otherwise assume the opposite. Always keep required disclosures: 'Not verified: invoices over 1,000 lines (no fixture).' In a handoff or PR for a reviewer, keep one short scope line about anything the reviewer would otherwise check ('CI config not changed'), and mark an unverified 'behaviour is unchanged' as unverified.
 
-**Throat clearing and faux insight setups.** 'Here's the thing', 'Let me be clear', 'The uncomfortable truth is', 'The part everyone misses'. Remove staged candour and claims of special insight; make the supported point directly. Retain a personal admission when it contributes real context.
+**Throat clearing and faux insight setups.** 'Here's the thing', 'Let me be clear', 'Make no mistake', 'The uncomfortable truth is', 'The part everyone misses', 'You already know this, but'. Remove staged candour and claims of special insight; make the supported point directly. Retain a personal admission when it contributes real context, and 'it turns out' when it reports a real finding ('It turns out the cache was stale').
 
 **Colon reveals.** 'The detail that makes it work: a separate agent grades it.' Remove the staged reveal: 'A separate agent grades it.' Keep any supported explanation of why that matters. Use colons for lists, labels and quotations, following normal sentence capitalisation.
 
@@ -30,17 +32,17 @@ Phrases that are often empty include it's worth noting, it's important to note, 
 
 **Importance puffery.** 'Stands as a testament', 'marks a pivotal moment', 'plays a vital role', 'solidifies its position'. State the supplied fact. 'The company launched its first paid product, marking a pivotal moment' becomes 'The company launched its first paid product.' Never supply a new milestone to replace the puffery.
 
-**Interpretive metadiscourse.** 'That last part matters more than it sounds', 'The key point is', 'As you can see', redundant 'In other words'. Delete commentary that repeats the point or tells readers how impressed to be. Keep useful explanations of unfamiliar concepts and consequences.
+**Interpretive metadiscourse.** 'That last part matters more than it sounds', 'This matters', 'Here's why that matters', 'The key point is', 'As you can see', redundant 'In other words'. Delete commentary that repeats the point or tells readers how impressed to be. Keep useful explanations of unfamiliar concepts and consequences.
 
 **Weasel attribution.** 'Experts agree', 'industry reports suggest', 'many argue', 'studies show'. Use the supplied source and its actual claim. If evidence is missing, flag the gap; removing the attribution must not make the claim sound established.
 
 **Fake-strong verbs.** Prefer direct verbs. 'The app serves as a tool for managing sponsors' becomes 'The app helps manage sponsors.' Do not invent a feature list to make the sentence specific.
 
-**Synonym cycling.** Repeat the correct term instead of rotating agent, assistant and tool merely for variety. Merge references only when they identify the same thing.
+**Synonym cycling.** Repeat the correct term instead of rotating agent, assistant and tool merely for variety. Merge references only when they identify the same thing. This is a clarity rule more than an AI tell: careful human writers vary terms too, but in technical and legal text a new word implies a new thing.
 
 **Dramatic fragmentation and robotic rhythm.** Remove stacked fragments that manufacture emphasis, such as 'That's it. That's the whole thing.' Keep clear fragments that belong to the writer or format. Inspect repeated openings, identical paragraph shapes, forced triads and stacked punchy sentences. Keep 3 real items when all 3 matter.
 
-**Rhetorical setups.** 'What if I told you...', 'Think about it:', 'Plot twist:', staged self-answered questions. Make the point directly. Keep genuine questions, interviews and useful FAQ entries. Inspect vague question headings and engagement requests for a useful answer or action; use supplied content to clarify them. Preserve specific calls to action and requested marketing copy.
+**Rhetorical setups.** 'What if I told you...', 'Think about it:', 'Plot twist:', 'And that's okay.', staged self-answered questions. Make the point directly. Keep genuine questions, interviews and useful FAQ entries. Inspect vague question headings and engagement requests for a useful answer or action; use supplied content to clarify them. Preserve specific calls to action and requested marketing copy.
 
 **Fake-profound kickers.** Delete an ending that turns the point into a generic metaphor, aphorism or mic drop line. Do not replace it with a cleverer version. Retain any substantive claim and end on a concrete point or requested next action.
 
@@ -55,6 +57,8 @@ Phrases that are often empty include it's worth noting, it's important to note, 
 **Unnecessary hyphens.** Inspect open-source, plain-language, public-sector, best-practice, e-mail, on-line and similar forms, and temporary compound modifiers hyphenated after their noun ('the report is high-quality'). Write set phrases open, close up established compounds, drop unnecessary hyphens after the noun and replace a hyphenated buzzword (data-driven, best-in-class) with the claim it stands for. Keep fixed compounds, dictionary hyphens (third-party, re-enter), compounds that misread without one (small-business owners) and every hyphen in a protected literal.
 
 **Stacked hedges.** 'Could potentially', 'may possibly', 'it might arguably be the case that'. Keep one qualifier at the confidence the source supports: 'The policy may affect outcomes.' Keep scope statements, legal and safety caveats, and a single hedge that reports real doubt.
+
+**Added qualifications.** An edit, especially one asked to 'hold up under review', that softens a supported claim or appends a disclaimer the source never made: 'Reconciling daily cut errors by 40%' becoming 'Reconciling daily may have helped reduce errors, although these results do not by themselves establish causation'. Keep the claim at the strength its evidence supports. Flag a claim the evidence does not support instead of hedging it, and keep a qualification the source or the user's request states.
 
 **Chatbot residue.** 'Great question!', 'Certainly!', 'I hope this helps', 'Let me know if you have any questions', 'Feel free to reach out', 'Happy to help'. Delete these from documents, commits and replies; end on the content. Keep courtesy a real email needs and thanks that is warranted.
 

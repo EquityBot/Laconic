@@ -108,14 +108,14 @@ Limits: 18 to 60 answers per setup from one generating model; the cases are in `
 
 ## Checker
 
-`tools/laconic-check` is a small Rust CLI with no dependencies. `lint` flags candidates in Markdown prose: em dashes, US spellings, 'while' and 'among' as conjunction and preposition, double quotation marks, possible serial commas, numbers written as words, dates and times in non-Style Manual forms, Latin abbreviations and chatbot closers, skipping code, URLs and quoted text. It also flags chat-tool residue, such as zero-width characters, citation markers and ChatGPT tracking tags, including inside links. `preserve` reports numbers, inline code, URLs and words such as 'not', 'must' and 'only' that an edit dropped. A finding is a reason to look, not proof of a defect.
+`tools/laconic-check` is a small Rust CLI with no dependencies. `lint` flags candidates in Markdown prose: em dashes, US spellings, 'while' and 'among' as conjunction and preposition, double quotation marks, possible serial commas, numbers written as words, dates and times in non-Style Manual forms, Latin abbreviations, chatbot closers and stock phrases such as 'Bottom line:' or 'circle back', skipping code, URLs and quoted text. It also flags chat-tool residue, such as zero-width characters, citation markers and ChatGPT tracking tags, including inside links. `preserve` reports numbers, inline code, URLs and words such as 'not', 'must' and 'only' that an edit dropped. A finding is a reason to look, not proof of a defect.
 
 ```bash
 cargo run --manifest-path tools/laconic-check/Cargo.toml -- lint README.md
 cargo run --manifest-path tools/laconic-check/Cargo.toml -- preserve original.md edited.md
 ```
 
-`lint -` reads standard input, so an agent can check a draft without saving it. When `laconic-check` is on the PATH, both skills run it on written deliverables before sending. Its US-to-Australian word list combines a hand-written list with about 2,400 pairs generated from the [English Speller Database](https://github.com/en-wl/wordlist) and reviewed against the Style Manual (`tools/laconic-check/gen_au_words.py`). Seeded-fault tests plant one known fault per rule into clean prose and require the checker to catch each one exactly once, with no findings on the clean text.
+`lint -` reads standard input, so an agent can check a draft without saving it. When `laconic-check` is on the PATH, both skills run it on written deliverables before sending. Its US-to-Australian word list combines a hand-written list with about 2,400 pairs generated from the [English Speller Database](https://github.com/en-wl/wordlist) and reviewed against the Style Manual (`tools/laconic-check/gen_au_words.py`). Seeded-fault tests plant one known fault per rule into clean prose and require the checker to catch each one exactly once, with no findings on the clean text. A calibration test runs `lint` over the scraped Style Manual (about 208,700 words of human prose) and fails if its 83 findings rise, so a rule change cannot quietly add false findings on human text.
 
 `tools/laconic-check/mcp/server.mjs` exposes `lint` and `preserve` as MCP tools, with no dependencies beyond Node:
 
@@ -141,7 +141,7 @@ Delete the file to turn session mode off. Choose one or the other: session mode 
 
 ## Credits
 
-Laconic is a fork of [i-have-adhd](https://github.com/ayghri/i-have-adhd) by Ayoub G. (MIT), which supplies the response rules, the platform adapters, the hooks and the evaluation harness. The writing guidance comes from No AI Slop, based on No AI Slop by Peter Yang and Stop Slop by Hardik Pandya, with material adapted from [humanizer](https://github.com/blader/humanizer), [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) and [Sepia](https://github.com/Nanako0129/sepia) (all MIT). The Australian English rules follow the [Australian Government Style Manual](https://www.stylemanual.gov.au/) (Commonwealth of Australia, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)); the copy in `skills/laconic/references/` was scraped from the site on 13 September 2026, with navigation, release notes and feedback widgets removed.
+Laconic is a fork of [i-have-adhd](https://github.com/ayghri/i-have-adhd) by Ayoub G. (MIT), which supplies the response rules, the platform adapters, the hooks and the evaluation harness. The writing guidance comes from No AI Slop, based on No AI Slop by Peter Yang and Stop Slop by Hardik Pandya, with material adapted from [humanizer](https://github.com/blader/humanizer), [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) and [Sepia](https://github.com/Nanako0129/sepia) (all MIT). The Australian English rules follow the [Australian Government Style Manual](https://www.stylemanual.gov.au/) (Commonwealth of Australia, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)); the copy in `skills/laconic-prose/references/` was scraped from the site on 13 September 2026, with navigation, release notes and feedback widgets removed.
 
 ## Licence
 
