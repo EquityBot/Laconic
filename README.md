@@ -101,7 +101,7 @@ A follow-up run on 20 October 2026 (30 cases, 1 trial) measured the later rule c
 Further checks on 20 October 2026:
 
 - **Drafts checked before sending:** session mode with the `laconic-check` self-check scored 4.82 weighted against 4.71 without it on 18 prose and accounting cases (4.74 against 4.49 on the 10 accounting cases), with no blocking findings against 1.
-- **Real use:** in the author's own Claude Code sessions on the day Laconic replaced the old setup, assistant messages with no `laconic-check` findings rose from 26% to 42%, and numbers written as words fell from 5.7 to 3.6 per 1,000 words.
+- **Real use:** in the author's own Claude Code sessions on the day Laconic replaced the old setup, assistant messages with no `laconic-check` findings rose from 26% to 42%; numbers written as words fell from 5.7 to 3.6 per 1,000 words.
 - **Agent cost:** on 5 small repository fixes (`evals/agent_bench.py`, 2 trials), every setup passed every task. Session mode cost about 27% more per task than the compact rules, mostly because of its larger always-loaded prompt; a separate agent-guidance section saved nothing and was removed.
 
 Limits: 18 to 60 answers per setup from one generating model; the cases are in `evals/cases.jsonl` and the rubric in `evals/rubric.md`. Serial commas remain the most common slip.

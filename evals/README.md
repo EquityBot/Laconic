@@ -49,6 +49,16 @@ python3 scripts/run_evals.py run --runner-config setups.json --runner setup-laco
 
 Judge with `--conditions candidate comparator`. Give every setup the same tools and the same reachable files, or the comparison measures access rather than instructions.
 
+## Agent cost benchmark
+
+`evals/agent_bench.py` measures whether a rule set changes how an agent works, not just how it writes. It builds 5 small Python repositories with one failing test each and asks Claude Code to fix them with tools limited to Read, Edit, Glob, Grep and `python -m unittest`. It records whether the tests pass afterwards, plus turns, tokens, cost and permission denials. It compares 2 rule files:
+
+```bash
+python3 evals/agent_bench.py rules-a.md rules-b.md 2 evals/results/agent-bench.jsonl
+```
+
+Everything runs in temporary folders, and each call is capped with `--max-budget-usd 1.5`.
+
 ## Measure
 
 Aggregate token usage, reported cost and response length from the completed responses file:

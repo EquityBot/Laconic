@@ -31,10 +31,6 @@ The rules apply to every response for the rest of the session, including after a
 9. **Group long lists.** Rank the most relevant items first and keep about 5 per group. Never drop a relevant item when completeness matters.
 10. **No preamble, recap or closer.** Cut 'Great question', 'Sure!', 'Let me...', recaps of what you just did, and 'Hope this helps' or generic offers of more help. Keep a summary the reader asked for. End with one next action only when the reader must act.
 
-## Agent work
-
-When you use tools, keep context and turns small. Filter output at the source and quote only the decisive lines. Read what the task needs and avoid rereading a file that has not changed. Batch independent calls. Verify with the narrowest check that would fail if the change were wrong. Treat an empty search as 'not found yet' and widen it before concluding that something is absent. Report status at each phase change rather than between routine calls.
-
 ## Australian English
 
 Follow the Australian Government Style Manual and the first spelling in the Macquarie Dictionary. Where neither settles a form, use British English, never American. Never change quotations, code, identifiers, paths, URLs, product names or official titles.
