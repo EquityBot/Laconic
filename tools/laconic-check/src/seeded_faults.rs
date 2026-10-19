@@ -65,6 +65,16 @@ const SEEDS: &[(&str, &str, &str)] = &[
     ("time", "at 9:30 am", "at 9.30am"),
     ("time", "at 9:30 am", "at 9:30 a.m."),
     ("latin", "for example the colour", "e.g. the colour"),
+    (
+        "residue",
+        "after the go-ahead.",
+        "after the go-ahead.\u{200b}",
+    ),
+    (
+        "residue",
+        "https://example.com/guide",
+        "https://example.com/guide?utm_source=chatgpt.com",
+    ),
 ];
 
 fn corpus() -> String {
@@ -123,6 +133,7 @@ fn every_rule_has_a_seed() {
         "date",
         "time",
         "latin",
+        "residue",
     ] {
         assert!(
             SEEDS.iter().any(|(r, _, _)| *r == rule),

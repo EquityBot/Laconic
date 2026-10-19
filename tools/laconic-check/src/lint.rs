@@ -138,9 +138,64 @@ pub fn lint(text: &str) -> Vec<Finding> {
                 message: "double quotation marks in prose; use single marks".into(),
             });
         }
+        check_residue(&chars, line_no, &mut findings);
         check_line(&masked, line_no, &mut findings);
     }
     findings
+}
+
+/// Chat-tool leftovers: citation markers and tracking tags in links.
+const RESIDUE_MARKERS: &[&str] = &[
+    "oaicite",
+    "contentreference",
+    "utm_source=chatgpt",
+    "utm_source=openai",
+];
+
+/// Flags zero-width characters and chat-tool markers. Unlike the other rules this
+/// reads URLs and quoted text, where the markers usually sit; inline code, which may
+/// name a marker on purpose, is skipped.
+fn check_residue(chars: &[char], line: usize, findings: &mut Vec<Finding>) {
+    let mut text = chars.to_vec();
+    let mut i = 0;
+    while i < text.len() {
+        if text[i] == '`'
+            && let Some(end) = find(chars, i + 1, |x| x == '`')
+        {
+            text[i..=end].iter_mut().for_each(|x| *x = ' ');
+            i = end;
+        }
+        i += 1;
+    }
+    for (k, c) in text.iter().enumerate() {
+        // A byte order mark that opens the file is an encoding marker, not residue.
+        let bom = *c == '\u{feff}' && line == 1 && k == 0;
+        if matches!(
+            c,
+            '\u{200b}' | '\u{200c}' | '\u{200d}' | '\u{2060}' | '\u{feff}'
+        ) && !bom
+        {
+            findings.push(Finding {
+                line,
+                column: k + 1,
+                rule: "residue",
+                message: format!("zero-width character U+{:04X}", *c as u32),
+            });
+        }
+    }
+    let lower: String = text.iter().collect::<String>().to_lowercase();
+    for marker in RESIDUE_MARKERS {
+        let mut from = 0;
+        while let Some(pos) = lower[from..].find(marker) {
+            findings.push(Finding {
+                line,
+                column: lower[..from + pos].chars().count() + 1,
+                rule: "residue",
+                message: format!("chat-tool residue '{marker}'"),
+            });
+            from += pos + marker.len();
+        }
+    }
 }
 
 /// Replaces protected spans with spaces, keeping columns. Returns the masked line and
@@ -632,6 +687,20 @@ mod tests {
     fn hyphenated_numbers_and_introductory_clauses_are_not_findings() {
         assert!(rules("We funded forty-five places.").is_empty());
         assert!(rules("If the tool is available, run it, and fix each finding.").is_empty());
+    }
+
+    #[test]
+    fn flags_chat_tool_residue_but_not_markers_named_in_code() {
+        assert_eq!(
+            rules("See [the guide](https://example.com/?utm_source=chatgpt.com) now."),
+            vec!["residue"]
+        );
+        assert_eq!(rules("Done\u{200b} today."), vec!["residue"]);
+        assert_eq!(
+            rules("Cited :contentReference[oaicite:0] here."),
+            vec!["residue", "residue"]
+        );
+        assert!(rules("\u{feff}Scan for `oaicite` and `utm_source=` before sending.").is_empty());
     }
 
     #[test]

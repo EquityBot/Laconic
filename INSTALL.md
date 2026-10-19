@@ -279,7 +279,7 @@ This is enough for routine chat, comments, handoffs, emails, short repository pr
 <details>
 <summary><strong>Gemini CLI</strong></summary>
 
-Gemini CLI has no plugin marketplace, so there are two native routes: a **custom command** (opt-in, off until you invoke it) or an **extension** (always-on once installed). The command route matches this skill's default posture; pick it unless you want the rules on every session.
+Gemini CLI has no plugin marketplace, so there are 2 native routes: a **custom command** (opt-in, off until you invoke it) or an **extension** (always-on once installed). The command route matches this skill's default posture; pick it unless you want the rules on every session.
 
 ### Install (command, opt-in)
 
@@ -327,7 +327,7 @@ rm ~/.gemini/commands/laconic.toml     # command route
 <details>
 <summary><strong>GitHub Copilot (VS Code and Copilot CLI)</strong></summary>
 
-Copilot reads Agent Skills natively: the same `SKILL.md`, no conversion. It scans `.github/skills/`, `.claude/skills/`, and `.agents/skills/` in the project, and `~/.copilot/skills/`, `~/.claude/skills/`, and `~/.agents/skills/` globally.
+Copilot reads Agent Skills natively: the same `SKILL.md`, no conversion. It scans `.github/skills/`, `.claude/skills/` and `.agents/skills/` in the project, and `~/.copilot/skills/`, `~/.claude/skills/`, and `~/.agents/skills/` globally.
 
 ### Install
 
@@ -507,7 +507,7 @@ cp .opencode/command/laconic.md ~/.config/opencode/commands/laconic.md
 
 ### Verify
 
-Start OpenCode, type `/`, and confirm `laconic` appears in the command list.
+Start OpenCode, type `/` and confirm `laconic` appears in the command list.
 
 ### Update
 
@@ -556,7 +556,7 @@ Start a new Pi session. Toggle Laconic output for the current session:
 /laconic
 ```
 
-The footer shows `● LACONIC ON` while the mode is active. Run the command again to turn it off, or be explicit:
+The footer shows `● LACONIC ON` whilst the mode is active. Run the command again to turn it off, or be explicit:
 
 ```text
 /laconic on
@@ -564,7 +564,7 @@ The footer shows `● LACONIC ON` while the mode is active. Run the command agai
 stop laconic
 ```
 
-Like the Claude Code hook, the extension adds the ruleset to the conversation once instead of rewriting the system prompt on every request, and adds it again after compaction drops it.
+Like the Claude Code hook, the extension adds the ruleset to the conversation once instead of rewriting the system prompt on every request and adds it again after compaction drops it.
 
 The existing Agent Skills command remains available as an alias:
 
@@ -840,7 +840,7 @@ In Claude Code, Qwen Code, Codex and Grok, no middle ground: if you did not turn
 
 **`claude plugin marketplace add` fails.** Use the `owner/repo` form. A local path must point at the repo root, not `.claude-plugin/`.
 
-**`grok plugin install` does nothing visible.** Add `--trust`, then run `grok plugin enable laconic`, then start a new session. Grok plugins stay off and untrusted until those two steps.
+**`grok plugin install` does nothing visible.** Add `--trust`, then run `grok plugin enable laconic`, then start a new session. Grok plugins stay off and untrusted until those 2 steps.
 
 **Installed but replies still preamble.** Open a new session. If it still drifts, tighten the wording in `skills/laconic/SKILL.md`.
 
