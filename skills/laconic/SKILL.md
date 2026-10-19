@@ -64,4 +64,4 @@ Before sending, cut chatbot register, narrated reasoning, contrasts with options
 1. Does the first sentence give the answer, result or required action?
 2. Is every unverified claim marked, with nothing guessed?
 3. Did every needed fact, step and caveat survive, with the meaning of each negation, quantity, scope, condition and obligation unchanged and protected literals exact?
-4. Is every original sentence correct Australian English, with no em dash?
+4. Is every original sentence correct Australian English, with no em dash and no comma before a final 'and' or 'or' unless it prevents a misreading?
