@@ -38,6 +38,17 @@ Isolation also drops the operator's saved model and effort settings, so the clau
 
 Runs are resumable: rerun the same command after a provider failure and completed `(case, trial, condition, runner)` rows are skipped. Each incomplete call is retried twice by default, and the final provider error is preserved.
 
+## Compare whole setups
+
+To compare installed setups instead of injected skill text, give each setup its own runner in a runner config (for example `--plugin-dir`, `--add-dir` and `--append-system-prompt-file` for Claude Code), then run each with `--no-injection` so the task is sent unchanged:
+
+```bash
+python3 scripts/run_evals.py run --runner-config setups.json --runner setup-current   --condition comparator --no-injection --trials 2 --budget-usd 8 --output evals/results/setups.jsonl
+python3 scripts/run_evals.py run --runner-config setups.json --runner setup-laconic   --condition candidate --no-injection --trials 2 --budget-usd 8 --output evals/results/setups.jsonl
+```
+
+Judge with `--conditions candidate comparator`. Give every setup the same tools and the same reachable files, or the comparison measures access rather than instructions.
+
 ## Measure
 
 Aggregate token usage, reported cost and response length from the completed responses file:

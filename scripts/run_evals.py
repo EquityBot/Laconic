@@ -324,8 +324,12 @@ def _run_with_timeout(invocation: list[str], timeout: float, **kwargs: Any) -> s
         return subprocess.CompletedProcess(invocation, 124, "", f"Timed out after {timeout:g} seconds")
 
 
-def _condition_prompt(task: str, condition: str, skill_path: Optional[Path]) -> str:
-    if condition == "baseline":
+def _condition_prompt(
+    task: str, condition: str, skill_path: Optional[Path], inject: bool = True
+) -> str:
+    # Without injection the runner itself supplies the setup (plugins, rules files),
+    # so whole installations can be compared under their real condition names.
+    if condition == "baseline" or not inject:
         return task
     if skill_path is None:
         raise ValueError(f"--condition-skill is required for the {condition} condition")
@@ -431,7 +435,9 @@ def run_evaluations(args: argparse.Namespace) -> int:
                 if remaining <= 0:
                     print("Budget exhausted; stopping.", file=sys.stderr)
                     return 2
-                prompt = _condition_prompt(case["prompt"], args.condition, args.condition_skill)
+                prompt = _condition_prompt(
+                    case["prompt"], args.condition, args.condition_skill, not getattr(args, "no_injection", False)
+                )
                 invocation = [*command]
                 if runner.get("budget_flag"):
                     invocation.extend([runner["budget_flag"], f"{remaining:.4f}"])
@@ -511,6 +517,11 @@ def _build_parser() -> argparse.ArgumentParser:
     run.add_argument("--case", action="append")
     run.add_argument("--trials", type=int, default=3)
     run.add_argument("--retries", type=int, default=2)
+    run.add_argument(
+        "--no-injection",
+        action="store_true",
+        help="Send the task unchanged; the runner config supplies the setup being compared",
+    )
     run.add_argument("--call-timeout", type=float, default=300.0, help="Seconds before one model call counts as failed")
     run.add_argument("--budget-usd", type=float, default=25.0)
     run.add_argument("--allow-unmetered", action="store_true")

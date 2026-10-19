@@ -526,6 +526,15 @@ class EvaluationHarnessTest(unittest.TestCase):
         )
 
 
+class NoInjectionTest(unittest.TestCase):
+    def test_setup_comparison_sends_the_task_unchanged(self):
+        self.assertEqual("Task", run_evals._condition_prompt("Task", "candidate", None, inject=False))
+
+    def test_injection_still_requires_a_skill(self):
+        with self.assertRaises(ValueError):
+            run_evals._condition_prompt("Task", "candidate", None)
+
+
 class CallTimeoutTest(unittest.TestCase):
     def test_a_hung_call_becomes_a_failed_attempt(self):
         result = run_evals._run_with_timeout(
