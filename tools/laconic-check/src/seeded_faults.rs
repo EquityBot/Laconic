@@ -57,6 +57,11 @@ const SEEDS: &[(&str, &str, &str)] = &[
         "to the review.",
         "to the review. Hope this helps!",
     ),
+    (
+        "stock-phrase",
+        "to the review.",
+        "to the review. Bottom line: it works.",
+    ),
     ("word-choice", "whilst demand", "while demand"),
     ("word-choice", "amongst small", "among small"),
     ("date", "on 19 October 2026", "on 19th October 2026"),
@@ -120,6 +125,32 @@ fn every_seeded_fault_is_caught_exactly_once() {
     );
 }
 
+/// Findings on the scraped Style Manual, about 208,700 words of human Australian
+/// Government prose. Many are the manual's own examples of forms to avoid or its
+/// 'while' and 'among', which the house style overrides. The ceiling only moves down;
+/// it guards against a net increase on this corpus, not against every new false finding.
+const STYLE_MANUAL_CEILING: usize = 83;
+
+#[test]
+fn human_corpus_findings_stay_under_the_ceiling() {
+    let path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../skills/laconic-prose/references/australian-government-style-manual.md"
+    );
+    let text = std::fs::read_to_string(path).expect("Style Manual copy");
+    let findings = lint(&text);
+    assert!(
+        findings.len() <= STYLE_MANUAL_CEILING,
+        "{} findings on the Style Manual, ceiling {STYLE_MANUAL_CEILING}",
+        findings.len()
+    );
+    let stock: Vec<_> = findings
+        .iter()
+        .filter(|f| f.rule == "stock-phrase")
+        .collect();
+    assert!(stock.is_empty(), "stock phrases in human prose: {stock:?}");
+}
+
 #[test]
 fn every_rule_has_a_seed() {
     for rule in [
@@ -129,6 +160,7 @@ fn every_rule_has_a_seed() {
         "serial-comma",
         "number-word",
         "closer",
+        "stock-phrase",
         "word-choice",
         "date",
         "time",

@@ -5,6 +5,7 @@ import argparse
 from contextlib import contextmanager
 import json
 import math
+import re
 import shlex
 import subprocess
 import sys
@@ -95,7 +96,70 @@ def validate_cases(cases: list[dict[str, Any]]) -> list[str]:
             errors.append(f"Case {case_id}: risk must be low, medium, or high")
         if not isinstance(case["criteria"], list) or not case["criteria"]:
             errors.append(f"Case {case_id}: criteria must be a non-empty list")
+        if "checks" in case:
+            errors.extend(f"Case {case_id}: {error}" for error in _validate_checks(case["checks"]))
     return errors
+
+
+def _validate_checks(checks: Any) -> list[str]:
+    """A case's optional regex checks must compile, and must accept every known-good
+    example and reject every known-bad one, so a broken check fails before a paid run."""
+    if not isinstance(checks, dict):
+        return ["checks must be an object"]
+
+    def strings(field: str) -> bool:
+        value = checks.get(field, [])
+        return isinstance(value, list) and all(isinstance(item, str) for item in value)
+
+    errors = [f"{field} must be a list of strings" for field in ("must_include", "must_not_include", "pass", "fail") if not strings(field)]
+    if errors:
+        return errors
+    patterns = [*checks.get("must_include", []), *checks.get("must_not_include", [])]
+    if not patterns:
+        errors.append("checks need at least one must_include or must_not_include pattern")
+    for pattern in patterns:
+        try:
+            re.compile(pattern, re.I)
+        except re.error as exc:
+            errors.append(f"bad check pattern {pattern!r}: {exc}")
+    if errors:
+        return errors
+    if not checks.get("pass") or not checks.get("fail"):
+        errors.append("checks need at least one pass and one fail example")
+    for example in checks.get("pass", []):
+        if failed := check_response(checks, example):
+            errors.append(f"pass example {example!r} fails {failed}")
+    for example in checks.get("fail", []):
+        if not check_response(checks, example):
+            errors.append(f"fail example {example!r} passes every check")
+    return errors
+
+
+def check_response(checks: dict[str, Any], text: str) -> list[str]:
+    """Return the checks a response fails (case-insensitive regex search)."""
+    failed = [f"missing {p!r}" for p in checks.get("must_include", []) if not re.search(p, text, re.I)]
+    failed += [f"contains {p!r}" for p in checks.get("must_not_include", []) if re.search(p, text, re.I)]
+    return failed
+
+
+def summarize_checks(cases: list[dict[str, Any]], responses: list[dict[str, Any]]) -> dict[str, Any]:
+    """Pass rate per condition on the cases that carry regex checks. No judge is involved,
+    so the same responses always get the same result."""
+    checks = {case["id"]: case["checks"] for case in cases if "checks" in case}
+    summary: dict[str, Any] = {}
+    for row in responses:
+        if row.get("case_id") not in checks:
+            continue
+        entry = summary.setdefault(row["condition"], {"checked": 0, "passed": 0, "failures": []})
+        failed = check_response(checks[row["case_id"]], row.get("response", ""))
+        entry["checked"] += 1
+        if failed:
+            entry["failures"].append({"case_id": row["case_id"], "trial": row.get("trial"), "failed": failed})
+        else:
+            entry["passed"] += 1
+    for entry in summary.values():
+        entry["pass_rate"] = entry["passed"] / entry["checked"]
+    return summary
 
 
 def _validate_score(row: dict[str, Any], index: int) -> None:
@@ -508,6 +572,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     measure.add_argument("responses", type=Path)
 
+    checks = subparsers.add_parser(
+        "checks", help="Score recorded responses against the cases' regex checks, without a judge"
+    )
+    checks.add_argument("responses", type=Path)
+    checks.add_argument("--cases", type=Path, default=DEFAULT_CASES)
+
     run = subparsers.add_parser("run", help="Run one evaluation condition")
     run.add_argument("--cases", type=Path, default=DEFAULT_CASES)
     run.add_argument("--runner-config", type=Path, default=ROOT / "evals" / "runners.example.json")
@@ -561,6 +631,13 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 0
     if args.command == "measure":
         print(json.dumps(summarize_usage(read_jsonl(args.responses)), indent=2, allow_nan=False))
+        return 0
+    if args.command == "checks":
+        cases = load_cases(args.cases)
+        errors = validate_cases(cases)
+        if errors:
+            raise ValueError("\n".join(errors))
+        print(json.dumps(summarize_checks(cases, read_jsonl(args.responses)), indent=2))
         return 0
     parser.error("unknown command")
     return 2

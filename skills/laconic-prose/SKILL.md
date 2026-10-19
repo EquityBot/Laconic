@@ -83,7 +83,7 @@ For spelling choices, grammatical word pairs, compounds and other mechanics (cap
 - **Use the portability test.** A sentence that could describe any company or product is probably filler. Keep it only if it informs, connects or instructs this reader.
 - **Fit the format to the content.** Prose for reasoning, lists for steps or parallel items, tables for comparisons, headings only for navigation. Length follows the stakes.
 - **Vary by meaning, not by rule.** Split tangled sentences; keep deliberate fragments and long spoken sentences. Avoid habitual triads, identical paragraph shapes and chains of 'so'.
-- **Add nothing the source lacked.** An edit must not introduce an em dash, colon reveal, staccato fragment, rhetorical question, first-person aside, stake-raising opener, contrarian foil or specific fact.
+- **Add nothing the source lacked.** An edit must not introduce an em dash, colon reveal, staccato fragment, rhetorical question, first-person aside, stake-raising opener, contrarian foil, specific fact or a qualification the evidence does not call for. When asked to revise for review or check the claims, state each claim as strongly as its evidence warrants: flag an overstated claim, but do not soften a supported one.
 
 ## Detailed guidance
 
@@ -97,7 +97,7 @@ For spelling choices, grammatical word pairs, compounds and other mechanics (cap
 
 1. Read the full draft or facts. Identify the reader, purpose and venue, and the facts, negations and constraints that must survive.
 2. Draft, or diagnose weak spans in context, including headings and endings. Recognise what a phrase does even when it is not listed. Treat word matches and scan hits as candidates. In detect mode, prepare findings and go to step 5.
-3. Run the quick pass. Ask what still reads as machine-written, and fix it.
+3. Run the quick pass. Ask what still reads as machine-written, and fix it. Recheck the patterns that most often survive a rewrite: contrasts, one-line closers, triads, dashes and bold labels.
 4. Test your changes. Strike each word or phrase you added; if the sentence still works and means the same, leave it out. Put back each word you replaced; if the original was shorter and means the same, keep the original. Reread each changed sentence in its paragraph for altered meaning, dropped caveats and new filler.
 5. Final scan of the prose (not code or quotations): em dashes; double quotation marks outside nested quotations; a comma before the final 'and' or 'or' in a list; `rather than`, `, not `, `isn't just`; `load-bearing|carries|anchor|genuinely|worth (noting|flagging)|Bottom line|In short|Let me|I hope this helps|Rest assured|don't hesitate`; US spellings; hyphenated set phrases; unfilled placeholders such as `[Client name]`; `oaicite|contentReference|utm_source=`; zero-width characters. Fix the defects; keep legitimate uses. If the `laconic-check` command is available, also run `laconic-check lint --warn -` with the draft's prose on standard input, and for an edit run `laconic-check preserve <original> <edited>`; fix each real finding and keep legitimate uses, such as a comma that prevents a misreading.
 6. Apply [references/eval.md](references/eval.md): the quick check always, the full checklist for audits and long documents. Fix failures within scope. If a fact gap prevents completion, state it instead of claiming a pass.

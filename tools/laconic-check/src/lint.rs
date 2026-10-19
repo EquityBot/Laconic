@@ -25,6 +25,34 @@ const CLOSERS: &[&str] = &[
     "don't hesitate",
 ];
 
+/// Stock phrases from the pattern catalogue that rarely carry meaning: staged
+/// openers, emphasis crutches, summary labels and business jargon. Matched as whole
+/// words, so 'circle backwards' is not a finding.
+const STOCK_PHRASES: &[&str] = &[
+    "here's the thing",
+    "let me be clear",
+    "make no mistake",
+    "let that sink in",
+    "the uncomfortable truth",
+    "here's what nobody tells you",
+    "the part everyone misses",
+    "it's worth noting",
+    "it is worth noting",
+    "worth flagging",
+    "it's important to note",
+    "it is important to note",
+    "bottom line:",
+    "in short:",
+    "in today's world",
+    "in a world where",
+    "earns its keep",
+    "deep dive",
+    "circle back",
+    "double down",
+    "game changer",
+    "game-changer",
+    "paradigm shift",
+];
 /// US forms that are not caught by the -ize/-yze rule, with the Australian form.
 const US_WORDS: &[(&str, &str)] = &[
     ("color", "colour"),
@@ -325,6 +353,37 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
                 message: format!("chatbot phrase '{phrase}'"),
             });
             from += pos + phrase.len();
+        }
+    }
+    // One output char per input char, so columns stay exact (to_lowercase can expand
+    // a character); every listed phrase is ASCII.
+    let plain: String = masked
+        .iter()
+        .map(|&c| {
+            if c == '\u{2019}' {
+                '\''
+            } else {
+                c.to_ascii_lowercase()
+            }
+        })
+        .collect();
+    for phrase in STOCK_PHRASES {
+        let mut from = 0;
+        while let Some(pos) = plain[from..].find(phrase) {
+            let at = from + pos;
+            let end = at + phrase.len();
+            let bounded = !plain[..at].ends_with(|c: char| c.is_alphanumeric())
+                && (phrase.ends_with(':')
+                    || !plain[end..].starts_with(|c: char| c.is_alphanumeric()));
+            if bounded {
+                findings.push(Finding {
+                    line,
+                    column: plain[..at].chars().count() + 1,
+                    rule: "stock-phrase",
+                    message: format!("stock phrase '{phrase}'; state the point directly"),
+                });
+            }
+            from = end;
         }
     }
     // Words, for spelling.
@@ -628,6 +687,33 @@ mod tests {
             vec!["serial-comma"]
         );
         assert_eq!(rules("Hope this helps!"), vec!["closer"]);
+    }
+
+    #[test]
+    fn flags_stock_phrases_as_whole_words_only() {
+        assert_eq!(
+            rules("Here\u{2019}s the thing: we should circle back."),
+            vec!["stock-phrase", "stock-phrase"]
+        );
+        assert_eq!(rules("Bottom line: it works."), vec!["stock-phrase"]);
+        assert!(rules("Draw a circle backwards. The deep diver surfaced.").is_empty());
+        assert!(rules("Avoid 'circle back' and `deep dive` in reports.").is_empty());
+        assert!(
+            rules("Reconcile the till at the end of the day. The load-bearing wall is cracked.")
+                .is_empty()
+        );
+        assert_eq!(
+            rules("Recircle back. Bottom line:works."),
+            vec!["stock-phrase"]
+        );
+    }
+
+    #[test]
+    fn stock_phrase_columns_count_characters() {
+        let f = &lint("We\u{2019}ll circle back.")[0];
+        assert_eq!((f.column, f.rule), (7, "stock-phrase"));
+        let f = &lint("\u{130} circle back.")[0];
+        assert_eq!((f.column, f.rule), (3, "stock-phrase"));
     }
 
     #[test]
