@@ -8,7 +8,7 @@ against the source text in the prompt:
   meaning words such as 'not' that the rewrite lost);
 - optionally, the avoid-ai-writing detector's 0 to 100 score and finding count
   (--avoid <path to bin/avoid-ai-writing.js>), and dslop's finding count
-  (--dslop-config <dslop.toml>, run through uvx).
+  (--dslop, run through uvx with evals/humanise-dslop.toml).
 
 The same checks run on the source texts, so each condition can be read against
 where it started. Every checker has a house view; a finding is a candidate.
@@ -38,6 +38,7 @@ FINDING =re.compile(r"^\S.*:\d+:\d+: ", re.MULTILINE)
 # metrics do not ('<stdin> sentence-length-cv=0.19 (threshold 0.30)').
 DSLOP_FINDING = re.compile(r"<stdin>(?::\d+:\d+)? [a-z]")
 DROPPED = re.compile(r"^dropped ", re.MULTILINE)
+DSLOP_CONFIG = ROOT / "evals" / "humanise-dslop.toml"
 
 
 def source_text(prompt: str) -> str:
@@ -75,10 +76,10 @@ def preserve_drops(source: str, rewrite: str) -> int:
     return len(DROPPED.findall(out))
 
 
-def checker_metrics(avoid: Path | None, dslop_config: Path | None) -> Callable[[str], dict[str, float]]:
+def checker_metrics(avoid: Path | None, dslop: bool, dslop_config: Path = DSLOP_CONFIG) -> Callable[[str], dict[str, float]]:
     # dslop silently falls back to its defaults when its config file is missing or
     # is not valid TOML, so check both before measuring anything.
-    if dslop_config:
+    if dslop:
         if not dslop_config.is_file():
             raise FileNotFoundError(f"dslop config not found: {dslop_config}")
         tomllib.loads(dslop_config.read_text(encoding="utf-8"))
@@ -89,7 +90,7 @@ def checker_metrics(avoid: Path | None, dslop_config: Path | None) -> Callable[[
             report = json.loads(_run(["node", str(avoid), "--context", "general"], text))
             result["avoid_score"] = report["score"]
             result["avoid_findings"] = len(report["issues"])
-        if dslop_config:
+        if dslop:
             out = _run(["uvx", "dslop", "--config", str(dslop_config), "-"], text, findings=DSLOP_FINDING)
             result["dslop"] = len(DSLOP_FINDING.findall(out))
         return result
@@ -127,11 +128,11 @@ def main() -> int:
     parser.add_argument("responses", type=Path)
     parser.add_argument("--cases", type=Path, default=ROOT / "evals" / "humanise-cases.jsonl")
     parser.add_argument("--avoid", type=Path, help="Path to avoid-ai-writing's bin/avoid-ai-writing.js")
-    parser.add_argument("--dslop-config", type=Path, help="dslop.toml; runs dslop through uvx")
+    parser.add_argument("--dslop", action="store_true", help="Also run dslop through uvx with evals/humanise-dslop.toml")
     args = parser.parse_args()
     cases = {case["id"]: case for case in run_evals.load_cases(args.cases)}
     rows = [row for row in run_evals.read_jsonl(args.responses) if row["case_id"] in cases]
-    print(json.dumps(summarise(rows, cases, checker_metrics(args.avoid, args.dslop_config)), indent=2))
+    print(json.dumps(summarise(rows, cases, checker_metrics(args.avoid, args.dslop)), indent=2))
     return 0
 
 

@@ -54,7 +54,7 @@ class HumaniseMetricsTest(unittest.TestCase):
         with mock.patch.object(humanise_metrics.subprocess, "run", return_value=drops):
             self.assertEqual(1, humanise_metrics.preserve_drops("a 12", "a"))
         with self.assertRaises(FileNotFoundError):
-            humanise_metrics.checker_metrics(None, Path("missing-dslop.toml"))
+            humanise_metrics.checker_metrics(None, True, Path("missing-dslop.toml"))
         # Exit 1 without a finding is an operational failure (uvx exits 1 when it cannot launch).
         launch = subprocess.CompletedProcess(args=["x"], returncode=1, stdout="", stderr="No solution found")
         with mock.patch.object(humanise_metrics.subprocess, "run", return_value=launch):
@@ -66,7 +66,7 @@ class HumaniseMetricsTest(unittest.TestCase):
             bad = Path(tmp, "dslop.toml")
             bad.write_text("[patterns\nbroken = \n", encoding="utf-8")
             with self.assertRaises(tomllib.TOMLDecodeError):
-                humanise_metrics.checker_metrics(None, bad)
+                humanise_metrics.checker_metrics(None, True, bad)
 
     def test_dslop_pattern_counts_positioned_findings_and_rhythm_metrics(self):
         out = "  <stdin>:1:17 em-dash\n  <stdin> sentence-length-cv=0.19 (threshold 0.30)\n\nfix:\n  em-dash: rewrite\n"
