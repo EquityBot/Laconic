@@ -55,20 +55,25 @@ const STOCK_PHRASES: &[&str] = &[
 ];
 
 /// Unnecessary hyphens: set phrases the house writes open and established compounds
-/// it writes closed. Matched at a word start, with any suffix ('e-mails', 'co-ordinated').
-const HYPHENATED_FORMS: &[(&str, &str)] = &[
-    ("open-source", "open source"),
-    ("plain-language", "plain language"),
-    ("public-sector", "public sector"),
-    ("best-practice", "best practice"),
-    ("e-mail", "email"),
-    ("on-line", "online"),
-    ("web-site", "website"),
-    ("code-base", "codebase"),
-    ("data-set", "dataset"),
-    ("time-frame", "timeframe"),
-    ("road-map", "roadmap"),
-    ("co-ordinat", "coordinat"),
+/// it writes closed, each with the suffixes that keep it the same word. A whole-word
+/// match only, so 'code-based' and 'data-setting' are not 'codebase' and 'dataset'.
+const HYPHENATED_FORMS: &[(&str, &str, &[&str])] = &[
+    ("open-source", "open source", &["", "d"]),
+    ("plain-language", "plain language", &[""]),
+    ("public-sector", "public sector", &[""]),
+    ("best-practice", "best practice", &["", "s"]),
+    ("e-mail", "email", &["", "s", "ed", "ing"]),
+    ("on-line", "online", &[""]),
+    ("web-site", "website", &["", "s"]),
+    ("code-base", "codebase", &["", "s"]),
+    ("data-set", "dataset", &["", "s"]),
+    ("time-frame", "timeframe", &["", "s"]),
+    ("road-map", "roadmap", &["", "s"]),
+    (
+        "co-ordinat",
+        "coordinat",
+        &["e", "es", "ed", "ing", "ion", "or", "ors"],
+    ),
 ];
 
 /// Openers of a staged contrast ('not just a tool, it's a platform'). 'Not only ...
@@ -479,7 +484,7 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
             from = end;
         }
     }
-    for (hyphenated, house) in HYPHENATED_FORMS {
+    for (hyphenated, house, suffixes) in HYPHENATED_FORMS {
         let mut from = 0;
         while let Some(pos) = plain[from..].find(hyphenated) {
             let at = from + pos;
@@ -487,10 +492,12 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
             if plain[..at].ends_with(|c: char| c.is_alphanumeric() || c == '-') {
                 continue;
             }
-            let suffix: String = plain[from..]
-                .chars()
-                .take_while(|c| c.is_ascii_alphabetic())
-                .collect();
+            let rest = &plain[from..];
+            let Some(suffix) = suffixes.iter().find(|s| {
+                rest.starts_with(**s) && !rest[s.len()..].starts_with(char::is_alphanumeric)
+            }) else {
+                continue;
+            };
             findings.push(Finding {
                 line,
                 column: plain[..at].chars().count() + 1,
@@ -1047,12 +1054,27 @@ mod tests {
             vec!["hyphen", "hyphen"]
         );
         for text in [
+            "The code-base, code-bases, data-set and e-mail-based forms.",
+            "They co-ordinated it.",
+        ] {
+            assert!(rules(text).iter().all(|r| *r == "hyphen"), "{text}");
+        }
+        assert_eq!(
+            rules("The code-base, code-bases, data-set and e-mail-based forms.").len(),
+            4
+        );
+        for text in [
             "Re-sign the up-to-date co-op agreement.",
             "Reopen-source is not a word, nor is pre-e-mail.",
             "See https://example.com/open-source and `e-mail`.",
+            "We use code-based authentication.",
+            "The data-setting step is complete.",
+            "Decode code-base64 strings.",
+            "The co-ordinatorship lapsed.",
         ] {
             assert!(rules(text).is_empty(), "{text}: {:?}", rules(text));
         }
+        assert_eq!(lint("Caf\u{e9} e-mail.")[0].column, 6);
     }
 
     #[test]
