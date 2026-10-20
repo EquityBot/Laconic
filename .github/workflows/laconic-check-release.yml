@@ -1,0 +1,97 @@
+name: laconic-check release
+
+# Builds laconic-check for Linux, Windows and macOS. A tag such as laconic-check-v0.1.0
+# publishes the binaries as a GitHub release; a manual run, or a PR that changes this
+# workflow, only uploads them as artefacts.
+on:
+  push:
+    tags: ["laconic-check-v*"]
+  pull_request:
+    paths:
+      - .github/workflows/laconic-check-release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            binary: laconic-check
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary: laconic-check.exe
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            binary: laconic-check
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+        working-directory: tools/laconic-check
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check the tag matches the crate version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n 1)
+          test "${GITHUB_REF_NAME}" = "laconic-check-v${version}" || {
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match Cargo.toml version ${version}"
+            exit 1
+          }
+      - name: Install the musl linker
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+      - name: Test and build
+        run: |
+          rustup target add ${{ matrix.target }}
+          cargo test
+          cargo build --release --target ${{ matrix.target }}
+      - name: Package
+        run: |
+          name=laconic-check-${{ matrix.target }}
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/${{ matrix.binary }} dist/
+          cd dist
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            7z a "../$name.zip" ${{ matrix.binary }} > /dev/null
+            cd .. && sha256sum "$name.zip" > "$name.zip.sha256"
+          else
+            tar -czf "../$name.tar.gz" ${{ matrix.binary }}
+            cd .. && shasum -a 256 "$name.tar.gz" > "$name.tar.gz.sha256"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: laconic-check-${{ matrix.target }}
+          path: |
+            tools/laconic-check/laconic-check-${{ matrix.target }}.*
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/* \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes "Prebuilt laconic-check binaries for Linux (x86_64, static), Windows (x86_64) and macOS (Apple silicon), each with a SHA-256 checksum."
