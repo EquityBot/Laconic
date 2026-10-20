@@ -1,11 +1,13 @@
 <p align="center">
-  <strong>Laconic: concise, answer-first output in correct Australian English.</strong>
+  <strong>Laconic: concise, answer-first output and an AI-text humaniser in correct Australian English.</strong>
 </p>
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/ryanduguid/laconic?style=flat" alt="Licence"></a>
 </p>
 
 Laconic is a skill for coding agents and chat assistants. It makes the model lead with the answer, mark what it has not verified and stop when the answer is complete, without dropping a fact, step or caveat the reader needs. It instructs the model to write every original sentence to the Australian Government Style Manual, with the house overrides listed in the skill.
+
+To humanise AI-written text, ask the agent to humanise it. The prose skill removes AI writing patterns, keeps every fact, number and caveat, and leaves the text shorter, not padded with performed personality.
 
 ## Install
 
@@ -56,7 +58,7 @@ Restart the agent, then type `/laconic`. It stays on for the session until you s
 |---|---|---|
 | Session mode | `skills/laconic/SKILL.md` | After you type `/laconic`, for the rest of the session, until 'stop laconic' |
 | Prose skill | `skills/laconic-prose/SKILL.md` | Loaded by the model for drafting, editing and prose audits; affects that task only |
-| Compact rules | `rules/laconic.md` | Always loaded, if you add it to your agent's rules (about 200 words) |
+| Compact rules | `rules/laconic.md` | Always loaded, if you add it to your agent's rules (about 240 words) |
 
 The session rules, in full in [SKILL.md](skills/laconic/SKILL.md):
 
@@ -152,7 +154,7 @@ To start every Claude Code session in full session mode instead, create an empty
 touch ~/.claude/.laconic-always
 ```
 
-Delete the file to turn session mode off. Choose one or the other: session mode already contains the compact rules, so loading both repeats about 250 words in every session. [INSTALL.md](INSTALL.md) covers the other agents.
+Delete the file to turn session mode off. Choose one or the other: session mode already contains the compact rules, so loading both repeats about 240 words in every session. [INSTALL.md](INSTALL.md) covers the other agents.
 
 ## Credits
 
@@ -160,4 +162,4 @@ Laconic is a fork of [i-have-adhd](https://github.com/ayghri/i-have-adhd) by Ayo
 
 ## Licence
 
-MIT, except the Style Manual material, which is CC BY 4.0. See [LICENSE](LICENSE).
+MIT, except the Style Manual material, which is CC BY 4.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).

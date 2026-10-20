@@ -1,7 +1,7 @@
 ---
 name: laconic-prose
 license: MIT
-description: Write, edit or audit prose in concise, correct Australian English while preserving meaning and the writer's voice. Use when asked to audit prose or flag AI-like writing, to edit a supplied draft, or to write substantial prose such as reports, documentation, UI copy and PR text. Routine chat, emails, comments, handoffs and small edits need only the compact Laconic rules.
+description: Write, edit, humanise or audit prose in concise, correct Australian English while preserving meaning and the writer's voice. Use when asked to humanise ('humanize') AI-written text, to audit prose or flag AI-like writing, to edit a supplied draft, or to write substantial prose such as reports, documentation, UI copy and PR text. Routine chat, emails, comments, handoffs and small edits need only the compact Laconic rules.
 ---
 
 # Laconic prose

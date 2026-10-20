@@ -167,7 +167,7 @@ rm ~/.claude/.laconic-always
 
 The hook only fires when the flag file exists, so installing the plugin changes nothing by itself. 'stop laconic' still turns it off for the current session.
 
-Use either this hook or the compact rules in `~/.claude/rules/laconic.md`, not both. Session mode already contains the compact rules, so loading both repeats about 250 words in every session.
+Use either this hook or the compact rules in `~/.claude/rules/laconic.md`, not both. Session mode already contains the compact rules, so loading both repeats about 240 words in every session.
 
 </details>
 
