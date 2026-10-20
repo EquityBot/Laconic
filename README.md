@@ -2,7 +2,7 @@
   <strong>Laconic: concise, answer-first output and an AI-text humaniser in correct Australian English.</strong>
 </p>
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/ryanduguid/laconic?style=flat" alt="Licence"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/ryanduguid/laconic?style=flat&labelColor=000000&color=66023C" alt="Licence"></a>
 </p>
 
 Laconic is a skill for coding agents and chat assistants. It makes the model lead with the answer, mark what it has not verified and stop when the answer is complete, without dropping a fact, step or caveat the reader needs. It instructs the model to write every original sentence to the Australian Government Style Manual, with the house overrides listed in the skill.
