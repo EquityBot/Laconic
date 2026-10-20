@@ -133,6 +133,12 @@ const REVEAL_PHRASES: &[&str] = &[
     "honestly",
 ];
 
+/// Auxiliary verbs that open a question; a reveal's answer never starts with one.
+const QUESTION_OPENERS: &[&str] = &[
+    "do", "does", "did", "is", "are", "was", "were", "can", "could", "will", "would", "should",
+    "has", "have", "had", "don't", "doesn't", "didn't", "isn't", "aren't", "wasn't",
+];
+
 /// US forms that are not caught by the -ize/-yze rule, with the Australian form.
 const US_WORDS: &[(&str, &str)] = &[
     ("color", "colour"),
@@ -699,10 +705,22 @@ fn check_structure(masked: &[char], plain: &str, line: usize, findings: &mut Vec
                 message: "staged contrast ('not X, it's Y'); state what it is".into(),
             });
         }
-        // The answer is the next sentence on the line, and it must not be a question.
+        // The answer is the next sentence on the line, and it must not be a question:
+        // no '?' in its closing punctuation ('Did it pass?!') and no auxiliary verb
+        // opening it, which also covers a question cut short by 'Mr.' or 'Dr.'.
         let next = skip_space(stop);
         let answer: String = chars[next..sentence_end(&chars, next)].iter().collect();
-        let answered = answer.contains(char::is_alphanumeric) && !answer.trim_end().ends_with('?');
+        let asks = answer
+            .trim_end()
+            .chars()
+            .rev()
+            .take_while(|c| matches!(c, '?' | '!' | '.'))
+            .any(|c| c == '?')
+            || answer
+                .split_whitespace()
+                .next()
+                .is_some_and(|w| QUESTION_OPENERS.contains(&w));
+        let answered = answer.contains(char::is_alphanumeric) && !asks;
         let capital = masked.get(start + lead).is_some_and(|c| c.is_uppercase());
         let question = sentence[lead..].trim_end();
         let reveal = question
@@ -1121,6 +1139,9 @@ mod tests {
             "The dog died? I had no idea.",
             "Really? Did it pass?",
             "The result? Did it pass?",
+            "The result? Did Mr. Smith pass?",
+            "The result? Did it pass?!",
+            "The result? Is it ready.",
         ] {
             assert!(rules(text).is_empty(), "{text}: {:?}", rules(text));
         }
