@@ -1,6 +1,8 @@
 import shutil
+import subprocess
 import sys
 import unittest
+from unittest import mock
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,6 +40,19 @@ class HumaniseMetricsTest(unittest.TestCase):
         self.assertEqual({"rows": 1, "lint": 1, "length": 1.0, "drops": 0}, summary["source"])
         self.assertEqual({"rows": 2, "lint": 1, "length": 0.75, "drops": 1}, summary["candidate"])
         self.assertEqual(2.0, summary["comparator"]["length"])
+
+    def test_checker_failures_raise_instead_of_counting_as_clean(self):
+        failed = subprocess.CompletedProcess(args=["x"], returncode=2, stdout="", stderr="cannot read input")
+        with mock.patch.object(humanise_metrics.subprocess, "run", return_value=failed):
+            with self.assertRaisesRegex(RuntimeError, "exited 2: cannot read input"):
+                humanise_metrics.lint_count("text")
+            with self.assertRaisesRegex(RuntimeError, "exited 2"):
+                humanise_metrics.preserve_drops("a", "b")
+        drops = subprocess.CompletedProcess(args=["x"], returncode=1, stdout="dropped number: 12\n", stderr="")
+        with mock.patch.object(humanise_metrics.subprocess, "run", return_value=drops):
+            self.assertEqual(1, humanise_metrics.preserve_drops("a 12", "a"))
+        with self.assertRaises(FileNotFoundError):
+            humanise_metrics.checker_metrics(None, Path("missing-dslop.toml"))
 
     @unittest.skipUnless(shutil.which("laconic-check"), "laconic-check is not on the PATH")
     def test_lint_count_reads_laconic_check_findings(self):

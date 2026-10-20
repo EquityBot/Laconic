@@ -123,7 +123,7 @@ Limits: 18 to 90 answers per setup from one generating model; the cases are in `
 
 ### Against other humanisers
 
-On 20 October 2026, 3 installed setups humanised 20 AI-written texts for an Australian reader (`evals/humanise-cases.jsonl`: client emails, a PR description, release notes, a board report, a job ad and others), 2 trials each, generated and blind-judged by Claude Opus 5.5. Each setup had only its own skill and was told to use it: Laconic's prose skill, [humanizer](https://github.com/blader/humanizer) (commit `8c307f3`) and [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) (commit `cb16d10`).
+On 20 October 2026, 3 installed setups humanised 20 AI-written texts for an Australian reader (`evals/humanise-cases.jsonl`: client emails, a PR description, release notes, a board report, a job ad and others), 2 trials each, generated and blind-judged by Claude Opus 5.5. Each setup had only its own skill, with the Skill and Read tools, and was told to use it: Laconic's prose skill (commit `c7e3048`), [humanizer](https://github.com/blader/humanizer) (commit `8c307f3`) and [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) (commit `cb16d10`).
 
 | Measure | Laconic | `humanizer` | `avoid-ai-writing` |
 |---|---|---|---|
@@ -132,16 +132,18 @@ On 20 October 2026, 3 installed setups humanised 20 AI-written texts for an Aust
 | Correctness, neutral rubric | 4.80 | 4.13 | 4.18 |
 | Concision, neutral rubric | 4.95 | 4.20 | 3.95 |
 | Blocking findings | 0 | 0 | 0 |
-| Regex fact and pattern checks passed | 40 of 40 | 40 of 40 | 35 of 40 |
-| Length, as a share of the source's words | 65% | 81% | 81% |
+| Regex fact and pattern checks passed (see below) | 40 of 40 | 40 of 40 | 35 of 40 |
+| Mean length relative to its source, in words | 65% | 81% | 81% |
 | avoid-ai-writing detector findings per text (source: 2.6) | 0.03 | 0 | 0.05 |
 | dslop findings per text (source: 1.05) | 0.08 | 0.13 | 0.08 |
-| `laconic-check` findings per text (source: 1.85) | 0.15 | 0.45 | 0.28 |
+| `laconic-check` 0.1.0 findings per text (source: 1.85) | 0.15 | 0.45 | 0.28 |
 | Generation cost for 40 texts | $4.54 | $5.84 | $15.78 |
 
-On the neutral rubric, which drops Laconic's house mechanics (numerals, serial commas and em dashes) but still asks for Australian spelling, Laconic leads `humanizer` by 0.38 weighted (95% interval +0.27 to +0.48) and avoid-ai-writing by 0.43 (+0.30 to +0.56). The lead is not from house rules: most of the other setups' lost correctness points are for content the source did not contain, such as an invented experience in a cover letter or a derived dollar figure in a grant application. All 3 setups remove nearly every tell the detectors find, so the detectors cannot separate them.
+On the neutral rubric, which drops Laconic's house mechanics (numerals, serial commas and em dashes) but still asks for Australian spelling, Laconic leads `humanizer` by 0.38 weighted and `avoid-ai-writing` by 0.43. The 95% intervals, from a paired bootstrap that resamples the 20 texts with both trials, are +0.26 to +0.51 and +0.26 to +0.59. The lead remains when those mechanics are removed from the rubric. The judge's notes on the other setups include content the source did not contain, such as an experience added to a cover letter and a dollar figure derived for a grant application. These detectors returned few findings for every setup in this sample.
 
-Limits: 40 texts per setup from one generating model, judged by the same model family. Each checker reflects its author's house view, and the avoid-ai-writing detector is that skill's own engine. [evals/README.md](evals/README.md) gives the commands to rerun it.
+Four regex checks were widened after inspecting responses that failed them with faithful paraphrases ('in stages', 'a second person will check', 'five to seven', 'Don't install any personal'). The same revised checks were applied to every setup, and the table reports the revised results; before the change, Laconic passed 37 and `humanizer` 34 of 40. The `laconic-check` row comes from version 0.1.0; later versions add rules and count more findings.
+
+Limits: 40 texts per setup from one generating model, judged by the same model family, on these 20 prompts and these installed setups. Each checker reflects its author's house view, and the `avoid-ai-writing` detector is that skill's own engine. Passing the regex checks is partial evidence that facts survived, not proof that every qualifier did. [evals/README.md](evals/README.md) gives the commands to rerun it.
 
 ## Checker
 

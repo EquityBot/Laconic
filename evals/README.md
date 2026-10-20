@@ -79,7 +79,7 @@ python3 scripts/run_evals.py checks evals/results/responses.jsonl --cases evals/
 python3 evals/humanise_metrics.py evals/results/responses.jsonl --avoid path/to/avoid-ai-writing/bin/avoid-ai-writing.js --dslop-config evals/humanise-dslop.toml
 ```
 
-`humanise-rubric-neutral.md` is the rubric without Laconic's house mechanics, so a humaniser is not marked down for house rules it never claims to follow. `humanise_metrics.py` reports each condition's length as a share of the source, `laconic-check` lint findings and `preserve` drops, and optionally the avoid-ai-writing detector and dslop (with negation findings off), beside the same measures on the source texts. Read `preserve` drops before citing them: removing a staged contrast drops its 'not' legitimately.
+`humanise-rubric-neutral.md` is the rubric without Laconic's house mechanics, so a humaniser is not marked down for house rules it never claims to follow. `humanise_metrics.py` reports each condition's length as a share of the source, `laconic-check` lint findings and `preserve` drops, and optionally the avoid-ai-writing detector and dslop (with negation findings off), beside the same measures on the source texts. Read `preserve` drops before citing them: removing a staged contrast drops its 'not' legitimately. It calls whichever `laconic-check` is on the PATH, so record that build with published counts: later versions add rules. A checker that exits with an error raises rather than counting as zero findings.
 
 ## Agent cost benchmark
 

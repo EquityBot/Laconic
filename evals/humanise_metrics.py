@@ -45,8 +45,13 @@ def words(text: str) -> int:
     return len(text.split())
 
 
-def _run(cmd: list[str], text: str) -> str:
-    return subprocess.run(cmd, input=text, capture_output=True, text=True, encoding="utf-8", timeout=120).stdout
+def _run(cmd: list[str], text: str | None = None, ok: tuple[int, ...] = (0,)) -> str:
+    """A checker's stdout. An exit status outside `ok` is an operational failure, not
+    a clean result, so it raises rather than counting as zero findings."""
+    done = subprocess.run(cmd, input=text, capture_output=True, text=True, encoding="utf-8", timeout=120)
+    if done.returncode not in ok:
+        raise RuntimeError(f"{' '.join(cmd)} exited {done.returncode}: {done.stderr.strip()}")
+    return done.stdout
 
 
 def lint_count(text: str) -> int:
@@ -54,15 +59,20 @@ def lint_count(text: str) -> int:
 
 
 def preserve_drops(source: str, rewrite: str) -> int:
+    """Protected items the rewrite dropped; preserve exits 1 when it finds any."""
     with tempfile.TemporaryDirectory() as tmp:
         original, edited = Path(tmp, "original.md"), Path(tmp, "edited.md")
         original.write_text(source, encoding="utf-8")
         edited.write_text(rewrite, encoding="utf-8")
-        out = subprocess.run(["laconic-check", "preserve", str(original), str(edited)], capture_output=True, text=True, encoding="utf-8", timeout=120)
-    return len([line for line in out.stdout.splitlines() if line.startswith("dropped ")])
+        out = _run(["laconic-check", "preserve", str(original), str(edited)], ok=(0, 1))
+    return len([line for line in out.splitlines() if line.startswith("dropped ")])
 
 
 def checker_metrics(avoid: Path | None, dslop_config: Path | None) -> Callable[[str], dict[str, float]]:
+    # dslop exits 0 on a missing config file, silently using its defaults.
+    if dslop_config and not dslop_config.is_file():
+        raise FileNotFoundError(f"dslop config not found: {dslop_config}")
+
     def measure(text: str) -> dict[str, float]:
         result: dict[str, float] = {"lint": lint_count(text)}
         if avoid:
@@ -70,7 +80,8 @@ def checker_metrics(avoid: Path | None, dslop_config: Path | None) -> Callable[[
             result["avoid_score"] = report["score"]
             result["avoid_findings"] = len(report["issues"])
         if dslop_config:
-            out = _run(["uvx", "dslop", "--config", str(dslop_config), "-"], text)
+            # dslop exits 1 when it finds patterns.
+            out = _run(["uvx", "dslop", "--config", str(dslop_config), "-"], text, ok=(0, 1))
             result["dslop"] = len(DSLOP_FINDING.findall(out))
         return result
 
