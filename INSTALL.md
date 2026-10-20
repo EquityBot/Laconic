@@ -59,7 +59,7 @@ this skill. Check the exported instructions before enabling it.
 ### Install
 
 1. Download the [canonical SKILL.md](https://raw.githubusercontent.com/ryanduguid/laconic/main/skills/laconic/SKILL.md) and save it as `SKILL.md`. Review its contents before uploading.
-2. In AstronClaw, open **我的技能 (My skills)**, choose **新建 (New)**, and upload that `.md` file.
+2. In AstronClaw, open **我的技能 (My skills)**, choose **新建 (New)** and upload that `.md` file.
 3. Check that the imported skill is named `laconic`. Use **启用/禁用 (Enable/Disable)** to control its availability.
 
 This route installs the session rules only. The `laconic-prose` writing skill,

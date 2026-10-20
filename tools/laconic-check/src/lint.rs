@@ -104,6 +104,24 @@ const SUBORDINATORS: &[&str] = &[
     "once", "whenever",
 ];
 
+/// Prepositions that open an introductory phrase ('In the original flow, the server...').
+const INTRO_PREPOSITIONS: &[&str] = &[
+    "in", "on", "at", "for", "with", "without", "from", "by", "during", "under", "after", "before",
+    "within", "across", "through", "outside", "inside",
+];
+
+/// Words that end an introductory marker whose comma is not a list comma.
+const MARKERS_BEFORE_COMMA: &[&str] = &[
+    "for example",
+    "for instance",
+    "that is",
+    "however",
+    "in short",
+];
+
+/// Words that open a parenthetical segment between commas ('a folder, not a repository,').
+const PARENTHETICAL_OPENERS: &[&str] = &["which", "not"];
+
 const MONTHS: [&str; 12] = [
     "january",
     "february",
@@ -446,10 +464,30 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
         if !(is_and || is_or) {
             continue;
         }
-        let clause_start = (0..k)
-            .rev()
-            .find(|&j| matches!(lower_chars[j], '.' | ';' | ':' | '!' | '?' | '('))
-            .map_or(0, |j| j + 1);
+        // The clause starts after sentence punctuation or the bracket that encloses this
+        // comma; a bracket pair that closes before it belongs to the clause.
+        let mut depth = 0;
+        let mut clause_start = 0;
+        for j in (0..k).rev() {
+            match lower_chars[j] {
+                ')' => depth += 1,
+                '(' if depth == 0 => {
+                    clause_start = j + 1;
+                    break;
+                }
+                '(' => depth -= 1,
+                '.' if j + 1 < lower_chars.len()
+                    && lower_chars[j + 1].is_ascii_digit()
+                    && j > 0
+                    && lower_chars[j - 1].is_ascii_digit() => {}
+                '.' | ';' | ':' | '!' | '?' if depth == 0 => {
+                    clause_start = j + 1;
+                    break;
+                }
+                _ => {}
+            }
+        }
+        let list_commas = list_commas(&lower_chars, clause_start, k);
         // A final item that itself contains 'and' or 'or' may need the comma.
         let item_start = k + if is_and { 6 } else { 5 };
         let item_end = (item_start..lower_chars.len())
@@ -465,11 +503,69 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
             .split(|c: char| !c.is_alphabetic())
             .find(|w| !w.is_empty())
             .unwrap_or("");
-        let introductory = SUBORDINATORS.contains(&first_word) && earlier.matches(',').count() == 1;
-        if earlier.contains(',') && !compound_final && !compound_earlier && !introductory {
+        // So does 'In the original flow, the server sends a code, and the client...'.
+        let words_before_first_comma = list_commas.first().map_or(0, |&c| {
+            lower_chars[clause_start..c]
+                .iter()
+                .collect::<String>()
+                .split_whitespace()
+                .count()
+        });
+        let introductory = list_commas.len() == 1
+            && (SUBORDINATORS.contains(&first_word)
+                || (INTRO_PREPOSITIONS.contains(&first_word)
+                    && words_before_first_comma >= 3
+                    && starts_sentence_at(&lower_chars, clause_start)));
+        if !list_commas.is_empty() && !compound_final && !compound_earlier && !introductory {
             findings.push(Finding { line, column: k + 1, rule: "serial-comma", message: "possible comma before a final 'and' or 'or'; keep it only if it prevents a misreading".into() });
         }
     }
+}
+
+/// Commas in `chars[from..to]` that could separate list items. Skips commas inside numbers
+/// (75,000), inside a bracket pair, after markers such as 'for example', and the pair of
+/// commas around a 'which' or 'not' segment.
+fn list_commas(chars: &[char], from: usize, to: usize) -> Vec<usize> {
+    let mut found = Vec::new();
+    let mut depth = 0i32;
+    let mut closes_parenthetical = false;
+    for j in from..to {
+        match chars[j] {
+            '(' => depth += 1,
+            ')' => depth -= 1,
+            ',' if depth == 0 => {
+                let in_number = j > 0
+                    && chars[j - 1].is_ascii_digit()
+                    && chars.get(j + 1).is_some_and(|c| c.is_ascii_digit());
+                if in_number {
+                    continue;
+                }
+                let before: String = chars[from..j].iter().collect();
+                let after_marker = MARKERS_BEFORE_COMMA
+                    .iter()
+                    .any(|m| before.trim_end().ends_with(m));
+                let opens = PARENTHETICAL_OPENERS.contains(&word_after(chars, j + 1).as_str());
+                if closes_parenthetical {
+                    closes_parenthetical = false;
+                } else if opens {
+                    closes_parenthetical = true;
+                } else if !after_marker {
+                    found.push(j);
+                }
+            }
+            _ => {}
+        }
+    }
+    found
+}
+
+/// True when position `at` opens a sentence or the line, not a clause after ':' or ';'.
+fn starts_sentence_at(chars: &[char], at: usize) -> bool {
+    chars[..at]
+        .iter()
+        .rev()
+        .find(|c| !c.is_whitespace())
+        .is_none_or(|c| matches!(c, '.' | '!' | '?'))
 }
 
 /// Dates, times and Latin abbreviations that break the Style Manual forms.
@@ -835,6 +931,56 @@ mod tests {
             rules("Due October 5 at 9 a.m. today."),
             vec!["date", "time"]
         );
+    }
+
+    /// Labelled from the serial-comma findings on 164 eval responses (20 October 2026):
+    /// real serial commas, then sentences the rule used to flag wrongly.
+    #[test]
+    fn serial_comma_rule_matches_labelled_eval_responses() {
+        let real = [
+            "Risks include `id > :cursor` pagination, sharding by `id % n`, and integer-typed fields in clients.",
+            "It's your gross business income, excluding GST, input-taxed sales such as residential rent, and sales not connected to an enterprise.",
+            "The client creates a random secret, sends a hash of it when the login starts, and reveals the secret itself when it redeems the code.",
+            "The file may never have been created, it may be gitignored, or the build may be resolving the path wrongly.",
+            "Re-key caches with a dual-read: try the UUID key first, then the integer key, and write the UUID key.",
+            "It excludes GST-free sales such as basic food, input-taxed sales, and sales not connected with your business.",
+            "It's expired, revoked, mistyped, or issued for a different environment.",
+            "Use whatever your other tests use, such as a fixture, a test helper that signs a JWT, or a seeded test user's login.",
+            "Add the UUID next to the integer, write both, move readers one at a time behind flags, and remove the integer at the end.",
+            "So I assumed PostgreSQL, a Kafka-style stream with a schema registry, and a REST API with external clients.",
+            "Wait until the gate has passed, v1 is sunset, event retention has expired, and the longest token lifetime has passed.",
+            // A list after a colon, and a list of 'wh' clauses, are lists (held-out responses).
+            "Store the nonce locally: in session storage for an SPA, secure storage for a mobile app, or the server-side session.",
+            "The paragraph never says what the platform does, who it's for, or what result it produces.",
+        ];
+        for sentence in real {
+            assert_eq!(
+                rules(sentence),
+                vec!["serial-comma"],
+                "should flag: {sentence}"
+            );
+        }
+        let not_lists = [
+            "In Australia you must register once your GST turnover reaches $75,000, and $68,000 is under that.",
+            "This includes taxi and ride-sourcing drivers (for example, Uber), and anyone claiming fuel tax credits.",
+            "Find the entry from just before the operation (for example, `feature@{2}`, or the line before it).",
+            "The working directory is an empty temporary folder, not a git repository, and nothing names a project.",
+            "Without a secret, the authorisation code is the only protection, and the code can leak in several ways.",
+            "The authorisation server signs the user in, which may include multi-factor authentication, and asks them to approve.",
+            "It is a single file. 10,000 notes is a small load for it, and its FTS5 extension gives you fast search.",
+            "For example, a payment entered twice in the ledger, or a receipt left out.",
+            "You made 2 commits (C, D), and meanwhile someone added E to `main`.",
+            "In the original flow, the AS returns a short-lived code via redirect, and the client exchanges it for tokens.",
+            "They do not have the verifier, which was never sent anywhere until step 6, and step 6 goes straight to the AS.",
+            "Use base64url, not standard base64, and strip the padding.",
+            "Which project should I deploy (for example, `site`), and how do you normally deploy it?",
+            "Check for standard base64 (`+`, `/`, `=`) instead of base64url, or hashing a hex string.",
+            "The threshold is $75,000 ($150,000 for non-profit organisations), and $68,000 is below it.",
+            "For public clients, the code itself was the only credential, and it travels through the browser.",
+        ];
+        for sentence in not_lists {
+            assert!(rules(sentence).is_empty(), "should not flag: {sentence}");
+        }
     }
 
     #[test]
