@@ -54,6 +54,23 @@ const STOCK_PHRASES: &[&str] = &[
     "paradigm shift",
 ];
 
+/// Unnecessary hyphens: set phrases the house writes open and established compounds
+/// it writes closed. Matched at a word start, with any suffix ('e-mails', 'co-ordinated').
+const HYPHENATED_FORMS: &[(&str, &str)] = &[
+    ("open-source", "open source"),
+    ("plain-language", "plain language"),
+    ("public-sector", "public sector"),
+    ("best-practice", "best practice"),
+    ("e-mail", "email"),
+    ("on-line", "online"),
+    ("web-site", "website"),
+    ("code-base", "codebase"),
+    ("data-set", "dataset"),
+    ("time-frame", "timeframe"),
+    ("road-map", "roadmap"),
+    ("co-ordinat", "coordinat"),
+];
+
 /// Openers of a staged contrast ('not just a tool, it's a platform'). 'Not only ...
 /// but' is left alone: it is ordinary formal English and common in human prose.
 const CONTRAST_OPENERS: &[&str] = &[
@@ -435,6 +452,26 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
                 });
             }
             from = end;
+        }
+    }
+    for (hyphenated, house) in HYPHENATED_FORMS {
+        let mut from = 0;
+        while let Some(pos) = plain[from..].find(hyphenated) {
+            let at = from + pos;
+            from = at + hyphenated.len();
+            if plain[..at].ends_with(|c: char| c.is_alphanumeric() || c == '-') {
+                continue;
+            }
+            let suffix: String = plain[from..]
+                .chars()
+                .take_while(|c| c.is_ascii_alphabetic())
+                .collect();
+            findings.push(Finding {
+                line,
+                column: plain[..at].chars().count() + 1,
+                rule: "hyphen",
+                message: format!("'{hyphenated}{suffix}': write '{house}{suffix}'"),
+            });
         }
     }
     check_structure(masked, &plain, line, findings);
@@ -956,6 +993,29 @@ mod tests {
 
     fn rules(text: &str) -> Vec<&'static str> {
         lint(text).into_iter().map(|f| f.rule).collect()
+    }
+
+    #[test]
+    fn flags_unnecessary_hyphens_but_keeps_meaningful_ones() {
+        let f = &lint("We e-mailed the open-source maintainers.")[..];
+        assert_eq!(
+            f.iter().map(|f| f.message.as_str()).collect::<Vec<_>>(),
+            vec![
+                "'open-source': write 'open source'",
+                "'e-mailed': write 'emailed'"
+            ]
+        );
+        assert_eq!(
+            rules("Co-ordination of the data-sets"),
+            vec!["hyphen", "hyphen"]
+        );
+        for text in [
+            "Re-sign the up-to-date co-op agreement.",
+            "Reopen-source is not a word, nor is pre-e-mail.",
+            "See https://example.com/open-source and `e-mail`.",
+        ] {
+            assert!(rules(text).is_empty(), "{text}: {:?}", rules(text));
+        }
     }
 
     #[test]
