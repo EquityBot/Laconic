@@ -170,7 +170,7 @@ class EvaluationHarnessTest(unittest.TestCase):
             time.sleep(delay)
             return subprocess.CompletedProcess(args=cmd, returncode=0, stdout=json.dumps(ok), stderr="")
 
-        # The success lands in the same completion batch as the failure, then after it.
+        # The success may finish alongside the failure (delay 0) or after it is seen (delay 0.3).
         for delay in (0.0, 0.3):
             with self.subTest(delay=delay), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)
