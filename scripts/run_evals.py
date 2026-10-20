@@ -563,15 +563,18 @@ def run_evaluations(args: argparse.Namespace) -> int:
                 continue
             pending.append((case, trial))
 
-    # shortcut: calls already running when the budget runs out still finish, so a
-    # run with --jobs N can exceed the budget by up to N - 1 calls.
+    # shortcut: the budget is a soft threshold. No call starts once recorded cost
+    # reaches it, but up to N - 1 calls may still be running; it is not a hard cap.
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("a", encoding="utf-8") as destination, ThreadPoolExecutor(jobs) as pool:
         running: dict[Future[dict[str, Any]], None] = {}
         queue = iter(pending)
         exhausted = False
+        # After a failure, calls already running still finish and are saved, so a
+        # resumed run neither repeats nor loses their responses and costs.
+        failure: BaseException | None = None
         while True:
-            while not exhausted and len(running) < jobs:
+            while failure is None and not exhausted and len(running) < jobs:
                 remaining = args.budget_usd - reported_cost
                 if remaining <= 0:
                     exhausted = True
@@ -587,14 +590,15 @@ def run_evaluations(args: argparse.Namespace) -> int:
                 del running[future]
                 try:
                     row = future.result()
-                except BaseException:
-                    for other in running:
-                        other.cancel()
-                    raise
+                except BaseException as error:
+                    failure = failure or error
+                    continue
                 reported_cost += float(row["cost_usd"] or 0)
                 destination.write(json.dumps(row, ensure_ascii=False) + "\n")
                 destination.flush()
                 print(f"{args.condition} trial {row['trial']}: {row['case_id']}")
+        if failure is not None:
+            raise failure
         if exhausted and next(queue, None) is not None:
             print("Budget exhausted; stopping.", file=sys.stderr)
             return 2
@@ -646,7 +650,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Send the task unchanged; the runner config supplies the setup being compared",
     )
     run.add_argument("--call-timeout", type=float, default=300.0, help="Seconds before one model call counts as failed")
-    run.add_argument("--jobs", type=int, default=1, help="Model calls to run at once; the budget can be exceeded by up to jobs - 1 calls")
+    run.add_argument("--jobs", type=int, default=1, help="Model calls to run at once; the budget is a soft threshold that up to jobs - 1 running calls can pass")
     run.add_argument("--budget-usd", type=float, default=25.0)
     run.add_argument("--allow-unmetered", action="store_true")
     run.add_argument("--output", type=Path, required=True)
