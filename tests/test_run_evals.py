@@ -135,6 +135,31 @@ class EvaluationHarnessTest(unittest.TestCase):
             self.assertEqual(1, runner.call_count)
             self.assertIs(subprocess.DEVNULL, runner.call_args.kwargs.get("stdin"))
 
+    def test_parallel_jobs_record_every_case_and_stop_at_the_budget(self):
+        completed = subprocess.CompletedProcess(
+            args=["stub"], returncode=0, stdout=json.dumps({"result": "ok", "usage": {}, "total_cost_usd": 0.4}), stderr=""
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            runners = root / "runners.json"
+            runners.write_text(json.dumps({"stub": {"command": ["stub"], "response_format": "claude-json"}}), encoding="utf-8")
+            ids = ["direct-answer", "debugging-cause", "concept-explanation", "error-report"]
+            args = argparse.Namespace(
+                cases=ROOT / "evals" / "cases.jsonl", runner_config=runners, runner="stub", condition="baseline",
+                condition_skill=None, case=ids, trials=1, retries=0, budget_usd=10.0,
+                allow_unmetered=False, output=root / "out.jsonl", jobs=3,
+            )
+            with mock.patch.object(run_evals.subprocess, "run", return_value=completed):
+                self.assertEqual(0, run_evals.run_evaluations(args))
+            self.assertEqual(sorted(ids), sorted(row["case_id"] for row in run_evals.read_jsonl(args.output)))
+
+            args.output, args.budget_usd, args.jobs = root / "capped.jsonl", 0.5, 2
+            with mock.patch.object(run_evals.subprocess, "run", return_value=completed):
+                self.assertEqual(2, run_evals.run_evaluations(args))
+            # Calls already running finish after the budget runs out: 2 or 3 of the 4
+            # run, depending on whether the first pair completes together.
+            self.assertIn(len(run_evals.read_jsonl(args.output)), {2, 3})
+
     def test_score_summary_applies_weights_and_release_gates(self):
         scores = []
         for condition, value in (("baseline", 3), ("candidate", 4)):

@@ -36,6 +36,8 @@ Both example runners isolate the call from the operator's own agent configuratio
 
 Isolation also drops the operator's saved model and effort settings, so the claude runner pins `--model` explicitly. Keep a pin when editing the runner: without one, the eval silently runs whatever the operator (or the CLI release) defaults to; the model would vary between operators and over time, and per-token cost varies with it. The pinned model is part of the result: record it with published numbers, as below.
 
+`--jobs N` runs N model calls at once, which cuts wall time roughly N-fold for setups that load skills or read references. Calls already running when the budget runs out still finish, so a run can exceed `--budget-usd` by up to N - 1 calls; rows are written as calls complete, not in case order.
+
 Runs are resumable: rerun the same command after a provider failure and completed `(case, trial, condition, runner)` rows are skipped. Each incomplete call is retried twice by default, and the final provider error is preserved.
 
 ## Terse control
