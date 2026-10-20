@@ -128,6 +128,8 @@ cargo run --manifest-path tools/laconic-check/Cargo.toml -- lint README.md
 cargo run --manifest-path tools/laconic-check/Cargo.toml -- preserve original.md edited.md
 ```
 
+Prebuilt binaries for Linux (x86_64, static), Windows (x86_64) and macOS (Apple silicon) are attached to each `laconic-check-v*` release, with SHA-256 checksums; put the binary on the PATH. Building from source needs only Rust.
+
 `lint -` reads standard input, so an agent can check a draft without saving it. When `laconic-check` is on the PATH, both skills run it on written deliverables before sending. Its US-to-Australian word list combines a hand-written list with about 2,400 pairs generated from the [English Speller Database](https://github.com/en-wl/wordlist) and reviewed against the Style Manual (`tools/laconic-check/gen_au_words.py`). Seeded-fault tests plant one known fault per rule into clean prose and require the checker to catch each one exactly once, with no findings on the clean text. A calibration test runs `lint` over the scraped Style Manual (about 208,700 words of human prose) and fails if its 83 findings rise or any stock phrase appears, which guards against a net increase in findings on human text.
 
 `tools/laconic-check/mcp/server.mjs` exposes `lint` and `preserve` as MCP tools, with no dependencies beyond Node:
