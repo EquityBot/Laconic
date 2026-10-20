@@ -14,6 +14,7 @@ import tempfile
 import time
 from collections import Counter, defaultdict
 from collections.abc import Iterator
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from pathlib import Path
 from typing import Any, Optional
 
@@ -497,73 +498,110 @@ def run_evaluations(args: argparse.Namespace) -> int:
     if args.budget_usd <= 0 or args.budget_usd > 25:
         raise ValueError("--budget-usd must be greater than 0 and no more than 25")
 
+    jobs = getattr(args, "jobs", 1)
+    if jobs < 1:
+        raise ValueError("--jobs must be at least 1")
+
+    def call(case: dict[str, Any], trial: int, remaining: float) -> dict[str, Any]:
+        prompt = _condition_prompt(
+            case["prompt"], args.condition, args.condition_skill, not getattr(args, "no_injection", False)
+        )
+        invocation = [*command]
+        if runner.get("budget_flag"):
+            invocation.extend([runner["budget_flag"], f"{remaining:.4f}"])
+        invocation.append(prompt)
+        completed = None
+        # The model reads today's date from its environment, so 'today' and
+        # 'yesterday' in a response mean this date, which the judge needs.
+        called_on = datetime.date.today().isoformat()
+        for attempt in range(args.retries + 1):
+            with _neutral_cwd() as cwd:
+                completed = _run_with_timeout(
+                    invocation, getattr(args, "call_timeout", 300.0), cwd=cwd, stdin=subprocess.DEVNULL
+                )
+            if completed.returncode == 0:
+                break
+            if attempt < args.retries:
+                time.sleep(min(2**attempt, 5))
+        assert completed is not None
+        if completed.returncode:
+            detail = completed.stderr.strip() or completed.stdout.strip()
+            if completed.stdout.strip():
+                try:
+                    parsed_text, _, _ = _parse_response(completed.stdout, response_format)
+                    detail = parsed_text or detail
+                except (ValueError, json.JSONDecodeError):
+                    pass
+            raise RuntimeError(
+                f"Runner failed after {args.retries + 1} attempts "
+                f"({shlex.join(invocation[:-1])}):\n{detail}"
+            )
+        text, usage, cost = _parse_response(completed.stdout, response_format)
+        if cost is None and not args.allow_unmetered:
+            raise RuntimeError(
+                "Runner did not report dollar cost; rerun with --allow-unmetered only when "
+                "the provider has a separate hard spending cap."
+            )
+        return {
+            "case_id": case["id"],
+            "trial": trial,
+            "condition": args.condition,
+            "runner": args.runner,
+            "response": text,
+            "usage": usage,
+            "cost_usd": cost,
+            "date": called_on,
+        }
+
+    pending = []
+    for trial in range(1, args.trials + 1):
+        for case in cases:
+            if args.case and case["id"] not in args.case:
+                continue
+            if (case["id"], trial, args.condition, args.runner) in done:
+                print(f"skip completed {args.condition} trial {trial}: {case['id']}")
+                continue
+            pending.append((case, trial))
+
+    # shortcut: the budget is a soft threshold. No new call is submitted once recorded
+    # cost reaches it, but up to N - 1 calls may still be running; it is not a hard cap.
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    with args.output.open("a", encoding="utf-8") as destination:
-        for trial in range(1, args.trials + 1):
-            for case in cases:
-                if args.case and case["id"] not in args.case:
-                    continue
-                key = (case["id"], trial, args.condition, args.runner)
-                if key in done:
-                    print(f"skip completed {args.condition} trial {trial}: {case['id']}")
-                    continue
+    with args.output.open("a", encoding="utf-8") as destination, ThreadPoolExecutor(jobs) as pool:
+        running: dict[Future[dict[str, Any]], None] = {}
+        queue = iter(pending)
+        exhausted = False
+        # After a failure, calls already running still finish and are saved, so a
+        # resumed run neither repeats nor loses their responses and costs.
+        failure: BaseException | None = None
+        while True:
+            while failure is None and not exhausted and len(running) < jobs:
                 remaining = args.budget_usd - reported_cost
                 if remaining <= 0:
-                    print("Budget exhausted; stopping.", file=sys.stderr)
-                    return 2
-                prompt = _condition_prompt(
-                    case["prompt"], args.condition, args.condition_skill, not getattr(args, "no_injection", False)
-                )
-                invocation = [*command]
-                if runner.get("budget_flag"):
-                    invocation.extend([runner["budget_flag"], f"{remaining:.4f}"])
-                invocation.append(prompt)
-                completed = None
-                # The model reads today's date from its environment, so 'today' and
-                # 'yesterday' in a response mean this date, which the judge needs.
-                called_on = datetime.date.today().isoformat()
-                for attempt in range(args.retries + 1):
-                    with _neutral_cwd() as cwd:
-                        completed = _run_with_timeout(
-                            invocation, getattr(args, "call_timeout", 300.0), cwd=cwd, stdin=subprocess.DEVNULL
-                        )
-                    if completed.returncode == 0:
-                        break
-                    if attempt < args.retries:
-                        time.sleep(min(2**attempt, 5))
-                assert completed is not None
-                if completed.returncode:
-                    detail = completed.stderr.strip() or completed.stdout.strip()
-                    if completed.stdout.strip():
-                        try:
-                            parsed_text, _, _ = _parse_response(completed.stdout, response_format)
-                            detail = parsed_text or detail
-                        except (ValueError, json.JSONDecodeError):
-                            pass
-                    raise RuntimeError(
-                        f"Runner failed after {args.retries + 1} attempts "
-                        f"({shlex.join(invocation[:-1])}):\n{detail}"
-                    )
-                text, usage, cost = _parse_response(completed.stdout, response_format)
-                if cost is None and not args.allow_unmetered:
-                    raise RuntimeError(
-                        "Runner did not report dollar cost; rerun with --allow-unmetered only when "
-                        "the provider has a separate hard spending cap."
-                    )
-                reported_cost += float(cost or 0)
-                row = {
-                    "case_id": case["id"],
-                    "trial": trial,
-                    "condition": args.condition,
-                    "runner": args.runner,
-                    "response": text,
-                    "usage": usage,
-                    "cost_usd": cost,
-                    "date": called_on,
-                }
+                    exhausted = True
+                    break
+                item = next(queue, None)
+                if item is None:
+                    break
+                running[pool.submit(call, item[0], item[1], remaining)] = None
+            if not running:
+                break
+            finished, _ = wait(running, return_when=FIRST_COMPLETED)
+            for future in finished:
+                del running[future]
+                try:
+                    row = future.result()
+                except BaseException as error:
+                    failure = failure or error
+                    continue
+                reported_cost += float(row["cost_usd"] or 0)
                 destination.write(json.dumps(row, ensure_ascii=False) + "\n")
                 destination.flush()
-                print(f"{args.condition} trial {trial}: {case['id']}")
+                print(f"{args.condition} trial {row['trial']}: {row['case_id']}")
+        if failure is not None:
+            raise failure
+        if exhausted and next(queue, None) is not None:
+            print("Budget exhausted; stopping.", file=sys.stderr)
+            return 2
     print(f"Reported cost: ${reported_cost:.4f}")
     return 0
 
@@ -612,6 +650,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Send the task unchanged; the runner config supplies the setup being compared",
     )
     run.add_argument("--call-timeout", type=float, default=300.0, help="Seconds before one model call counts as failed")
+    run.add_argument("--jobs", type=int, default=1, help="Model calls to run at once; the budget is a soft threshold that up to jobs - 1 running calls can pass")
     run.add_argument("--budget-usd", type=float, default=25.0)
     run.add_argument("--allow-unmetered", action="store_true")
     run.add_argument("--output", type=Path, required=True)
