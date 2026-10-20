@@ -135,11 +135,11 @@ On 20 October 2026, 3 installed setups humanised 20 AI-written texts for an Aust
 | Regex fact and pattern checks passed (see below) | 40 of 40 | 40 of 40 | 35 of 40 |
 | Mean length relative to its source, in words | 65% | 81% | 81% |
 | avoid-ai-writing detector findings per text (source: 2.6) | 0.03 | 0 | 0.05 |
-| dslop findings per text (source: 1.05) | 0.08 | 0.13 | 0.08 |
+| dslop findings per text, including rhythm metrics (source: 1.80) | 0.50 | 0.83 | 0.63 |
 | `laconic-check` 0.1.0 findings per text (source: 1.85) | 0.15 | 0.45 | 0.28 |
 | Generation cost for 40 texts | $4.54 | $5.84 | $15.78 |
 
-On the neutral rubric, which drops Laconic's house mechanics (numerals, serial commas and em dashes) but still asks for Australian spelling, Laconic leads `humanizer` by 0.38 weighted and `avoid-ai-writing` by 0.43. The 95% intervals, from a paired bootstrap that resamples the 20 texts with both trials, are +0.26 to +0.51 and +0.26 to +0.59. The lead remains when those mechanics are removed from the rubric. The judge's notes on the other setups include content the source did not contain, such as an experience added to a cover letter and a dollar figure derived for a grant application. These detectors returned few findings for every setup in this sample.
+On the neutral rubric, which drops Laconic's house mechanics (numerals, serial commas and em dashes) but still asks for Australian spelling, Laconic leads `humanizer` by 0.38 weighted and `avoid-ai-writing` by 0.43. The 95% intervals, from a paired bootstrap that resamples the 20 texts with both trials, are +0.26 to +0.51 and +0.26 to +0.59. The lead remains when those mechanics are removed from the rubric. The judge's notes on the other setups include content the source did not contain, such as an experience added to a cover letter and a dollar figure derived for a grant application. All 3 setups cut these detectors' findings well below the sources' levels in this sample.
 
 Four regex checks were widened after inspecting responses that failed them with faithful paraphrases ('in stages', 'a second person will check', 'five to seven', 'Don't install any personal'). The same revised checks were applied to every setup, and the table reports the revised results; before the change, Laconic passed 37 and `humanizer` 34 of 40. The `laconic-check` row comes from version 0.1.0; later versions add rules and count more findings.
 

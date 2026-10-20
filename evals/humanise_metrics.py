@@ -23,6 +23,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import tomllib
 from collections import defaultdict
 from pathlib import Path
 from statistics import mean
@@ -33,7 +34,10 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import run_evals  # noqa: E402
 
 FINDING =re.compile(r"^\S.*:\d+:\d+: ", re.MULTILINE)
-DSLOP_FINDING = re.compile(r"<stdin>:\d+:\d+ ")
+# Pattern findings carry a position ('<stdin>:1:17 em-dash'); whole-text rhythm
+# metrics do not ('<stdin> sentence-length-cv=0.19 (threshold 0.30)').
+DSLOP_FINDING = re.compile(r"<stdin>(?::\d+:\d+)? [a-z]")
+DROPPED = re.compile(r"^dropped ", re.MULTILINE)
 
 
 def source_text(prompt: str) -> str:
@@ -45,11 +49,14 @@ def words(text: str) -> int:
     return len(text.split())
 
 
-def _run(cmd: list[str], text: str | None = None, ok: tuple[int, ...] = (0,)) -> str:
-    """A checker's stdout. An exit status outside `ok` is an operational failure, not
-    a clean result, so it raises rather than counting as zero findings."""
+def _run(cmd: list[str], text: str | None = None, findings: re.Pattern[str] | None = None) -> str:
+    """A checker's stdout. Exit 0 is success. With `findings`, exit 1 is success only
+    when stdout holds a finding, because 1 also reports an operational failure (uvx
+    exits 1 when it cannot launch). Any other status raises rather than counting as
+    zero findings."""
     done = subprocess.run(cmd, input=text, capture_output=True, text=True, encoding="utf-8", timeout=120)
-    if done.returncode not in ok:
+    found = findings is not None and done.returncode == 1 and findings.search(done.stdout)
+    if done.returncode != 0 and not found:
         raise RuntimeError(f"{' '.join(cmd)} exited {done.returncode}: {done.stderr.strip()}")
     return done.stdout
 
@@ -64,14 +71,17 @@ def preserve_drops(source: str, rewrite: str) -> int:
         original, edited = Path(tmp, "original.md"), Path(tmp, "edited.md")
         original.write_text(source, encoding="utf-8")
         edited.write_text(rewrite, encoding="utf-8")
-        out = _run(["laconic-check", "preserve", str(original), str(edited)], ok=(0, 1))
-    return len([line for line in out.splitlines() if line.startswith("dropped ")])
+        out = _run(["laconic-check", "preserve", str(original), str(edited)], findings=DROPPED)
+    return len(DROPPED.findall(out))
 
 
 def checker_metrics(avoid: Path | None, dslop_config: Path | None) -> Callable[[str], dict[str, float]]:
-    # dslop exits 0 on a missing config file, silently using its defaults.
-    if dslop_config and not dslop_config.is_file():
-        raise FileNotFoundError(f"dslop config not found: {dslop_config}")
+    # dslop silently falls back to its defaults when its config file is missing or
+    # is not valid TOML, so check both before measuring anything.
+    if dslop_config:
+        if not dslop_config.is_file():
+            raise FileNotFoundError(f"dslop config not found: {dslop_config}")
+        tomllib.loads(dslop_config.read_text(encoding="utf-8"))
 
     def measure(text: str) -> dict[str, float]:
         result: dict[str, float] = {"lint": lint_count(text)}
@@ -80,8 +90,7 @@ def checker_metrics(avoid: Path | None, dslop_config: Path | None) -> Callable[[
             result["avoid_score"] = report["score"]
             result["avoid_findings"] = len(report["issues"])
         if dslop_config:
-            # dslop exits 1 when it finds patterns.
-            out = _run(["uvx", "dslop", "--config", str(dslop_config), "-"], text, ok=(0, 1))
+            out = _run(["uvx", "dslop", "--config", str(dslop_config), "-"], text, findings=DSLOP_FINDING)
             result["dslop"] = len(DSLOP_FINDING.findall(out))
         return result
 

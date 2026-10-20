@@ -1,6 +1,8 @@
 import shutil
 import subprocess
 import sys
+import tempfile
+import tomllib
 import unittest
 from unittest import mock
 from pathlib import Path
@@ -53,6 +55,22 @@ class HumaniseMetricsTest(unittest.TestCase):
             self.assertEqual(1, humanise_metrics.preserve_drops("a 12", "a"))
         with self.assertRaises(FileNotFoundError):
             humanise_metrics.checker_metrics(None, Path("missing-dslop.toml"))
+        # Exit 1 without a finding is an operational failure (uvx exits 1 when it cannot launch).
+        launch = subprocess.CompletedProcess(args=["x"], returncode=1, stdout="", stderr="No solution found")
+        with mock.patch.object(humanise_metrics.subprocess, "run", return_value=launch):
+            with self.assertRaisesRegex(RuntimeError, "exited 1: No solution found"):
+                humanise_metrics.preserve_drops("a", "b")
+            with self.assertRaisesRegex(RuntimeError, "exited 1"):
+                humanise_metrics._run(["uvx", "dslop", "-"], "text", findings=humanise_metrics.DSLOP_FINDING)
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = Path(tmp, "dslop.toml")
+            bad.write_text("[patterns\nbroken = \n", encoding="utf-8")
+            with self.assertRaises(tomllib.TOMLDecodeError):
+                humanise_metrics.checker_metrics(None, bad)
+
+    def test_dslop_pattern_counts_positioned_findings_and_rhythm_metrics(self):
+        out = "  <stdin>:1:17 em-dash\n  <stdin> sentence-length-cv=0.19 (threshold 0.30)\n\nfix:\n  em-dash: rewrite\n"
+        self.assertEqual(2, len(humanise_metrics.DSLOP_FINDING.findall(out)))
 
     @unittest.skipUnless(shutil.which("laconic-check"), "laconic-check is not on the PATH")
     def test_lint_count_reads_laconic_check_findings(self):
