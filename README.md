@@ -121,6 +121,28 @@ Laconic beats the plain instruction by 0.56 weighted. The changes are neutral on
 
 Limits: 18 to 90 answers per setup from one generating model; the cases are in `evals/cases.jsonl` and the rubric in `evals/rubric.md`. Serial commas remain the most common slip.
 
+### Against other humanisers
+
+On 20 October 2026, 3 installed setups humanised 20 AI-written texts for an Australian reader (`evals/humanise-cases.jsonl`: client emails, a PR description, release notes, a board report, a job ad and others), 2 trials each, generated and blind-judged by Claude Opus 5.5. Each setup had only its own skill and was told to use it: Laconic's prose skill, [humanizer](https://github.com/blader/humanizer) (commit `8c307f3`) and [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) (commit `cb16d10`).
+
+| Measure | Laconic | `humanizer` | `avoid-ai-writing` |
+|---|---|---|---|
+| Weighted score, neutral rubric (1 to 5) | 4.92 | 4.54 | 4.50 |
+| Weighted score, house rubric | 4.87 | 4.50 | 4.42 |
+| Correctness, neutral rubric | 4.80 | 4.13 | 4.18 |
+| Concision, neutral rubric | 4.95 | 4.20 | 3.95 |
+| Blocking findings | 0 | 0 | 0 |
+| Regex fact and pattern checks passed | 40 of 40 | 40 of 40 | 35 of 40 |
+| Length, as a share of the source's words | 65% | 81% | 81% |
+| avoid-ai-writing detector findings per text (source: 2.6) | 0.03 | 0 | 0.05 |
+| dslop findings per text (source: 1.05) | 0.08 | 0.13 | 0.08 |
+| `laconic-check` findings per text (source: 1.85) | 0.15 | 0.45 | 0.28 |
+| Generation cost for 40 texts | $4.54 | $5.84 | $15.78 |
+
+On the neutral rubric, which drops Laconic's house mechanics (numerals, serial commas and em dashes) but still asks for Australian spelling, Laconic leads `humanizer` by 0.38 weighted (95% interval +0.27 to +0.48) and avoid-ai-writing by 0.43 (+0.30 to +0.56). The lead is not from house rules: most of the other setups' lost correctness points are for content the source did not contain, such as an invented experience in a cover letter or a derived dollar figure in a grant application. All 3 setups remove nearly every tell the detectors find, so the detectors cannot separate them.
+
+Limits: 40 texts per setup from one generating model, judged by the same model family. Each checker reflects its author's house view, and the avoid-ai-writing detector is that skill's own engine. [evals/README.md](evals/README.md) gives the commands to rerun it.
+
 ## Checker
 
 `tools/laconic-check` is a small Rust CLI with no dependencies. `lint` flags candidates in Markdown prose: em dashes, US spellings, 'while' and 'among' as conjunction and preposition, double quotation marks, possible serial commas, numbers written as words, dates and times in non-Style Manual forms, weekdays that do not match their date, Latin abbreviations, chatbot closers and stock phrases such as 'Bottom line:' or 'circle back', skipping code, URLs and quoted text. It also flags chat-tool residue, such as zero-width characters, citation markers and ChatGPT tracking tags, including inside links. `preserve` reports numbers, inline code, URLs and words such as 'not', 'must' and 'only' that an edit dropped. A finding is a reason to look, not proof of a defect.

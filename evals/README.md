@@ -67,6 +67,20 @@ python3 scripts/run_evals.py run --runner-config setups.json --runner setup-laco
 
 Judge with `--conditions candidate comparator`, then score and measure with `--reference comparator`, which compares the candidate with the comparator in place of a baseline. Give every setup the same tools and the same reachable files, or the comparison measures access rather than instructions.
 
+## Humanising benchmark
+
+`humanise-cases.jsonl` holds 20 AI-written texts to humanise for an Australian reader, each with regex checks for the facts that must survive and the patterns that must go. To compare humanisers, install each as a Claude Code plugin in its own runner (`--plugin-dir`, `--add-dir`, `--tools Skill,Read` and an `--append-system-prompt-file` naming the skill to use), run each with `--no-injection` as one of the 3 conditions, then judge all 3 together:
+
+```bash
+python3 scripts/run_evals.py run --cases evals/humanise-cases.jsonl --runner-config setups.json --runner hum-laconic --condition candidate --no-injection --trials 2 --budget-usd 12 --output evals/results/hum-laconic.jsonl
+python3 scripts/judge.py --runner claude --cases evals/humanise-cases.jsonl --conditions baseline candidate comparator --responses evals/results/responses.jsonl --output evals/results/scores.jsonl
+python3 scripts/judge.py --runner claude --rubric evals/humanise-rubric-neutral.md --cases evals/humanise-cases.jsonl --conditions baseline candidate comparator --responses evals/results/responses.jsonl --output evals/results/scores-neutral.jsonl
+python3 scripts/run_evals.py checks evals/results/responses.jsonl --cases evals/humanise-cases.jsonl
+python3 evals/humanise_metrics.py evals/results/responses.jsonl --avoid path/to/avoid-ai-writing/bin/avoid-ai-writing.js --dslop-config evals/humanise-dslop.toml
+```
+
+`humanise-rubric-neutral.md` is the rubric without Laconic's house mechanics, so a humaniser is not marked down for house rules it never claims to follow. `humanise_metrics.py` reports each condition's length as a share of the source, `laconic-check` lint findings and `preserve` drops, and optionally the avoid-ai-writing detector and dslop (with negation findings off), beside the same measures on the source texts. Read `preserve` drops before citing them: removing a staged contrast drops its 'not' legitimately.
+
 ## Agent cost benchmark
 
 `evals/agent_bench.py` measures whether a rule set changes how an agent works, not just how it writes. It builds 5 small Python repositories with one failing test each and asks Claude Code to fix them with tools limited to Read, Edit, Glob, Grep and `python -m unittest`. It records whether the tests pass afterwards, plus turns, tokens, cost and permission denials. It compares 2 rule files:
