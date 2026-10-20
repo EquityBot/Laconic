@@ -77,6 +77,8 @@ const SEEDS: &[(&str, &str, &str)] = &[
         "Two reviewers checked",
         "The result? Two reviewers checked",
     ),
+    ("hyphen", "the program", "the open-source program"),
+    ("hyphen", "left for the centre", "e-mailed the centre"),
     ("word-choice", "whilst demand", "while demand"),
     ("word-choice", "amongst small", "among small"),
     ("date", "on 19 October 2026", "on 19th October 2026"),
@@ -164,7 +166,7 @@ fn human_corpus_findings_stay_under_the_ceiling() {
         .filter(|f| {
             matches!(
                 f.rule,
-                "stock-phrase" | "staged-contrast" | "reveal-question"
+                "stock-phrase" | "staged-contrast" | "reveal-question" | "hyphen"
             )
         })
         .collect();
@@ -183,6 +185,7 @@ fn every_rule_has_a_seed() {
         "stock-phrase",
         "staged-contrast",
         "reveal-question",
+        "hyphen",
         "word-choice",
         "date",
         "time",
