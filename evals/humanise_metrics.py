@@ -29,7 +29,10 @@ from statistics import mean
 from typing import Any, Callable
 
 ROOT = Path(__file__).resolve().parents[1]
-FINDING = re.compile(r"^\S.*:\d+:\d+: ", re.MULTILINE)
+sys.path.insert(0, str(ROOT / "scripts"))
+import run_evals  # noqa: E402
+
+FINDING =re.compile(r"^\S.*:\d+:\d+: ", re.MULTILINE)
 DSLOP_FINDING = re.compile(r"<stdin>:\d+:\d+ ")
 
 
@@ -106,9 +109,8 @@ def main() -> int:
     parser.add_argument("--avoid", type=Path, help="Path to avoid-ai-writing's bin/avoid-ai-writing.js")
     parser.add_argument("--dslop-config", type=Path, help="dslop.toml; runs dslop through uvx")
     args = parser.parse_args()
-    cases = {case["id"]: case for case in map(json.loads, args.cases.read_text(encoding="utf-8").splitlines())}
-    rows = [json.loads(line) for line in args.responses.read_text(encoding="utf-8").splitlines() if line.strip()]
-    rows = [row for row in rows if row["case_id"] in cases]
+    cases = {case["id"]: case for case in run_evals.load_cases(args.cases)}
+    rows = [row for row in run_evals.read_jsonl(args.responses) if row["case_id"] in cases]
     print(json.dumps(summarise(rows, cases, checker_metrics(args.avoid, args.dslop_config)), indent=2))
     return 0
 
