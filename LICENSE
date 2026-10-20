@@ -4,9 +4,6 @@ Copyright (c) 2026 Ayoub Ghriss
 Copyright (c) 2026 Ryan Duguid
 Copyright (c) 2026 Peter Yang
 Copyright (c) 2025 Hardik Pandya
-Portions adapted from humanizer (Siqi Chen) and its forks by jooray and sbfnk,
-avoid-ai-writing (Conor Bronsdon) and Sepia (copyright 2026 Nanako Tsai), each
-under the MIT License.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,14 +22,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Third-party content: skills/laconic/references/australian-government-style-manual.md
-and the rules derived from it reproduce material from the Australian Government
-Style Manual (https://www.stylemanual.gov.au/), copyright Commonwealth of
-Australia, licensed under the Creative Commons Attribution 4.0 International
-licence (https://creativecommons.org/licenses/by/4.0/). The text was scraped on
-13 September 2026 with navigation, release notes and feedback widgets removed,
-and the derived rules summarise and adapt it. This MIT License does not apply
-to that material.

@@ -1,0 +1,16 @@
+Laconic
+
+Laconic is licensed under the MIT License in LICENSE, except as stated below.
+
+Portions adapted from humanizer (Siqi Chen) and its forks by jooray and sbfnk,
+avoid-ai-writing (Conor Bronsdon) and Sepia (copyright 2026 Nanako Tsai), each
+under the MIT License.
+
+Third-party content: skills/laconic-prose/references/australian-government-style-manual.md
+and the rules derived from it reproduce material from the Australian Government
+Style Manual (https://www.stylemanual.gov.au/), copyright Commonwealth of
+Australia, licensed under the Creative Commons Attribution 4.0 International
+licence (https://creativecommons.org/licenses/by/4.0/). The text was scraped on
+13 September 2026 with navigation, release notes and feedback widgets removed,
+and the derived rules summarise and adapt it. The MIT License does not apply
+to that material.
