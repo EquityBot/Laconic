@@ -62,6 +62,21 @@ const SEEDS: &[(&str, &str, &str)] = &[
         "to the review.",
         "to the review. Bottom line: it works.",
     ),
+    (
+        "staged-contrast",
+        "Bring the logs, metrics and traces to the review.",
+        "It's not a log review, it's a trace review.",
+    ),
+    (
+        "staged-contrast",
+        "to the review.",
+        "to the review, not just a quick look but a full audit.",
+    ),
+    (
+        "reveal-question",
+        "Two reviewers checked",
+        "The result? Two reviewers checked",
+    ),
     ("word-choice", "whilst demand", "while demand"),
     ("word-choice", "amongst small", "among small"),
     ("date", "on 19 October 2026", "on 19th October 2026"),
@@ -129,7 +144,7 @@ fn every_seeded_fault_is_caught_exactly_once() {
 /// Government prose. Many are the manual's own examples of forms to avoid or its
 /// 'while' and 'among', which the house style overrides. The ceiling only moves down;
 /// it guards against a net increase on this corpus, not against every new false finding.
-const STYLE_MANUAL_CEILING: usize = 83;
+const STYLE_MANUAL_CEILING: usize = 82;
 
 #[test]
 fn human_corpus_findings_stay_under_the_ceiling() {
@@ -144,11 +159,16 @@ fn human_corpus_findings_stay_under_the_ceiling() {
         "{} findings on the Style Manual, ceiling {STYLE_MANUAL_CEILING}",
         findings.len()
     );
-    let stock: Vec<_> = findings
+    let tells: Vec<_> = findings
         .iter()
-        .filter(|f| f.rule == "stock-phrase")
+        .filter(|f| {
+            matches!(
+                f.rule,
+                "stock-phrase" | "staged-contrast" | "reveal-question"
+            )
+        })
         .collect();
-    assert!(stock.is_empty(), "stock phrases in human prose: {stock:?}");
+    assert!(tells.is_empty(), "AI tells in human prose: {tells:?}");
 }
 
 #[test]
@@ -161,6 +181,8 @@ fn every_rule_has_a_seed() {
         "number-word",
         "closer",
         "stock-phrase",
+        "staged-contrast",
+        "reveal-question",
         "word-choice",
         "date",
         "time",

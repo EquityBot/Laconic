@@ -53,6 +53,70 @@ const STOCK_PHRASES: &[&str] = &[
     "game-changer",
     "paradigm shift",
 ];
+
+/// Openers of a staged contrast ('not just a tool, it's a platform'). 'Not only ...
+/// but' is left alone: it is ordinary formal English and common in human prose.
+const CONTRAST_OPENERS: &[&str] = &[
+    "not just ",
+    "not simply ",
+    "not merely ",
+    "isn't just ",
+    "aren't just ",
+    "wasn't just ",
+    "isn't about ",
+    "it's not ",
+    "it is not ",
+    "this isn't ",
+    "this is not ",
+    "that's not ",
+];
+
+/// What follows the turn of a staged contrast, after a comma, semicolon or dash.
+const CONTRAST_TURNS: &[&str] = &[
+    "it's ",
+    "it is ",
+    "it was ",
+    "they're ",
+    "they are ",
+    "we're ",
+    "this is ",
+    "that's ",
+];
+
+/// Reveal questions answered in the next sentence ('The result? A 40% cut.'). An explicit
+/// list: a general 'short question' test flags ordinary questions ('The dog died?').
+const REVEAL_PHRASES: &[&str] = &[
+    "the result",
+    "the results",
+    "the outcome",
+    "the upshot",
+    "the catch",
+    "the cause",
+    "the root cause",
+    "the reason",
+    "the answer",
+    "the fix",
+    "the problem",
+    "the real problem",
+    "the difference",
+    "the secret",
+    "our secret",
+    "the twist",
+    "the kicker",
+    "the takeaway",
+    "the truth",
+    "the best part",
+    "why",
+    "how",
+    "honestly",
+];
+
+/// Auxiliary verbs that open a question; a reveal's answer never starts with one.
+const QUESTION_OPENERS: &[&str] = &[
+    "do", "does", "did", "is", "are", "was", "were", "can", "could", "will", "would", "should",
+    "has", "have", "had", "don't", "doesn't", "didn't", "isn't", "aren't", "wasn't",
+];
+
 /// US forms that are not caught by the -ize/-yze rule, with the Australian form.
 const US_WORDS: &[(&str, &str)] = &[
     ("color", "colour"),
@@ -404,6 +468,7 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
             from = end;
         }
     }
+    check_structure(masked, &plain, line, findings);
     // Words, for spelling.
     let mut start = None;
     for k in 0..=lower_chars.len() {
@@ -557,6 +622,108 @@ fn list_commas(chars: &[char], from: usize, to: usize) -> Vec<usize> {
         }
     }
     found
+}
+
+/// End (exclusive) of the sentence starting at `start`: just past a '.', '!' or '?'
+/// followed by whitespace or the end of the line, or the end of the line.
+fn sentence_end(chars: &[char], start: usize) -> usize {
+    let mut stop = start;
+    while stop < chars.len()
+        && !(matches!(chars[stop], '.' | '!' | '?')
+            && chars.get(stop + 1).is_none_or(|c| c.is_whitespace()))
+    {
+        stop += 1;
+    }
+    (stop + 1).min(chars.len())
+}
+
+/// Structural tells, one finding per sentence at most: a staged contrast ('it's not
+/// X, it's Y'; 'not just X but Y') and a reveal question answered by the next
+/// sentence ('The result? A 40% cut.'). `plain` is `masked` lowercased char for char.
+fn check_structure(masked: &[char], plain: &str, line: usize, findings: &mut Vec<Finding>) {
+    let chars: Vec<char> = plain.chars().collect();
+    let skip_space = |mut at: usize| {
+        while at < chars.len() && chars[at].is_whitespace() {
+            at += 1;
+        }
+        at
+    };
+    let mut start = skip_space(0);
+    while start < chars.len() {
+        let stop = sentence_end(&chars, start);
+        let sentence: String = chars[start..stop].iter().collect();
+        let lead = sentence.len() - sentence.trim_start_matches([' ', '-', '*', '#']).len();
+        if let Some(at) = staged_contrast(&sentence, lead) {
+            findings.push(Finding {
+                line,
+                column: start + sentence[..at].chars().count() + 1,
+                rule: "staged-contrast",
+                message: "staged contrast ('not X, it's Y'); state what it is".into(),
+            });
+        }
+        // The answer is the next sentence on the line, and it must not be a question:
+        // no '?' in its closing punctuation ('Did it pass?!') and no auxiliary verb
+        // opening it, which also covers a question cut short by 'Mr.' or 'Dr.'.
+        let next = skip_space(stop);
+        let answer: String = chars[next..sentence_end(&chars, next)].iter().collect();
+        let asks = answer
+            .trim_end()
+            .chars()
+            .rev()
+            .take_while(|c| matches!(c, '?' | '!' | '.'))
+            .any(|c| c == '?')
+            || answer
+                .split_whitespace()
+                .next()
+                .is_some_and(|w| QUESTION_OPENERS.contains(&w));
+        let answered = answer.contains(char::is_alphanumeric) && !asks;
+        let capital = masked.get(start + lead).is_some_and(|c| c.is_uppercase());
+        let question = sentence[lead..].trim_end();
+        let reveal = question
+            .strip_suffix('?')
+            .is_some_and(|phrase| REVEAL_PHRASES.contains(&phrase.trim()));
+        if reveal && answered && capital {
+            findings.push(Finding {
+                line,
+                column: start + lead + 1,
+                rule: "reveal-question",
+                message: "question-and-answer reveal; state the answer directly".into(),
+            });
+        }
+        start = next;
+    }
+}
+
+/// Byte offset of a staged-contrast opener in `sentence`, if its turn follows. Openers
+/// beginning 'it's not' or 'this is not' count only at the start of the sentence and
+/// only with an 'it's' turn, so 'If it is not listed, it is excluded' and 'This is not
+/// a firm rule, but one example' are not findings.
+fn staged_contrast(sentence: &str, lead: usize) -> Option<usize> {
+    for (index, opener) in CONTRAST_OPENERS.iter().enumerate() {
+        let sentence_start_only =
+            index >= CONTRAST_OPENERS.iter().position(|o| *o == "it's not ")?;
+        let mut from = 0;
+        while let Some(pos) = sentence[from..].find(opener) {
+            let at = from + pos;
+            from = at + opener.len();
+            let bounded = !sentence[..at].ends_with(|c: char| c.is_alphanumeric());
+            if !bounded || (sentence_start_only && at != lead) {
+                continue;
+            }
+            let rest = &sentence[from..];
+            let turned = (!sentence_start_only && rest.contains(" but "))
+                || rest
+                    .match_indices([',', ';', '\u{2014}', '\u{2013}'])
+                    .any(|(i, sep)| {
+                        let after = rest[i + sep.len()..].trim_start();
+                        CONTRAST_TURNS.iter().any(|t| after.starts_with(t))
+                    });
+            if turned {
+                return Some(at);
+            }
+        }
+    }
+    None
 }
 
 /// True when position `at` opens a sentence or the line, not a clause after ':' or ';'.
@@ -844,6 +1011,73 @@ mod tests {
 
     fn rules(text: &str) -> Vec<&'static str> {
         lint(text).into_iter().map(|f| f.rule).collect()
+    }
+
+    #[test]
+    fn flags_staged_contrasts_but_not_ordinary_negation() {
+        for text in [
+            "It's not a tool, it's a platform.",
+            "It\u{2019}s not a tool; it\u{2019}s a platform.",
+            "The deadline isn't just a date, it's a milestone.",
+            "We ship not just code but working software.",
+            "This isn't about speed. It is about trust, and this is not just about speed but trust.",
+        ] {
+            assert_eq!(rules(text), vec!["staged-contrast"], "{text}");
+        }
+        for text in [
+            "If it is not listed, it is excluded.",
+            "This is not a firm rule, but one example of how things can change.",
+            "Not only the family but the carers attended.",
+            "It's not ready yet.",
+            "The fix is not just a restart.",
+            "She said 'it's not a tool, it's a platform' twice.",
+        ] {
+            assert!(rules(text).is_empty(), "{text}: {:?}", rules(text));
+        }
+        let f = &lint("Read this. It's not X, it's Y.")[0];
+        assert_eq!((f.column, f.rule), (12, "staged-contrast"));
+    }
+
+    #[test]
+    fn flags_verbless_reveal_questions_followed_by_their_answer() {
+        for text in [
+            "The root cause? A misconfigured pool.",
+            "- Our secret? Testing.",
+            "Why? Because the cache was cold.",
+        ] {
+            assert_eq!(rules(text), vec!["reveal-question"], "{text}");
+        }
+        for text in [
+            "Who's still there? A few staff.",
+            "Did it pass? Yes.",
+            "Is the build ready?",
+            "the result? a cut, on a wrapped line.",
+            "What does the 401 mean in this request? It means no token.",
+            "Your payment cleared? Check the account.",
+            "The dog died? I had no idea.",
+            "Really? Did it pass?",
+            "The result? Did it pass?",
+            "The result? Did Mr. Smith pass?",
+            "The result? Did it pass?!",
+            "The result? Is it ready.",
+        ] {
+            assert!(rules(text).is_empty(), "{text}: {:?}", rules(text));
+        }
+        assert_eq!(lint("Done. The result? A cut.")[0].column, 7);
+        // Columns count characters, not bytes.
+        assert_eq!(lint("Caf\u{e9}. The result? A cut.")[0].column, 7);
+    }
+
+    #[test]
+    fn any_whitespace_ends_a_sentence() {
+        for gap in [" ", "\t", "\u{a0}"] {
+            let text = format!("The fix is not just a restart.{gap}It is slow, but it works.");
+            assert!(rules(&text).is_empty(), "{gap:?}: {:?}", rules(&text));
+            let text = format!("Done.{gap}It's not a tool, it's a platform.");
+            assert_eq!(rules(&text), vec!["staged-contrast"], "{gap:?}");
+        }
+        let f = &lint("Caf\u{e9}. It\u{2019}s not X, it\u{2019}s Y.")[0];
+        assert_eq!((f.column, f.rule), (7, "staged-contrast"));
     }
 
     #[test]
