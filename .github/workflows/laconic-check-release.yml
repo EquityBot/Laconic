@@ -53,8 +53,8 @@ jobs:
       - name: Test and build
         run: |
           rustup target add ${{ matrix.target }}
-          cargo test
-          cargo build --release --target ${{ matrix.target }}
+          cargo test --locked
+          cargo build --locked --release --target ${{ matrix.target }}
       - name: Package
         run: |
           name=laconic-check-${{ matrix.target }}
