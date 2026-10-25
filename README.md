@@ -1,9 +1,17 @@
 <p align="center">
-  <strong>Laconic: concise, answer-first output and an AI-text humaniser in correct Australian English.</strong>
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/banner-light.svg">
+    <img src=".github/assets/banner.svg" width="100%" alt="Laconic: answer first, every fact kept, Australian English. Pixel art of a crested Spartan helmet beside the LACONIC wordmark in block letters.">
+  </picture>
 </p>
-<p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/ryanduguid/laconic?style=flat&labelColor=000000&color=66023C" alt="Licence"></a>
-</p>
+
+<div align="center">
+
+[![tests](https://img.shields.io/github/actions/workflow/status/ryanduguid/laconic/tests.yml?branch=main&label=tests&labelColor=000000&style=flat)](https://github.com/ryanduguid/laconic/actions/workflows/tests.yml) [![laconic-check](https://img.shields.io/github/actions/workflow/status/ryanduguid/laconic/laconic-check.yml?branch=main&label=laconic-check&labelColor=000000&style=flat)](https://github.com/ryanduguid/laconic/actions/workflows/laconic-check.yml) [![release](https://img.shields.io/github/v/release/ryanduguid/laconic?filter=laconic-check-v*&label=release&labelColor=000000&color=66023C&style=flat)](https://github.com/ryanduguid/laconic/releases/latest) [![licence](https://img.shields.io/github/license/ryanduguid/laconic?label=licence&labelColor=000000&color=66023C&style=flat)](LICENSE)
+
+[Install](#install) · [What changes](#what-changes) · [Evaluation](#evaluation) · [Checker](#checker) · [Always on](#always-on)
+
+</div>
 
 Laconic is a skill for coding agents and chat assistants. It makes the model lead with the answer, mark what it has not verified and stop when the answer is complete, without dropping a fact, step or caveat the reader needs. It instructs the model to write every original sentence to the Australian Government Style Manual, with the house overrides listed in the skill.
 
@@ -88,6 +96,9 @@ Measured on 19 October 2026 with the harness in `evals/`: 30 cases, 2 trials eac
 | Blocking findings | 1 | 7 | |
 | Mean answer length (characters) | 1,360 | 1,663 | |
 
+<details>
+<summary>Second judge, checker counts and follow-up runs</summary>
+
 A second, blind judge from another model family (GPT-6 Pro) agreed on the direction with a smaller margin: weighted score 4.63 against 4.46 (difference +0.17, 95% interval +0.05 to +0.30) and correctness +0.33 (+0.12 to +0.58). It applied the house mechanics far more strictly and found serial commas and numbers written as words in many answers from both setups.
 
 `tools/laconic-check` counts those slips without a judge. Across the same 60 answers per setup:
@@ -119,6 +130,8 @@ A terse control on 20 October 2026 (45 cases, 2 trials, Opus 5.5 generating and 
 
 Laconic beats the plain instruction by 0.56 weighted. The changes are neutral on judged quality and fix the financial-year hyphen, which both other setups missed; none of the blocking findings comes from the changed guidance.
 
+</details>
+
 Limits: 18 to 90 answers per setup from one generating model; the cases are in `evals/cases.jsonl` and the rubric in `evals/rubric.md`. Serial commas remain the most common slip.
 
 ### Against other humanisers
@@ -141,7 +154,12 @@ On 20 October 2026, 3 installed setups humanised 20 AI-written texts for an Aust
 
 On the neutral rubric, which drops Laconic's house mechanics (numerals, serial commas and em dashes) but still asks for Australian spelling, Laconic leads `humanizer` by 0.38 weighted and `avoid-ai-writing` by 0.43. The 95% intervals, from a paired bootstrap that resamples the 20 texts with both trials, are +0.26 to +0.51 and +0.26 to +0.59. The lead remains when those mechanics are removed from the rubric. The judge's notes on the other setups include content the source did not contain, such as an experience added to a cover letter and a dollar figure derived for a grant application. All 3 setups cut these detectors' findings well below the sources' levels in this sample.
 
+<details>
+<summary>How the regex checks were revised</summary>
+
 Four regex checks were widened after inspecting responses that failed them with faithful paraphrases ('in stages', 'a second person will check', 'five to seven', 'Don't install any personal'). The same revised checks were applied to every setup, and the table reports the revised results; before the change, Laconic passed 37 and `humanizer` 34 of 40. The `laconic-check` row comes from version 0.1.0; later versions add rules and count more findings.
+
+</details>
 
 Limits: 40 texts per setup from one generating model, judged by the same model family, on these 20 prompts and these installed setups. Each checker reflects its author's house view, and the `avoid-ai-writing` detector is that skill's own engine. Passing the regex checks is partial evidence that facts survived, not proof that every qualifier did. [evals/README.md](evals/README.md) gives the commands to rerun it.
 
@@ -184,6 +202,12 @@ Delete the file to turn session mode off. Choose one or the other: session mode 
 
 Laconic is a fork of [i-have-adhd](https://github.com/ayghri/i-have-adhd) by Ayoub G. (MIT), which supplies the response rules, the platform adapters, the hooks and the evaluation harness. The writing guidance comes from No AI Slop, based on No AI Slop by Peter Yang and Stop Slop by Hardik Pandya, with material adapted from [humanizer](https://github.com/blader/humanizer), [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) and [Sepia](https://github.com/Nanako0129/sepia) (all MIT). The Australian English rules follow the [Australian Government Style Manual](https://www.stylemanual.gov.au/) (Commonwealth of Australia, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)); the copy in `skills/laconic-prose/references/` was scraped from the site on 13 September 2026, with navigation, release notes and feedback widgets removed.
 
+The banner's lettering and emblem are drawn from Cascadia Mono glyphs (SIL OFL 1.1).
+
 ## Licence
 
 Apache-2.0 for Laconic's own work. Portions from i-have-adhd and the other sources in Credits remain under the MIT License, and the Style Manual material is CC BY 4.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+
+---
+
+<p align="center"><sub>Asked what Sparta would do if Philip II of Macedon invaded Laconia, the Spartans are said to have replied: <i>'If.'</i><br>Made in Newcastle, Australia by <a href="https://duguid.com.au/">Ryan Duguid</a>.</sub></p>
