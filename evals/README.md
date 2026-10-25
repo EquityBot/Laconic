@@ -107,7 +107,8 @@ usage or cost; negative deltas mean less. Read these alongside quality scores.
 
 Comparisons require the same runner and identical `(case_id, trial)` coverage,
 without duplicates. If rows include `model`, every row must name the same model.
-Older runner output does not record model metadata: `model: null` means model
+`run` records the model named by the runner command's `--model` or `-m`; a command
+without one, and older runner output, leaves `model: null`, which means model
 comparability is unverified. Check the original model/CLI settings yourself;
 a matching runner alias alone does not establish the same model or configuration.
 

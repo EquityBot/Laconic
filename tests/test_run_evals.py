@@ -451,6 +451,69 @@ class EvaluationHarnessTest(unittest.TestCase):
         rows[1]["model"] = "model-a"
         self.assertEqual("model-a", run_evals.summarize_usage(rows)["model"])
 
+    def test_boolean_scores_are_rejected(self):
+        rows = [self._score_row("a", "baseline", 3), self._score_row("a", "candidate", 4)]
+        rows[1]["correctness"] = True
+        with self.assertRaisesRegex(ValueError, "correctness must be between 1 and 5"):
+            run_evals.summarize_scores(rows)
+
+    def test_a_regression_of_exactly_one_tenth_is_within_tolerance(self):
+        # Means of 4.2 and 4.1 differ by 0.1, but 4.2 - 0.1 rounds above 4.1.
+        baseline = [1, 1, 5, 5, 5, 5, 5, 5, 5, 5]
+        candidate = [1, 1, 4, 5, 5, 5, 5, 5, 5, 5]
+        rows = []
+        for trial, (b, c) in enumerate(zip(baseline, candidate), start=1):
+            rows.append(dict(self._score_row("a", "baseline", 3, trial), correctness=b))
+            rows.append(dict(self._score_row("a", "candidate", 5, trial), correctness=c))
+        reasons = run_evals.summarize_scores(rows)["release_gate"]["reasons"]
+        self.assertNotIn("Candidate correctness regressed by more than 0.1 points.", reasons)
+
+    def test_trials_must_be_at_least_one(self):
+        for command in (["plan"], ["run", "--runner", "x", "--condition", "baseline", "--output", "o"]):
+            with self.subTest(command=command[0]), mock.patch("sys.stderr"):
+                with self.assertRaises(SystemExit):
+                    run_evals._build_parser().parse_args([*command, "--trials", "0"])
+
+    def test_nan_budget_is_rejected_before_any_call(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = self._run_args(Path(tmp), budget_usd=float("nan"))
+            with mock.patch.object(run_evals.subprocess, "run") as runner:
+                with self.assertRaisesRegex(ValueError, "--budget-usd"):
+                    run_evals.run_evaluations(args)
+            runner.assert_not_called()
+
+    def test_runs_record_the_model_the_runner_names(self):
+        completed = subprocess.CompletedProcess(
+            args=["stub-runner"], returncode=0, stderr="",
+            stdout=json.dumps({"result": "102", "usage": {}, "total_cost_usd": 0.01}),
+        )
+        for command, model in ((["stub-runner", "--model", "model-a"], "model-a"),
+                               (["stub-runner", "-m", "model-b"], "model-b"),
+                               (["stub-runner"], None)):
+            with self.subTest(command=command), tempfile.TemporaryDirectory() as tmp:
+                args = self._run_args(Path(tmp), command=command)
+                with mock.patch.object(run_evals.subprocess, "run", return_value=completed):
+                    run_evals.run_evaluations(args)
+                [row] = run_evals.read_jsonl(args.output)
+                self.assertEqual(model, row.get("model"))
+
+    @staticmethod
+    def _run_args(root, budget_usd=1.0, command=("stub-runner",)):
+        cases = root / "cases.jsonl"
+        cases.write_text(json.dumps({
+            "id": "probe", "category": "direct-answer", "prompt": "What is 17 multiplied by 6?",
+            "risk": "low", "criteria": ["Answers 102."],
+        }) + "\n", encoding="utf-8")
+        runners = root / "runners.json"
+        runners.write_text(json.dumps(
+            {"stub": {"command": list(command), "response_format": "claude-json"}}
+        ), encoding="utf-8")
+        return argparse.Namespace(
+            cases=cases, runner_config=runners, runner="stub", condition="baseline",
+            condition_skill=None, case=None, trials=1, retries=0, budget_usd=budget_usd,
+            allow_unmetered=False, output=root / "responses.jsonl",
+        )
+
     def test_measure_cli_reports_increased_input_and_cost(self):
         rows = [
             self._usage_row("a", "baseline", "long answer", 0.1,
