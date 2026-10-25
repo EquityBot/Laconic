@@ -53,16 +53,24 @@ class AlwaysOnHookTest(unittest.TestCase):
             env=env,
         )
 
-    def run_codex_hook(self, plugin_root=None):
+    def run_codex_hook(self, plugin_root=None, export_root=True, substitute_root=False):
         config = json.loads((ROOT / "hooks" / "hooks.json").read_text())
         hook = config["hooks"]["SessionStart"][0]["hooks"][0]
         env = os.environ.copy()
         env["CLAUDE_CONFIG_DIR"] = str(self.config_dir)
         plugin_root = plugin_root or self.plugin_root
-        env["CLAUDE_PLUGIN_ROOT"] = str(plugin_root)
-        env["PLUGIN_ROOT"] = str(plugin_root)
+        env.pop("CLAUDE_PLUGIN_ROOT", None)
+        env.pop("PLUGIN_ROOT", None)
+        if export_root:
+            env["CLAUDE_PLUGIN_ROOT"] = str(plugin_root)
+            env["PLUGIN_ROOT"] = str(plugin_root)
+        command = hook["command"]
+        if substitute_root:
+            # Claude Code substitutes ${CLAUDE_PLUGIN_ROOT} into the command, even
+            # where it does not export the variable (upstream issue #129).
+            command = command.replace("${CLAUDE_PLUGIN_ROOT}", str(plugin_root))
         return subprocess.run(
-            hook["command"],
+            command,
             check=False,
             capture_output=True,
             env=env,
@@ -155,6 +163,30 @@ class AlwaysOnHookTest(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual("", result.stderr)
         self.assertEqual("", result.stdout)
+
+    def test_codex_command_uses_the_substituted_root_without_the_variable(self):
+        (self.config_dir / ".laconic-always").touch()
+
+        result = self.run_codex_hook(export_root=False, substitute_root=True)
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("LACONIC MODE ACTIVE", result.stdout)
+
+    def test_codex_command_warns_when_opted_in_but_given_no_root(self):
+        (self.config_dir / ".laconic-always").touch()
+
+        result = self.run_codex_hook(export_root=False)
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("", result.stdout)
+        self.assertIn("CLAUDE_PLUGIN_ROOT", result.stderr)
+
+    def test_codex_command_is_silent_without_root_or_opt_in_flag(self):
+        result = self.run_codex_hook(export_root=False)
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("", result.stdout)
+        self.assertEqual("", result.stderr)
 
     def test_hook_uses_a_shared_claude_and_codex_launcher(self):
         config = json.loads((ROOT / "hooks" / "hooks.json").read_text())
