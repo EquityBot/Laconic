@@ -231,6 +231,7 @@ const IZE_EXCEPTIONS: &[&str] = &[
 
 pub fn lint(text: &str) -> Vec<Finding> {
     let mut findings = Vec::new();
+    let mut paragraph = Paragraph::default();
     let mut fence: Option<&str> = None;
     // A leading YAML frontmatter block is metadata, not prose.
     let mut in_frontmatter = text.starts_with("---\n") || text.starts_with("---\r\n");
@@ -250,6 +251,7 @@ pub fn lint(text: &str) -> Vec<Finding> {
             continue;
         }
         if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
+            paragraph.flush(&mut findings);
             fence = Some(if trimmed.starts_with("```") {
                 "```"
             } else {
@@ -257,23 +259,102 @@ pub fn lint(text: &str) -> Vec<Finding> {
             });
             continue;
         }
-        if trimmed.starts_with('<') || trimmed.starts_with('>') {
-            continue; // HTML and block quotations are not original prose.
+        if trimmed.is_empty() || trimmed.starts_with('<') || trimmed.starts_with('>') {
+            // A blank line ends the paragraph; HTML and block quotations are not
+            // original prose.
+            paragraph.flush(&mut findings);
+            continue;
         }
-        let chars: Vec<char> = raw.chars().collect();
-        let (masked, doubles) = mask(&chars);
+        // Headings and table rows are one line each; a list item opens a block that
+        // its wrapped lines continue.
+        let single_line = trimmed.starts_with('#') || trimmed.starts_with('|');
+        if single_line || starts_list_item(trimmed) {
+            paragraph.flush(&mut findings);
+        }
+        paragraph.push(raw, line_no);
+        if single_line {
+            paragraph.flush(&mut findings);
+        }
+    }
+    paragraph.flush(&mut findings);
+    findings
+}
+
+fn starts_list_item(trimmed: &str) -> bool {
+    let digits = trimmed.chars().take_while(char::is_ascii_digit).count();
+    ["- ", "* ", "+ "].iter().any(|m| trimmed.starts_with(m))
+        || (digits > 0
+            && [". ", ") "]
+                .iter()
+                .any(|m| trimmed[digits..].starts_with(m)))
+}
+
+/// Consecutive prose lines joined with single spaces, so a phrase split by a line wrap
+/// is still found. `origin` maps each joined character back to its line and column.
+#[derive(Default)]
+struct Paragraph {
+    chars: Vec<char>,
+    origin: Vec<(usize, usize)>,
+    lines: Vec<(usize, Vec<char>)>,
+}
+
+impl Paragraph {
+    fn push(&mut self, raw: &str, line: usize) {
+        let kept: Vec<char> = raw.trim_end().chars().collect();
+        // A continuation line's indent is layout; the first line keeps its columns.
+        let indent = if let Some(&(last_line, last_column)) = self.origin.last() {
+            self.chars.push(' ');
+            self.origin.push((last_line, last_column + 1));
+            kept.iter().take_while(|c| c.is_whitespace()).count()
+        } else {
+            0
+        };
+        for (k, &c) in kept.iter().enumerate().skip(indent) {
+            self.chars.push(c);
+            self.origin.push((line, k + 1));
+        }
+        self.lines.push((line, raw.chars().collect()));
+    }
+
+    /// Runs the rules over the joined paragraph and clears it.
+    fn flush(&mut self, findings: &mut Vec<Finding>) {
+        if self.lines.is_empty() {
+            return;
+        }
+        let (masked, doubles) = mask(&self.chars);
+        let mut found = Vec::new();
         for column in doubles {
-            findings.push(Finding {
-                line: line_no,
+            found.push(self.place(Finding {
+                line: 0,
                 column,
                 rule: "double-quotes",
                 message: "double quotation marks in prose; use single marks".into(),
-            });
+            }));
         }
-        check_residue(&chars, line_no, &mut findings);
-        check_line(&masked, line_no, &mut findings);
+        for (line, chars) in &self.lines {
+            check_residue(chars, *line, &mut found);
+        }
+        let mut joined = Vec::new();
+        check_line(&masked, 0, &mut joined);
+        found.extend(joined.into_iter().map(|f| self.place(f)));
+        // Report in line order; the sort is stable, so each line keeps its rule order.
+        found.sort_by_key(|f| f.line);
+        findings.append(&mut found);
+        *self = Self::default();
     }
-    findings
+
+    /// Moves a finding from its joined column to its original line and column.
+    fn place(&self, mut finding: Finding) -> Finding {
+        let index = finding.column.saturating_sub(1);
+        (finding.line, finding.column) = match self.origin.get(index) {
+            Some(&at) => at,
+            None => {
+                let (line, column) = self.origin.last().copied().unwrap_or((0, 0));
+                (line, column + index + 1 - self.origin.len())
+            }
+        };
+        finding
+    }
 }
 
 /// Chat-tool leftovers: citation markers and tracking tags in links.
@@ -1360,5 +1441,40 @@ mod tests {
     fn reports_line_and_column() {
         let f = &lint("ok\nThe color.")[0];
         assert_eq!((f.line, f.column, f.rule), (2, 5, "us-spelling"));
+    }
+
+    #[test]
+    fn finds_phrases_split_by_a_line_wrap() {
+        let at = |text: &str| -> Vec<(usize, usize, &'static str)> {
+            lint(text)
+                .into_iter()
+                .map(|f| (f.line, f.column, f.rule))
+                .collect()
+        };
+        // Present day, present time: the wrap falls inside each phrase.
+        assert_eq!(
+            at("Present day, present time. Hope this\nhelps."),
+            vec![(1, 28, "closer")]
+        );
+        assert_eq!(
+            at("The logs, metrics,\n  and traces."),
+            vec![(1, 18, "serial-comma")]
+        );
+        assert_eq!(
+            at("Ship it\non\n\"Friday\"."),
+            vec![(3, 1, "double-quotes")]
+        );
+        assert_eq!(at("A game\nchanger."), vec![(1, 3, "stock-phrase")]);
+        // Blank lines, list items, headings, table rows and fences end a paragraph.
+        for text in [
+            "Hope this\n\nhelps.",
+            "- logs, metrics\n- and traces",
+            "# Hope this\nhelps",
+            "Hope this\n# helps",
+            "| logs, metrics |\n| and traces |",
+            "Hope this\n```\nhelps\n```",
+        ] {
+            assert!(rules(text).is_empty(), "{text}: {:?}", rules(text));
+        }
     }
 }
