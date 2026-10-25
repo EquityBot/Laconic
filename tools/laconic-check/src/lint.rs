@@ -233,6 +233,7 @@ pub fn lint(text: &str) -> Vec<Finding> {
     let mut findings = Vec::new();
     let mut paragraph = Paragraph::default();
     let mut fence: Option<&str> = None;
+    let mut in_list = false;
     // A leading YAML frontmatter block is metadata, not prose.
     let mut in_frontmatter = text.starts_with("---\n") || text.starts_with("---\r\n");
     for (index, raw) in text.lines().enumerate() {
@@ -265,19 +266,40 @@ pub fn lint(text: &str) -> Vec<Finding> {
             paragraph.flush(&mut findings);
             continue;
         }
-        // Headings and table rows are one line each; a list item opens a block that
-        // its wrapped lines continue.
-        let single_line = trimmed.starts_with('#') || trimmed.starts_with('|');
-        if single_line || starts_list_item(trimmed) {
+        let list_item = !is_break_line(trimmed) && starts_list_item(trimmed);
+        let indent = raw.len() - trimmed.len();
+        if list_item {
+            in_list = true;
+        } else if paragraph.lines.is_empty() && indent == 0 {
+            in_list = false;
+        }
+        // Headings, table rows, thematic breaks, setext underlines and indented code
+        // lines are one line each; a list item opens a block that its wrapped lines
+        // continue.
+        let indented_code = paragraph.lines.is_empty() && indent >= 4 && !in_list;
+        let single_line = trimmed.starts_with('#')
+            || trimmed.starts_with('|')
+            || is_break_line(trimmed)
+            || indented_code;
+        if single_line || list_item {
             paragraph.flush(&mut findings);
         }
         paragraph.push(raw, line_no);
-        if single_line {
+        // A hard line break (two trailing spaces or a backslash) also ends the run.
+        if single_line || raw.ends_with("  ") || raw.trim_end().ends_with('\\') {
             paragraph.flush(&mut findings);
         }
     }
     paragraph.flush(&mut findings);
     findings
+}
+
+/// A thematic break or setext underline: 3 or more of one of - * _ =, spaces allowed.
+fn is_break_line(trimmed: &str) -> bool {
+    let marks: Vec<char> = trimmed.chars().filter(|c| !c.is_whitespace()).collect();
+    marks.len() >= 3
+        && matches!(marks[0], '-' | '*' | '_' | '=')
+        && marks.iter().all(|&c| c == marks[0])
 }
 
 fn starts_list_item(trimmed: &str) -> bool {
@@ -1473,8 +1495,26 @@ mod tests {
             "Hope this\n# helps",
             "| logs, metrics |\n| and traces |",
             "Hope this\n```\nhelps\n```",
+            // Hard breaks, thematic breaks, setext underlines and indented code too.
+            "Hope this  \nhelps.",
+            "Hope this\\\nhelps.",
+            "Hope this\n***\nhelps.",
+            "A heading\n=========\nhelps.",
+            "Prose.\n\n    Hope this\n    helps.",
         ] {
             assert!(rules(text).is_empty(), "{text}: {:?}", rules(text));
         }
+        // Indented code is still checked line by line, as before; list continuations,
+        // nested or after a blank line, still join.
+        assert_eq!(at("Prose.\n\n    color"), vec![(3, 5, "us-spelling")]);
+        assert_eq!(at("- Hope this\n  helps."), vec![(1, 3, "closer")]);
+        assert_eq!(
+            at("- item\n\n    Hope this\n    helps."),
+            vec![(3, 5, "closer")]
+        );
+        assert_eq!(
+            at("- item\n  - Hope this\n    helps."),
+            vec![(2, 5, "closer")]
+        );
     }
 }
