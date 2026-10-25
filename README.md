@@ -1,7 +1,9 @@
 <p align="center">
   <picture>
+    <source media="(max-width: 600px) and (prefers-color-scheme: light)" srcset=".github/assets/banner-phone-light.svg">
+    <source media="(max-width: 600px)" srcset=".github/assets/banner-phone.svg">
     <source media="(prefers-color-scheme: light)" srcset=".github/assets/banner-light.svg">
-    <img src=".github/assets/banner.svg" width="100%" alt="Laconic: answer first, every fact kept, Australian English. Pixel art of a crested Spartan helmet beside the LACONIC wordmark in block letters.">
+    <img src=".github/assets/banner.svg" width="100%" alt="Laconic. Answer first. Every fact kept. Australian English. Pixel art of a crested Spartan helmet beside the Laconic wordmark in slab-serif block letters.">
   </picture>
 </p>
 
