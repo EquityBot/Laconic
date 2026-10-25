@@ -102,7 +102,7 @@ python3 scripts/run_evals.py measure evals/results/responses.jsonl
 ```
 
 The summary reports input/output token totals, reported generation cost, stored
-response length, and candidate-minus-baseline deltas. Positive deltas mean more
+response length and candidate-minus-baseline deltas. Positive deltas mean more
 usage or cost; negative deltas mean less. Read these alongside quality scores.
 
 Comparisons require the same runner and identical `(case_id, trial)` coverage,
