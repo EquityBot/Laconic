@@ -470,6 +470,23 @@ def _usage_tokens(usage: Optional[dict[str, Any]]) -> tuple[int | None, int | No
     return _reported_token_total(input_values), usage.get("output_tokens")
 
 
+def _runner_model(command: list[str]) -> str | None:
+    """Report a requested model only for a directly invoked CLI we recognise."""
+    executable = Path(command[0]).stem.lower()
+    if executable not in ("claude", "codex"):
+        return None  # A wrapper's -m may select a Python module, not a model.
+    model = None
+    arguments = iter(command[1:])
+    for arg in arguments:
+        if arg == "--":
+            break
+        if arg == "--model" or (executable == "codex" and arg == "-m"):
+            model = next(arguments, None)
+        elif arg.startswith("--model="):
+            model = arg.partition("=")[2]
+    return model if model and not model.startswith("-") else None
+
+
 def run_evaluations(args: argparse.Namespace) -> int:
     cases = load_cases(args.cases)
     errors = validate_cases(cases)
@@ -503,10 +520,8 @@ def run_evaluations(args: argparse.Namespace) -> int:
     if jobs < 1:
         raise ValueError("--jobs must be at least 1")
 
-    # The model the runner asks for; None when the command leaves it to the CLI's default.
-    model = next(
-        (command[i + 1] for i, flag in enumerate(command[:-1]) if flag in ("--model", "-m")), None
-    )
+    # The requested model, not an attestation of the provider's resolved backend.
+    model = _runner_model(command)
 
     def call(case: dict[str, Any], trial: int, remaining: float) -> dict[str, Any]:
         prompt = _condition_prompt(

@@ -461,18 +461,21 @@ class EvaluationHarnessTest(unittest.TestCase):
         # Means of 4.2 and 4.1 differ by 0.1, but 4.2 - 0.1 rounds above 4.1.
         baseline = [1, 1, 5, 5, 5, 5, 5, 5, 5, 5]
         candidate = [1, 1, 4, 5, 5, 5, 5, 5, 5, 5]
-        rows = []
-        for trial, (b, c) in enumerate(zip(baseline, candidate), start=1):
-            rows.append(dict(self._score_row("a", "baseline", 3, trial), correctness=b))
-            rows.append(dict(self._score_row("a", "candidate", 5, trial), correctness=c))
-        reasons = run_evals.summarize_scores(rows)["release_gate"]["reasons"]
-        self.assertNotIn("Candidate correctness regressed by more than 0.1 points.", reasons)
+        for metric in ("correctness", "safety"):
+            with self.subTest(metric=metric):
+                rows = []
+                for trial, (b, c) in enumerate(zip(baseline, candidate), start=1):
+                    rows.append(dict(self._score_row("a", "baseline", 3, trial), **{metric: b}))
+                    rows.append(dict(self._score_row("a", "candidate", 5, trial), **{metric: c}))
+                reasons = run_evals.summarize_scores(rows)["release_gate"]["reasons"]
+                self.assertNotIn(f"Candidate {metric} regressed by more than 0.1 points.", reasons)
 
     def test_trials_must_be_at_least_one(self):
         for command in (["plan"], ["run", "--runner", "x", "--condition", "baseline", "--output", "o"]):
-            with self.subTest(command=command[0]), mock.patch("sys.stderr"):
-                with self.assertRaises(SystemExit):
-                    run_evals._build_parser().parse_args([*command, "--trials", "0"])
+            for trials in ("0", "-1"):
+                with self.subTest(command=command[0], trials=trials), mock.patch("sys.stderr"):
+                    with self.assertRaises(SystemExit):
+                        run_evals._build_parser().parse_args([*command, "--trials", trials])
 
     def test_nan_budget_is_rejected_before_any_call(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -487,9 +490,15 @@ class EvaluationHarnessTest(unittest.TestCase):
             args=["stub-runner"], returncode=0, stderr="",
             stdout=json.dumps({"result": "102", "usage": {}, "total_cost_usd": 0.01}),
         )
-        for command, model in ((["stub-runner", "--model", "model-a"], "model-a"),
-                               (["stub-runner", "-m", "model-b"], "model-b"),
-                               (["stub-runner"], None)):
+        for command, model in (
+            (["claude", "--model", "model-a"], "model-a"),
+            (["codex", "exec", "-m", "model-b"], "model-b"),
+            (["claude", "--model=model-a"], "model-a"),
+            (["claude", "--model", "old", "--model", "new"], "new"),
+            (["python", "-m", "runner_module", "--model", "model-a"], None),
+            (["stub-runner", "-m", "not-a-model"], None),
+            (["claude"], None),
+        ):
             with self.subTest(command=command), tempfile.TemporaryDirectory() as tmp:
                 args = self._run_args(Path(tmp), command=command)
                 with mock.patch.object(run_evals.subprocess, "run", return_value=completed):
