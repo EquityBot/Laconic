@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"(async()=>{const path=require('node:path');const arg=process.argv[1]||'';const root=process.env.CLAUDE_PLUGIN_ROOT||process.env.PLUGIN_ROOT||(arg.includes('{CLAUDE_PLUGIN_ROOT}')?'':arg);if(root){await import(require('node:url').pathToFileURL(path.join(root,'hooks','always-on.mjs')).href);return}const dir=process.env.CLAUDE_CONFIG_DIR||path.join(require('node:os').homedir(),'.claude');if(require('node:fs').existsSync(path.join(dir,'.laconic-always')))console.error('laconic: always-on is on, but the SessionStart hook got no plugin root (CLAUDE_PLUGIN_ROOT), so the ruleset was not loaded this session.')})().catch(()=>{})\" \"${CLAUDE_PLUGIN_ROOT}\"",
+            "command": "node -e \"(async()=>{const path=require('node:path');const root=process.env.CLAUDE_PLUGIN_ROOT||process.env.PLUGIN_ROOT;if(root){await import(require('node:url').pathToFileURL(path.join(root,'hooks','always-on.mjs')).href);return}const dir=process.env.CLAUDE_CONFIG_DIR||path.join(require('node:os').homedir(),'.claude');if(require('node:fs').existsSync(path.join(dir,'.laconic-always')))console.error('laconic: always-on is on, but the SessionStart hook got no plugin root (CLAUDE_PLUGIN_ROOT), so the ruleset was not loaded this session.')})().catch(()=>{})\"",
             "timeout": 30,
             "statusMessage": "Checking laconic always-on flag..."
           }
