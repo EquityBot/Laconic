@@ -107,7 +107,9 @@ usage or cost; negative deltas mean less. Read these alongside quality scores.
 
 Comparisons require the same runner and identical `(case_id, trial)` coverage,
 without duplicates. If rows include `model`, every row must name the same model.
-Older runner output does not record model metadata: `model: null` means model
+`run` records `--model` (or Codex's `-m`) for a direct Claude or Codex command,
+including `--model=value`. Unknown wrappers, commands without a model flag and
+older runner output leave `model: null`, which means model
 comparability is unverified. Check the original model/CLI settings yourself;
 a matching runner alias alone does not establish the same model or configuration.
 
