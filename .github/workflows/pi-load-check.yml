@@ -7,6 +7,7 @@ on:
       - skills/**
       - package.json
       - scripts/check_pi_extension.py
+      - .github/ci/pi/**
       - .github/workflows/pi-load-check.yml
   push:
     branches: [main]
@@ -26,6 +27,8 @@ jobs:
         with:
           node-version: 22
       - name: Install Pi
-        run: npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+        run: |
+          npm ci --ignore-scripts --prefix .github/ci/pi
+          echo "$GITHUB_WORKSPACE/.github/ci/pi/node_modules/.bin" >> "$GITHUB_PATH"
       - name: Verify the Pi package, commands, status, and persisted mode
         run: python3 scripts/check_pi_extension.py
