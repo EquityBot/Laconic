@@ -1,0 +1,28 @@
+name: tests
+
+# Runs the whole Python suite and validates the evaluation cases. The other
+# workflows each cover one layer; this catches the rest (eval tooling, judge,
+# humanise metrics, OpenCode plugin).
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  unittest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Validate evaluation cases
+        run: python scripts/run_evals.py validate
