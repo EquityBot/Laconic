@@ -8,7 +8,7 @@
   },
   "homepage": "https://github.com/ryanduguid/laconic",
   "repository": "https://github.com/ryanduguid/laconic",
-  "license": "MIT",
+  "license": "Apache-2.0 AND MIT AND CC-BY-4.0",
   "keywords": [
     "concise",
     "output-style",

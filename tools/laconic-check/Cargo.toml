@@ -2,7 +2,7 @@
 name = "laconic-check"
 version = "0.2.0"
 edition = "2024"
-license = "MIT"
+license = "Apache-2.0"
 description = "Flags Australian English and house-style candidates in Markdown prose, and checks that an edit kept numbers, code, URLs and negations."
 publish = false
 

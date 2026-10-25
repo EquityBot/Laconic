@@ -206,7 +206,7 @@ The banner's lettering and emblem are drawn from Cascadia Mono glyphs (SIL OFL 1
 
 ## Licence
 
-MIT, except the Style Manual material, which is CC BY 4.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+Apache-2.0 for Laconic's own work. Portions from i-have-adhd and the other sources in Credits remain under the MIT License, and the Style Manual material is CC BY 4.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
 ---
 

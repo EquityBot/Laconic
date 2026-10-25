@@ -1,9 +1,31 @@
+# Copyright 2026 Ryan Duguid
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Portions derive from i-have-adhd (https://github.com/ayghri/i-have-adhd) by
+# Ayoub Ghriss, No AI Slop by Peter Yang, Stop Slop by Hardik Pandya, humanizer
+# (Siqi Chen) and its forks by jooray and sbfnk, avoid-ai-writing (Conor
+# Bronsdon) and Sepia (copyright 2026 Nanako Tsai). Those portions remain under
+# the MIT License:
+#
 # MIT License
 #
 # Copyright (c) 2026 Ayoub Ghriss
-# Copyright (c) 2026 Ryan Duguid
 # Copyright (c) 2026 Peter Yang
 # Copyright (c) 2025 Hardik Pandya
+# Copyright (c) 2025 Siqi Chen
+# Copyright (c) 2026 Conor Bronsdon
+# Copyright (c) 2026 Nanako Tsai
 # Portions adapted from humanizer (Siqi Chen) and its forks by jooray and sbfnk,
 # avoid-ai-writing (Conor Bronsdon) and Sepia (copyright 2026 Nanako Tsai), each
 # under the MIT License.
@@ -28,8 +50,8 @@
 #
 # Australian English rules adapted from the Australian Government Style Manual
 # (https://www.stylemanual.gov.au/), copyright Commonwealth of Australia, CC BY 4.0
-# (https://creativecommons.org/licenses/by/4.0/). The MIT License above does not
-# apply to that material.
+# (https://creativecommons.org/licenses/by/4.0/). Neither the Apache License nor
+# the MIT License applies to that material.
 #
 # Gemini CLI custom command for laconic.
 # Install: copy to ~/.gemini/commands/laconic.toml, then type /laconic.
