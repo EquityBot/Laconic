@@ -1,6 +1,6 @@
 ---
 name: laconic-prose
-license: Apache-2.0
+license: Apache-2.0 AND MIT AND CC-BY-4.0
 description: Write, edit, humanise or audit prose in concise, correct Australian English while preserving meaning and the writer's voice. Use when asked to humanise ('humanize') AI-written text, to audit prose or flag AI-like writing, to edit a supplied draft, or to write substantial prose such as reports, documentation, UI copy and PR text. Routine chat, emails, comments, handoffs and small edits need only the compact Laconic rules.
 ---
 
