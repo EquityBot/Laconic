@@ -38,14 +38,17 @@ def load_scenario(directory: pathlib.Path) -> dict:
     return case
 
 
-def call_claude(command: list[str], workdir: str, spent: float) -> tuple[str, float]:
+def call_claude(
+    command: list[str], workdir: str, spent: float, *, prompt: str | None = None,
+) -> tuple[str, float]:
     """Reject unusable responses while retaining all known reported costs."""
     try:
         result = subprocess.run(
             command,
             cwd=workdir,
-            stdin=subprocess.DEVNULL,
-            text=True,
+            # Prompt bytes stay outside argv and retain their newlines on Windows.
+            input=prompt.encode("utf-8") if prompt is not None else None,
+            stdin=subprocess.DEVNULL if prompt is None else None,
             capture_output=True,
             check=False,
             timeout=CALL_TIMEOUT_SECONDS,
@@ -54,6 +57,9 @@ def call_claude(command: list[str], workdir: str, spent: float) -> tuple[str, fl
         raise RuntimeError(
             f"Claude timed out; call cost unavailable; reported so far: ${spent:.6f}"
         ) from exc
+    stderr = result.stderr
+    if isinstance(stderr, bytes):
+        stderr = stderr.decode("utf-8", errors="backslashreplace")
     try:
         payload = json.loads(result.stdout)
         cost = payload.get("total_cost_usd") if isinstance(payload, dict) else None
@@ -65,7 +71,7 @@ def call_claude(command: list[str], workdir: str, spent: float) -> tuple[str, fl
         ):
             raise ValueError("invalid total_cost_usd")
     except (ValueError, OverflowError) as exc:
-        detail = result.stderr.strip() or str(exc)
+        detail = stderr.strip() or str(exc)
         raise RuntimeError(
             f"Claude returned invalid JSON or cost ({detail}); call cost unavailable; "
             f"reported so far: ${spent:.6f}"
@@ -78,7 +84,7 @@ def call_claude(command: list[str], workdir: str, spent: float) -> tuple[str, fl
         or not isinstance(response, str)
         or not response.strip()
     ):
-        detail = result.stderr.strip() or response or "missing response"
+        detail = stderr.strip() or response or "missing response"
         raise RuntimeError(
             f"Claude failed: {detail}; cumulative reported cost: ${spent + cost:.6f}"
         )
@@ -115,9 +121,11 @@ def run_scenario(args: argparse.Namespace) -> int:
                 "--output-format", "json", "--model", args.model, "--tools", "",
                 "--resume" if index else "--session-id", session_id,
                 "--max-budget-usd", f"{remaining:.6f}",
-                first_prompt if index == 0 else turn["prompt"],
             ]
-            response, cost = call_claude(command, workdir, spent)
+            response, cost = call_claude(
+                command, workdir, spent,
+                prompt=first_prompt if index == 0 else turn["prompt"],
+            )
             spent += cost
             if spent > args.budget_usd:
                 raise RuntimeError(f"Budget exceeded; reported cost: ${spent:.6f}")
