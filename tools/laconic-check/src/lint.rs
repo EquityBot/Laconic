@@ -837,13 +837,18 @@ fn check_dates_times_latin(lower: &str, line: usize, findings: &mut Vec<Finding>
         }
         if MONTHS.contains(&word.trim_end_matches('.')) {
             let month = word.trim_end_matches('.');
+            // A month that ends a clause ('20 October; 14 new') takes no year or day after it.
+            let next = next.as_deref().filter(|_| {
+                !raw.trim_end_matches(['*', '_'])
+                    .ends_with(['.', ';', ':', '!', '?'])
+            });
             let prev_day = prev.as_deref().filter(|p| digits(p) || ordinal(p));
             if prev_day.is_some_and(ordinal) {
                 push(at, "date", "no ordinal in dates: write 19 October 2026");
             }
             if prev_day.is_some()
                 && raw.ends_with(',')
-                && next.as_deref().is_some_and(|n| {
+                && next.is_some_and(|n| {
                     let n = n.trim_end_matches(['.', ',']);
                     digits(n) && n.len() == 4
                 })
@@ -856,7 +861,6 @@ fn check_dates_times_latin(lower: &str, line: usize, findings: &mut Vec<Finding>
             }
             // 'Wednesday 22 October 2026' names a weekday the calendar can check.
             let year = next
-                .as_deref()
                 .map(|n| n.trim_end_matches(['.', ',']))
                 .filter(|n| digits(n) && n.len() == 4)
                 .and_then(|n| n.parse::<i32>().ok());
@@ -885,7 +889,7 @@ fn check_dates_times_latin(lower: &str, line: usize, findings: &mut Vec<Finding>
                 }
             }
             if month != "may"
-                && next.as_deref().is_some_and(|n| {
+                && next.is_some_and(|n| {
                     let n = n.trim_end_matches(['.', ',']);
                     (digits(n) && n.len() <= 2) || ordinal(n)
                 })
@@ -1317,6 +1321,20 @@ mod tests {
         assert!(rules("Reply by 22 October 2026.").is_empty());
         // A date that does not exist is not checked against a weekday.
         assert!(rules("Monday 30 February 2026 is not a date.").is_empty());
+    }
+
+    #[test]
+    fn a_date_ends_at_clause_punctuation() {
+        for sentence in [
+            "Peers were rechecked since 20 October; 14 new.",
+            "It shipped in October: 12 fixes.",
+            "We met in October. 3 of us stayed.",
+            "Was it October? 2 people thought so.",
+            "Reply by Wednesday 22 October; 2026 will be busy.",
+        ] {
+            assert!(rules(sentence).is_empty(), "should not flag: {sentence}");
+        }
+        assert_eq!(rules("Peers since October 20; 14 new."), vec!["date"]);
     }
 
     #[test]
