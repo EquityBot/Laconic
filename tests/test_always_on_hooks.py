@@ -53,16 +53,20 @@ class AlwaysOnHookTest(unittest.TestCase):
             env=env,
         )
 
-    def run_codex_hook(self, plugin_root=None):
+    def run_codex_hook(self, plugin_root=None, export_root=True):
         config = json.loads((ROOT / "hooks" / "hooks.json").read_text())
         hook = config["hooks"]["SessionStart"][0]["hooks"][0]
         env = os.environ.copy()
         env["CLAUDE_CONFIG_DIR"] = str(self.config_dir)
         plugin_root = plugin_root or self.plugin_root
-        env["CLAUDE_PLUGIN_ROOT"] = str(plugin_root)
-        env["PLUGIN_ROOT"] = str(plugin_root)
+        env.pop("CLAUDE_PLUGIN_ROOT", None)
+        env.pop("PLUGIN_ROOT", None)
+        if export_root:
+            env["CLAUDE_PLUGIN_ROOT"] = str(plugin_root)
+            env["PLUGIN_ROOT"] = str(plugin_root)
+        command = hook["command"]
         return subprocess.run(
-            hook["command"],
+            command,
             check=False,
             capture_output=True,
             env=env,
@@ -156,6 +160,31 @@ class AlwaysOnHookTest(unittest.TestCase):
         self.assertEqual("", result.stderr)
         self.assertEqual("", result.stdout)
 
+    def test_codex_command_keeps_shell_characters_in_an_exported_path(self):
+        (self.config_dir / ".laconic-always").touch()
+        hostile_root = Path(self.temp_dir.name) / "plugin $HOME %TEMP% `echo` & (test)"
+        shutil.copytree(self.plugin_root, hostile_root)
+        result = self.run_codex_hook(plugin_root=hostile_root)
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("LACONIC MODE ACTIVE", result.stdout)
+
+    def test_codex_command_warns_when_opted_in_but_given_no_root(self):
+        (self.config_dir / ".laconic-always").touch()
+
+        result = self.run_codex_hook(export_root=False)
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("", result.stdout)
+        self.assertIn("CLAUDE_PLUGIN_ROOT", result.stderr)
+
+    def test_codex_command_is_silent_without_root_or_opt_in_flag(self):
+        result = self.run_codex_hook(export_root=False)
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("", result.stdout)
+        self.assertEqual("", result.stderr)
+
     def test_hook_uses_a_shared_claude_and_codex_launcher(self):
         config = json.loads((ROOT / "hooks" / "hooks.json").read_text())
         hook = config["hooks"]["SessionStart"][0]["hooks"][0]
@@ -167,6 +196,7 @@ class AlwaysOnHookTest(unittest.TestCase):
         self.assertIn("process.env.PLUGIN_ROOT", command)
         self.assertIn("await import", command)
         self.assertIn(".catch", command)
+        self.assertNotIn("${CLAUDE_PLUGIN_ROOT}", command)
 
 
 if __name__ == "__main__":
