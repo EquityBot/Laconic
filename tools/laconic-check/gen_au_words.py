@@ -108,7 +108,25 @@ def parse(line: str):
 
 def lemma_and_entries(text: str):
     lemma_info, _, entries = text.partition(": ")
-    lemma = re.sub(r"\s*(<[^>]*>|\{[^}]*\}|\([^)]*\))", "", lemma_info).strip()
+    parts = []
+    missing_closers = set()
+    closers = {"<": ">", "{": "}", "(": ")"}
+    index = 0
+    while index < len(lemma_info):
+        char = lemma_info[index]
+        closer = closers.get(char)
+        if closer and closer not in missing_closers:
+            end = lemma_info.find(closer, index + 1)
+            if end != -1:
+                while parts and parts[-1].isspace():
+                    parts.pop()
+                index = end + 1
+                continue
+            # A failed search covers the remaining suffix; never scan it again.
+            missing_closers.add(closer)
+        parts.append(char)
+        index += 1
+    lemma = "".join(parts).strip()
     return lemma.lstrip("-@!") if lemma != "-" else "-", entries
 
 

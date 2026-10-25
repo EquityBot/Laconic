@@ -25,13 +25,19 @@ try {
   if (!fs.existsSync(skillPath)) process.exit(0);
 
   // Strip a leading YAML frontmatter block (--- ... --- at the very top of file).
-  const body = fs
+  let body = fs
     .readFileSync(skillPath, "utf8")
     .replace(
       /^---[^\S\r\n]*\r?\n[\s\S]*?\r?\n---[^\S\r\n]*(?:\r?\n|$)/,
       "",
-    )
-    .replace(/(?:\r?\n)+$/, "");
+    );
+  // Walk backwards once, retaining whitespace and incomplete line endings.
+  let end = body.length;
+  while (end > 0 && body[end - 1] === "\n") {
+    end -= 1;
+    if (end > 0 && body[end - 1] === "\r") end -= 1;
+  }
+  body = body.slice(0, end);
 
   process.stdout.write(
     "LACONIC MODE ACTIVE (always-on). The ruleset below applies to every response. " +
