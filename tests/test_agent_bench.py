@@ -28,6 +28,8 @@ FIXES = {
 
 
 class AgentBenchTest(unittest.TestCase):
+    # Same-size fixture edits within a second must not reuse stale bytecode.
+    @mock.patch.dict("os.environ", {"PYTHONDONTWRITEBYTECODE": "1"})
     def test_every_task_starts_failing_and_its_fix_passes(self):
         self.assertEqual(set(agent_bench.TASKS), set(FIXES))
         for task, (rel, old, new) in FIXES.items():
