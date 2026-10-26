@@ -587,6 +587,7 @@ def run_evaluations(args: argparse.Namespace) -> int:
 
     # shortcut: the budget is a soft threshold. No new call is submitted once recorded
     # cost reaches it, but up to N - 1 calls may still be running; it is not a hard cap.
+    # Reserve per-call cost before submitting if a run overshoots materially.
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("a", encoding="utf-8") as destination, ThreadPoolExecutor(jobs) as pool:
         running: dict[Future[dict[str, Any]], None] = {}
