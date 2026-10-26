@@ -1,6 +1,6 @@
 ---
 name: laconic-prose
-license: Apache-2.0 AND MIT AND CC-BY-4.0
+license: FSL-1.1-ALv2 AND MIT AND CC-BY-4.0
 description: Write, edit, humanise or audit prose in concise, correct Australian English while preserving meaning and the writer's voice. Use when asked to humanise ('humanize') AI-written text, to audit prose or flag AI-like writing, to edit a supplied draft, or to write substantial prose such as reports, documentation, UI copy and PR text. Routine chat, emails, comments, handoffs and small edits need only the compact Laconic rules.
 ---
 
@@ -107,4 +107,4 @@ When changing this skill, read [references/regression-cases.md](references/regre
 
 ## Licence
 
-Apache-2.0 for Laconic's own work; the third-party portions below remain under the MIT License. Preserve [LICENSE](LICENSE) and the attribution notices below. Based on No AI Slop by Peter Yang and Stop Slop by Hardik Pandya, as customised by Ryan Duguid. Pattern, draft mode, quick pass, venue and editor constraint guidance is adapted from [humanizer](https://github.com/blader/humanizer) (MIT, Siqi Chen) and its MIT forks by jooray and sbfnk, [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) (MIT, Conor Bronsdon) and [Sepia](https://github.com/Nanako0129/sepia) (MIT, Nanako Tsai). The Australian Government Style Manual material is copyright Commonwealth of Australia, CC BY 4.0.
+FSL-1.1-ALv2 for Laconic's own work, with each version available under Apache-2.0 2 years after it is made available; the third-party portions below remain under the MIT License. Preserve [LICENSE](LICENSE), [NOTICE](NOTICE) and the attribution notices below. Based on No AI Slop by Peter Yang and Stop Slop by Hardik Pandya, as customised by Ryan Duguid. Pattern, draft mode, quick pass, venue and editor constraint guidance is adapted from [humanizer](https://github.com/blader/humanizer) (MIT, Siqi Chen) and its MIT forks by jooray and sbfnk, [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) (MIT, Conor Bronsdon) and [Sepia](https://github.com/Nanako0129/sepia) (MIT, Nanako Tsai). The Australian Government Style Manual material is copyright Commonwealth of Australia, CC BY 4.0.

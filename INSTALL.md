@@ -63,8 +63,8 @@ this skill. Check the exported instructions before enabling it.
 3. Check that the imported skill is named `laconic`. Use **启用/禁用 (Enable/Disable)** to control its availability.
 
 This route installs the session rules only. The `laconic-prose` writing skill,
-its references and the `LICENSE` file are not uploaded, so keep a copy of
-`LICENSE` with the downloaded `SKILL.md`. Uploading
+its references and the `LICENSE` and `NOTICE` files are not uploaded, so keep
+copies of `LICENSE` and `NOTICE` with the downloaded `SKILL.md`. Uploading
 sends that file to AstronClaw; the repository's plugin manifests and hooks are
 not part of this setup.
 
@@ -724,7 +724,7 @@ https://github.com/ryanduguid/laconic/blob/main/skills/laconic/SKILL.md
 
 Save it in **User** scope for every project, or **Project** scope for one. Then type `/laconic` in the Agent Panel.
 
-The URL import brings only the session skill's `SKILL.md`, without the `laconic-prose` writing skill, its references or `LICENSE`. For the complete set, clone the repo and copy both skill folders into your user skills directory:
+The URL import brings only the session skill's `SKILL.md`, without the `laconic-prose` writing skill, its references, `LICENSE` or `NOTICE`. For the complete set, clone the repo and copy both skill folders into your user skills directory:
 
 ```bash
 git clone https://github.com/ryanduguid/laconic
