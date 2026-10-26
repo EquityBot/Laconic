@@ -9,7 +9,7 @@
 
 <div align="center">
 
-[![tests](https://img.shields.io/github/actions/workflow/status/ryanduguid/laconic/tests.yml?branch=main&label=tests&labelColor=000000&style=flat)](https://github.com/ryanduguid/laconic/actions/workflows/tests.yml) [![laconic-check](https://img.shields.io/github/actions/workflow/status/ryanduguid/laconic/laconic-check.yml?branch=main&label=laconic-check&labelColor=000000&style=flat)](https://github.com/ryanduguid/laconic/actions/workflows/laconic-check.yml) [![release](https://img.shields.io/github/v/release/ryanduguid/laconic?filter=laconic-check-v*&label=release&labelColor=000000&color=66023C&style=flat)](https://github.com/ryanduguid/laconic/releases/latest) [![licence](https://img.shields.io/github/license/ryanduguid/laconic?label=licence&labelColor=000000&color=66023C&style=flat)](LICENSE)
+[![tests](https://img.shields.io/github/actions/workflow/status/ryanduguid/laconic/tests.yml?branch=main&label=tests&labelColor=000000&style=flat)](https://github.com/ryanduguid/laconic/actions/workflows/tests.yml) [![laconic-check](https://img.shields.io/github/actions/workflow/status/ryanduguid/laconic/laconic-check.yml?branch=main&label=laconic-check&labelColor=000000&style=flat)](https://github.com/ryanduguid/laconic/actions/workflows/laconic-check.yml) [![release](https://img.shields.io/github/v/release/ryanduguid/laconic?filter=laconic-check-v*&label=release&labelColor=000000&color=66023C&style=flat)](https://github.com/ryanduguid/laconic/releases/latest) [![licence](https://img.shields.io/badge/licence-FSL--1.1--ALv2-66023C?labelColor=000000&color=66023C&style=flat)](LICENSE)
 
 [Install](#install) · [What changes](#what-changes) · [Evaluation](#evaluation) · [Checker](#checker) · [Always on](#always-on)
 
@@ -208,7 +208,7 @@ The banner's lettering and emblem are drawn from Cascadia Mono glyphs (SIL OFL 1
 
 ## Licence
 
-Apache-2.0 for Laconic's own work. Portions from i-have-adhd and the other sources in Credits remain under the MIT License, and the Style Manual material is CC BY 4.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+Licensed under the Functional Source License, Version 1.1, ALv2 Future License (FSL-1.1-ALv2). You may use, modify and redistribute it for any purpose except a Competing Use as defined in LICENSE (making it available to others in a competing commercial product or service), and each version becomes available under Apache-2.0 2 years after it is made available. Portions from i-have-adhd and the other sources in Credits remain under the MIT License, and the Style Manual material is CC BY 4.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
 ---
 
