@@ -42,15 +42,16 @@ class AlwaysOnHookTest(unittest.TestCase):
             )
         return runtimes
 
-    def run_hook(self, command):
+    def run_hook(self, command, timeout=None, text=True):
         env = os.environ.copy()
         env["CLAUDE_CONFIG_DIR"] = str(self.config_dir)
         return subprocess.run(
             [str(part) for part in command],
             check=False,
             capture_output=True,
-            text=True,
+            text=text,
             env=env,
+            timeout=timeout,
         )
 
     def run_codex_hook(self, plugin_root=None, export_root=True):
@@ -116,6 +117,35 @@ class AlwaysOnHookTest(unittest.TestCase):
                 outputs[name] = normalized
 
         self.assertEqual(1, len(set(outputs.values())))
+
+    def test_node_preserves_internal_newlines_without_backtracking(self):
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node is unavailable")
+        body = "Croft Manor.\n" + "\n" * 200000 + "End."
+        skill_path = self.plugin_root / "skills" / "laconic" / "SKILL.md"
+        skill_path.write_text(body + "\r\n\n", encoding="utf8", newline="")
+        (self.config_dir / ".laconic-always").touch()
+        result = self.run_hook([node, self.plugin_root / "hooks/always-on.mjs"], timeout=5)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertTrue(result.stdout.endswith("\n\n" + body + "\n"))
+
+    def test_node_trims_only_complete_trailing_line_endings(self):
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node is unavailable")
+        skill_path = self.plugin_root / "skills" / "laconic" / "SKILL.md"
+        (self.config_dir / ".laconic-always").touch()
+        for suffix, expected in (("\r\n\n", ""), ("\r\r\n", "\r"),
+                                 ("\n\r", "\n\r"), (" \t", " \t"),
+                                 ("\u2028", "\u2028")):
+            with self.subTest(suffix=suffix):
+                skill_path.write_text("Body." + suffix, encoding="utf8", newline="")
+                result = self.run_hook([node, self.plugin_root / "hooks/always-on.mjs"],
+                                       timeout=5, text=False)
+                self.assertEqual(0, result.returncode, result.stderr)
+                # Compare bytes: text mode would turn a kept lone CR into LF.
+                self.assertTrue(result.stdout.endswith(("Body." + expected + "\n").encode("utf8")))
 
     def test_runtimes_keep_content_when_frontmatter_is_unclosed(self):
         # An opening --- with no closing delimiter is not frontmatter. Keeping
