@@ -5,6 +5,7 @@ import argparse
 import json
 import math
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -14,6 +15,9 @@ import run_evals
 
 
 CALL_TIMEOUT_SECONDS = 120
+# Model IDs and aliases such as opus[1m] or claude-opus-4-5@20251101 (Vertex);
+# never an option or a space.
+MODEL_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/@\[\]-]*")
 
 
 def load_scenario(directory: pathlib.Path) -> dict:
@@ -95,6 +99,11 @@ def run_scenario(args: argparse.Namespace) -> int:
     case = load_scenario(args.scenario)
     if not 0 < args.budget_usd <= 25 or args.trial < 1:
         raise ValueError("Budget must be in (0, 25]; trial must be positive")
+    if not isinstance(args.model, str) or not MODEL_PATTERN.fullmatch(args.model):
+        raise ValueError(
+            "Model must start with a letter or digit and use only letters, digits "
+            "and . _ : / @ [ ] -"
+        )
     first_prompt = run_evals._condition_prompt(
         case["turns"][0]["prompt"], args.condition, args.condition_skill
     )
@@ -118,7 +127,7 @@ def run_scenario(args: argparse.Namespace) -> int:
                 raise RuntimeError(f"Budget exhausted; reported cost: ${spent:.6f}")
             command = [
                 "claude", "--safe-mode", "--strict-mcp-config", "--print",
-                "--output-format", "json", "--model", args.model, "--tools", "",
+                "--output-format", "json", f"--model={args.model}", "--tools", "",
                 "--resume" if index else "--session-id", session_id,
                 "--max-budget-usd", f"{remaining:.6f}",
             ]

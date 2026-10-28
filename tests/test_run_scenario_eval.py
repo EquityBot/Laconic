@@ -141,6 +141,35 @@ class ScenarioEvaluationTest(unittest.TestCase):
         run.assert_not_called()
 
     @mock.patch("run_scenario_eval.subprocess.run")
+    def test_model_cannot_become_another_cli_option(self, run):
+        run.return_value = subprocess.CompletedProcess(
+            [], 0, '{"result":"ok","total_cost_usd":0.01}', ""
+        )
+        for index, model in enumerate(("", "-", "--help", "--tools=Bash", "-pwned",
+                                       "opus --tools Bash", "opus\n", None)):
+            with self.subTest(model=model):
+                run.reset_mock()
+                self.args.model = model
+                self.args.output = self.root / f"invalid-{index}.jsonl"
+                with self.assertRaisesRegex(ValueError, "Model must"):
+                    self.run_capture()
+                run.assert_not_called()
+                self.assertFalse(self.args.output.exists())
+
+        for index, model in enumerate(("sonnet", "claude-opus-4-1[1m]",
+                                       "claude-opus-4-5@20251101",
+                                       "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+                                       "vendor/model_2")):
+            with self.subTest(model=model):
+                run.reset_mock()
+                self.args.model = model
+                self.args.output = self.root / f"valid-{index}.jsonl"
+                self.assertEqual(f"claude:{model}", self.run_capture()["runner"])
+                for call in run.call_args_list:
+                    self.assertIn(f"--model={model}", call.args[0])
+                    self.assertNotIn("--model", call.args[0])
+
+    @mock.patch("run_scenario_eval.subprocess.run")
     def test_remaining_budget_is_rounded_down_and_stops_further_calls(self, run):
         self.args.budget_usd = 0.1234569
         run.return_value = subprocess.CompletedProcess(
