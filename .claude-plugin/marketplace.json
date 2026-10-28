@@ -3,7 +3,7 @@
   "name": "laconic",
   "description": "Concise, answer-first output in Australian English: lead with the answer, mark unverified claims, cut filler without losing substance.",
   "owner": {
-    "name": "Ryan Duguid"
+    "name": "EquityBot"
   },
   "plugins": [
     {
