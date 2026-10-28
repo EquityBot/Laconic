@@ -10,9 +10,13 @@ on:
       - hooks/**
       - skills/**
       - tests/test_always_on_hooks.py
+      - .github/ci/claude-code/**
       - .github/workflows/plugin-load-check.yml
   push:
     branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   hook-parity:
@@ -22,6 +26,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
@@ -32,8 +38,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
+        run: |
+          # The wrapper needs a postinstall to copy this binary. Install it directly.
+          npm ci --ignore-scripts --prefix .github/ci/claude-code
+          echo "$GITHUB_WORKSPACE/.github/ci/claude-code/node_modules/@anthropic-ai/claude-code-linux-x64" >> "$GITHUB_PATH"
       - name: Install the plugin from this checkout into a scratch config
         run: |
           export CLAUDE_CONFIG_DIR="$RUNNER_TEMP/claude-scratch"
