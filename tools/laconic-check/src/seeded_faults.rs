@@ -19,6 +19,7 @@ const CLEAN: &[&str] = &[
     "She said 'the licence is current' and left for the centre.",
     "Two reviewers checked the catalogue, for example the colour plates.",
     "It may 5 times fail before it passes.",
+    "Andy wrote to the state senate every week for 6 years.",
     "The patterns credit [humanizer](https://github.com/blader/humanizer) and [the house guide](https://example.com/guide).",
 ];
 
