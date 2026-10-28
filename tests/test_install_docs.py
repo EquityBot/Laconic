@@ -57,7 +57,7 @@ class GrokInstallPathTest(unittest.TestCase):
         self.assertIn("</details>", section)
         section = section.split("</details>", 1)[0]
 
-        self.assertIn("grok plugin install ryanduguid/laconic --trust", section)
+        self.assertIn("grok plugin install EquityBot/laconic --trust", section)
         self.assertIn("grok plugin enable laconic", section)
         self.assertIn("grok plugin update laconic", section)
         self.assertIn("grok plugin uninstall laconic --confirm", section)

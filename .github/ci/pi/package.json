@@ -1,0 +1,12 @@
+{
+  "name": "laconic-ci-pi",
+  "private": true,
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "1.4.0"
+  },
+  "overrides": {
+    "@earendil-works/pi-coding-agent": {
+      "undici": "8.12.2"
+    }
+  }
+}
