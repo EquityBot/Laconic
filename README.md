@@ -9,7 +9,7 @@
 
 <div align="center">
 
-[![tests](https://img.shields.io/github/actions/workflow/status/ryanduguid/laconic/tests.yml?branch=main&label=tests&labelColor=000000&style=flat)](https://github.com/ryanduguid/laconic/actions/workflows/tests.yml) [![laconic-check](https://img.shields.io/github/actions/workflow/status/ryanduguid/laconic/laconic-check.yml?branch=main&label=laconic-check&labelColor=000000&style=flat)](https://github.com/ryanduguid/laconic/actions/workflows/laconic-check.yml) [![release](https://img.shields.io/github/v/release/ryanduguid/laconic?filter=laconic-check-v*&label=release&labelColor=000000&color=66023C&style=flat)](https://github.com/ryanduguid/laconic/releases/latest) [![licence](https://img.shields.io/badge/licence-FSL--1.1--ALv2-66023C?labelColor=000000&color=66023C&style=flat)](LICENSE)
+[![tests](https://img.shields.io/github/actions/workflow/status/EquityBot/laconic/tests.yml?branch=main&label=tests&labelColor=000000&style=flat)](https://github.com/EquityBot/laconic/actions/workflows/tests.yml) [![laconic-check](https://img.shields.io/github/actions/workflow/status/EquityBot/laconic/laconic-check.yml?branch=main&label=laconic-check&labelColor=000000&style=flat)](https://github.com/EquityBot/laconic/actions/workflows/laconic-check.yml) [![release](https://img.shields.io/github/v/release/EquityBot/laconic?filter=laconic-check-v*&label=release&labelColor=000000&color=66023C&style=flat)](https://github.com/EquityBot/laconic/releases/latest) [![licence](https://img.shields.io/badge/licence-FSL--1.1--ALv2-66023C?labelColor=000000&color=66023C&style=flat)](LICENSE)
 
 [Install](#install) · [What changes](#what-changes) · [Evaluation](#evaluation) · [Checker](#checker) · [Always on](#always-on)
 
@@ -24,13 +24,13 @@ To humanise AI-written text, ask the agent to humanise it. The prose skill remov
 Paste this into your agent:
 
 ```text
-Install the laconic skill/plugin from https://github.com/ryanduguid/laconic, following the repository's AGENTS.md.
+Install the laconic skill/plugin from https://github.com/EquityBot/laconic, following the repository's AGENTS.md.
 ```
 
 Or follow the [installation instructions](INSTALL.md) for your agent. For Claude Code:
 
 ```bash
-claude plugin marketplace add ryanduguid/laconic
+claude plugin marketplace add EquityBot/laconic
 claude plugin install laconic@laconic
 ```
 

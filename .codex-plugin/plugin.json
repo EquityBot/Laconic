@@ -6,8 +6,8 @@
     "name": "Ryan Duguid",
     "url": "https://github.com/ryanduguid"
   },
-  "homepage": "https://github.com/ryanduguid/laconic",
-  "repository": "https://github.com/ryanduguid/laconic",
+  "homepage": "https://github.com/EquityBot/laconic",
+  "repository": "https://github.com/EquityBot/laconic",
   "license": "FSL-1.1-ALv2 AND MIT AND CC-BY-4.0",
   "keywords": [
     "concise",
@@ -27,7 +27,7 @@
     "capabilities": [
       "Instructions"
     ],
-    "websiteURL": "https://github.com/ryanduguid/laconic",
+    "websiteURL": "https://github.com/EquityBot/laconic",
     "defaultPrompt": [
       "Use laconic for this task.",
       "Answer first and mark anything unverified.",
