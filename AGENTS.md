@@ -1,6 +1,6 @@
 # Agent guide
 
-This file is the map for agents working with [laconic](https://github.com/ryanduguid/laconic). Read it after locating or installing the repository. It explains where the canonical behaviour, platform adapters, documentation and verification commands live. It does not replace the skill rules in `skills/laconic/SKILL.md`.
+This file is the map for agents working with [laconic](https://github.com/EquityBot/laconic). Read it after locating or installing the repository. It explains where the canonical behaviour, platform adapters, documentation and verification commands live. It does not replace the skill rules in `skills/laconic/SKILL.md`.
 
 ## Start here
 
