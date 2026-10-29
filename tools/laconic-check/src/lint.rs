@@ -205,11 +205,15 @@ const FINITE_VERBS: &[&str] = &[
     "must", "may", "might", "do", "does", "did",
 ];
 
-/// Determiners after which an '-ed' word is an adjective ('the signed token'), not a verb;
-/// so is one after 'not' ('sales not connected to it').
+/// Determiners after which a verb-like word is a noun or adjective ('the signed token',
+/// 'a can of soup'), not a verb. An '-ed' word after 'not' is also not a verb ('sales not
+/// connected to it').
 const DETERMINERS: &[&str] = &[
     "a", "an", "the", "my", "your", "his", "her", "its", "our", "their", "these", "those",
 ];
+
+/// Relative pronouns, after which a verb belongs to a relative clause in a list item.
+const RELATIVE_PRONOUNS: &[&str] = &["that", "which", "who", "whom", "whose"];
 
 /// Words that end an introductory marker whose comma is not a list comma.
 const MARKERS_BEFORE_COMMA: &[&str] = &[
@@ -798,16 +802,17 @@ fn starts_clause(chars: &[char]) -> bool {
         return false;
     }
     (1..words.len()).any(|j| {
-        let word = words[j];
+        let (word, previous) = (words[j], words[j - 1]);
+        // A verb after a relative pronoun is a relative clause ('the build that failed'),
+        // and one after a determiner is a noun ('a can of soup').
+        if RELATIVE_PRONOUNS.contains(&previous) || DETERMINERS.contains(&previous) {
+            return false;
+        }
         let auxiliary = word.strip_suffix("n't").unwrap_or(word);
         FINITE_VERBS.contains(&auxiliary)
             || matches!(word, "can't" | "won't" | "cannot")
-            || (j > 1 && ["now", "still", "also", "never", "already"].contains(&words[j - 1]))
-            || word.len() > 3
-                && word.ends_with("ed")
-                && !word.ends_with("eed")
-                && !DETERMINERS.contains(&words[j - 1])
-                && words[j - 1] != "not"
+            || (j > 1 && ["now", "still", "also", "never", "already"].contains(&previous))
+            || word.len() > 3 && word.ends_with("ed") && !word.ends_with("eed") && previous != "not"
     })
 }
 
@@ -1426,6 +1431,8 @@ mod tests {
         for list in [
             "Collect logs, metrics, and traces.",
             "Pick red, green, or blue.",
+            "Review logs, the build that failed, and the test that passed.",
+            "Buy bread, a can of soup, and a can of beans.",
             "The +, \u{2212}, \u{d7}, and \u{f7} symbols are called operators.",
         ] {
             assert_eq!(rules(list), vec!["serial-comma"], "should flag: {list}");
