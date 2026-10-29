@@ -212,7 +212,7 @@ const DETERMINERS: &[&str] = &[
     "a", "an", "the", "my", "your", "his", "her", "its", "our", "their", "these", "those",
 ];
 
-/// Relative pronouns, after which a verb belongs to a relative clause in a list item.
+/// Relative pronouns; the verbs after one belong to a relative clause in a list item.
 const RELATIVE_PRONOUNS: &[&str] = &["that", "which", "who", "whom", "whose"];
 
 /// Words that end an introductory marker whose comma is not a list comma.
@@ -801,18 +801,26 @@ fn starts_clause(chars: &[char]) -> bool {
     if SUBORDINATORS.contains(&first) || INTRO_PREPOSITIONS.contains(&first) || first == "as" {
         return false;
     }
+    // Verbs from a relative pronoun on belong to a relative clause ('the build that has failed').
+    let end = words
+        .iter()
+        .skip(1)
+        .position(|w| RELATIVE_PRONOUNS.contains(w))
+        .map_or(words.len(), |p| p + 1);
+    let words = &words[..end];
     (1..words.len()).any(|j| {
         let (word, previous) = (words[j], words[j - 1]);
-        // A verb after a relative pronoun is a relative clause ('the build that failed'),
-        // and one after a determiner is a noun ('a can of soup').
-        if RELATIVE_PRONOUNS.contains(&previous) || DETERMINERS.contains(&previous) {
-            return false;
-        }
+        // An auxiliary after an article or possessive is a noun ('a can of soup'); after
+        // 'these' or 'those' it has a subject ('these may fail').
+        let noun = DETERMINERS.contains(&previous) && !matches!(previous, "these" | "those");
         let auxiliary = word.strip_suffix("n't").unwrap_or(word);
-        FINITE_VERBS.contains(&auxiliary)
-            || matches!(word, "can't" | "won't" | "cannot")
+        !noun && (FINITE_VERBS.contains(&auxiliary) || matches!(word, "can't" | "won't" | "cannot"))
             || (j > 1 && ["now", "still", "also", "never", "already"].contains(&previous))
-            || word.len() > 3 && word.ends_with("ed") && !word.ends_with("eed") && previous != "not"
+            || word.len() > 3
+                && word.ends_with("ed")
+                && !word.ends_with("eed")
+                && !DETERMINERS.contains(&previous)
+                && previous != "not"
     })
 }
 
@@ -1424,6 +1432,7 @@ mod tests {
             "The job retried twice, as expected, and it failed.",
             "We fixed the lockfile, as you suggested, and we reran it.",
             "Thanks to the new runner, the tests are green, and the build now passes.",
+            "As expected, the job retried, and these may fail.",
         ];
         for sentence in joins {
             assert!(rules(sentence).is_empty(), "should not flag: {sentence}");
@@ -1432,6 +1441,7 @@ mod tests {
             "Collect logs, metrics, and traces.",
             "Pick red, green, or blue.",
             "Review logs, the build that failed, and the test that passed.",
+            "Review logs, the build that has failed, and the test that has passed.",
             "Buy bread, a can of soup, and a can of beans.",
             "The +, \u{2212}, \u{d7}, and \u{f7} symbols are called operators.",
         ] {
