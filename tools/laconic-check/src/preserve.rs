@@ -144,7 +144,7 @@ fn numbers(text: &str) -> Vec<String> {
         }
     }
     out.extend(
-        words(text)
+        words(&prose(text))
             .iter()
             .filter_map(|w| number_word(w))
             .map(str::to_string),
@@ -160,12 +160,50 @@ fn number_word(w: &str) -> Option<&'static str> {
 }
 
 fn code_spans(text: &str) -> Vec<String> {
-    text.split('`')
-        .skip(1)
-        .step_by(2)
-        .map(str::to_string)
-        .filter(|s| !s.is_empty())
-        .collect()
+    split_code(text).0
+}
+
+/// Code spans and the text outside them. As in Markdown, a span opens and closes
+/// with the same number of backticks, and an unmatched run is literal text.
+fn split_code(text: &str) -> (Vec<String>, String) {
+    let (mut spans, mut outside) = (Vec::new(), String::new());
+    let mut rest = text;
+    while let Some(start) = rest.find('`') {
+        outside.push_str(&rest[..start]);
+        let run = backtick_run(&rest[start..]);
+        let after = &rest[start + run..];
+        match closing_run(after, run) {
+            Some(end) => {
+                if !after[..end].is_empty() {
+                    spans.push(after[..end].to_string());
+                }
+                outside.push(' ');
+                rest = &after[end + run..];
+            }
+            None => {
+                outside.push_str(&rest[start..start + run]);
+                rest = after;
+            }
+        }
+    }
+    outside.push_str(rest);
+    (spans, outside)
+}
+
+fn backtick_run(s: &str) -> usize {
+    s.len() - s.trim_start_matches('`').len()
+}
+
+fn closing_run(s: &str, run: usize) -> Option<usize> {
+    let mut i = 0;
+    while let Some(p) = s[i..].find('`') {
+        let len = backtick_run(&s[i + p..]);
+        if len == run {
+            return Some(i + p);
+        }
+        i += p + len;
+    }
+    None
 }
 
 fn urls(text: &str) -> Vec<String> {
@@ -180,23 +218,41 @@ fn urls(text: &str) -> Vec<String> {
 }
 
 /// The text without code spans and URLs, so `--all` or a path is not a meaning word.
+/// A link label before its URL, as in `[all](https://...)`, is kept.
 fn prose(text: &str) -> String {
-    let outside_code: Vec<&str> = text.split('`').step_by(2).collect();
-    outside_code
-        .join(" ")
+    split_code(text)
+        .1
         .split_whitespace()
-        .filter(|w| !w.contains("http://") && !w.contains("https://"))
+        .map(|w| {
+            match [w.find("http://"), w.find("https://")]
+                .into_iter()
+                .flatten()
+                .min()
+            {
+                Some(p) => &w[..p],
+                None => w,
+            }
+        })
         .collect::<Vec<_>>()
         .join(" ")
 }
 
+/// Marks punctuation between words, so a phrase such as 'up to' cannot span 'up. To'.
+const BOUNDARY: &str = "|";
+
 fn words(text: &str) -> Vec<String> {
-    text.to_lowercase()
-        .replace('\u{2019}', "'")
-        .split(|c: char| !(c.is_alphanumeric() || c == '\''))
-        .map(|w| w.trim_matches('\'').to_string())
-        .filter(|w| !w.is_empty())
-        .collect()
+    let text = text.to_lowercase().replace('\u{2019}', "'");
+    let mut out = Vec::new();
+    for segment in text.split(['.', ',', ';', ':', '!', '?', '(', ')', '[', ']']) {
+        out.extend(
+            segment
+                .split(|c: char| !(c.is_alphanumeric() || c == '\''))
+                .map(|w| w.trim_matches('\'').to_string())
+                .filter(|w| !w.is_empty()),
+        );
+        out.push(BOUNDARY.to_string());
+    }
+    out
 }
 
 /// Occurrences of a word or space-separated phrase, where `N` matches a number.
@@ -258,6 +314,37 @@ mod tests {
             a["meaning word"],
             vec!["'must' (0 before, 2 after)", "'all' (0 before, 1 after)"]
         );
+    }
+
+    #[test]
+    fn link_labels_keep_their_meaning_words() {
+        let m = missing(
+            "See [all](https://example.com/a) docs. It is [not](https://example.com/b) final.",
+            "See [some](https://example.com/a) docs. It is [now](https://example.com/b) final.",
+        );
+        assert_eq!(
+            m["meaning word"],
+            vec!["'not' (1 before, 0 after)", "'all' (1 before, 0 after)"]
+        );
+    }
+
+    #[test]
+    fn phrases_do_not_cross_punctuation() {
+        let original = "The service is up. To confirm, run a check.";
+        let edited = "The service is up. Run a check to confirm.";
+        assert!(missing(original, edited).is_empty());
+        assert!(added(original, edited).is_empty());
+    }
+
+    #[test]
+    fn double_backtick_code_and_urls_hold_no_meaning_or_number_words() {
+        let m = missing(
+            "Run ``can --all`` from https://example.com/two-step today.",
+            "Run ``may`` from https://example.com/one-step today.",
+        );
+        assert!(!m.contains_key("meaning word"), "{m:?}");
+        assert!(!m.contains_key("number"), "{m:?}");
+        assert_eq!(m["code"], vec!["can --all"]);
     }
 
     #[test]
