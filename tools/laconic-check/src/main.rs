@@ -2,8 +2,8 @@
 //!
 //! `lint` reports candidates in the original prose of Markdown files; a match is a
 //! reason to look, not proof of a defect. `preserve` compares an original and an
-//! edit and reports numbers, code spans, URLs and negations the edit dropped, and,
-//! as advice, those it added.
+//! edit and reports numbers, code spans, URLs, meaning words and bounds the edit
+//! dropped, and, as advice, those it added.
 
 use std::collections::BTreeMap;
 use std::env;

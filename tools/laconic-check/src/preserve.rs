@@ -8,7 +8,52 @@ use std::collections::BTreeMap;
 
 const MEANING_WORDS: &[&str] = &[
     "not", "never", "no", "none", "nothing", "nor", "neither", "without", "cannot", "can't",
-    "don't", "doesn't", "isn't", "won't", "must", "may", "only", "except", "unless",
+    "don't", "doesn't", "isn't", "won't", "must", "may", "only", "except", "unless", "some", "all",
+    "any", "every", "most", "should", "might", "can", "could", "always",
+];
+
+/// Bounds and comparisons; `N` matches a number, so 'over the weekend' is not a bound.
+const MEANING_PHRASES: &[&str] = &[
+    "up to",
+    "at least",
+    "at most",
+    "more than",
+    "less than",
+    "fewer than",
+    "over N",
+    "under N",
+];
+
+/// Number words count as their numerals, so 'three' to '3' is not a change.
+/// 'one' is left out because it is also a pronoun. shortcut: compounds such as
+/// 'twenty-five' read as 20 and 5; spell out a parser if edits hit them.
+const NUMBER_WORDS: &[(&str, &str)] = &[
+    ("two", "2"),
+    ("three", "3"),
+    ("four", "4"),
+    ("five", "5"),
+    ("six", "6"),
+    ("seven", "7"),
+    ("eight", "8"),
+    ("nine", "9"),
+    ("ten", "10"),
+    ("eleven", "11"),
+    ("twelve", "12"),
+    ("thirteen", "13"),
+    ("fourteen", "14"),
+    ("fifteen", "15"),
+    ("sixteen", "16"),
+    ("seventeen", "17"),
+    ("eighteen", "18"),
+    ("nineteen", "19"),
+    ("twenty", "20"),
+    ("thirty", "30"),
+    ("forty", "40"),
+    ("fifty", "50"),
+    ("sixty", "60"),
+    ("seventy", "70"),
+    ("eighty", "80"),
+    ("ninety", "90"),
 ];
 
 /// Items the original had and the edit lost.
@@ -45,9 +90,10 @@ fn only_in(
             out.insert(kind, lost);
         }
     }
-    let (in_from, in_to) = (words(from), words(to));
+    let (in_from, in_to) = (words(&prose(from)), words(&prose(to)));
     let lost: Vec<String> = MEANING_WORDS
         .iter()
+        .chain(MEANING_PHRASES)
         .filter_map(|w| {
             let (f, t) = (count(&in_from, w), count(&in_to, w));
             let (b, a) = order(f, t);
@@ -97,7 +143,20 @@ fn numbers(text: &str) -> Vec<String> {
             i += 1;
         }
     }
+    out.extend(
+        words(text)
+            .iter()
+            .filter_map(|w| number_word(w))
+            .map(str::to_string),
+    );
     out
+}
+
+fn number_word(w: &str) -> Option<&'static str> {
+    NUMBER_WORDS
+        .iter()
+        .find(|(word, _)| *word == w)
+        .map(|(_, n)| *n)
 }
 
 fn code_spans(text: &str) -> Vec<String> {
@@ -120,6 +179,17 @@ fn urls(text: &str) -> Vec<String> {
         .collect()
 }
 
+/// The text without code spans and URLs, so `--all` or a path is not a meaning word.
+fn prose(text: &str) -> String {
+    let outside_code: Vec<&str> = text.split('`').step_by(2).collect();
+    outside_code
+        .join(" ")
+        .split_whitespace()
+        .filter(|w| !w.contains("http://") && !w.contains("https://"))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 fn words(text: &str) -> Vec<String> {
     text.to_lowercase()
         .replace('\u{2019}', "'")
@@ -129,8 +199,18 @@ fn words(text: &str) -> Vec<String> {
         .collect()
 }
 
-fn count(words: &[String], w: &str) -> usize {
-    words.iter().filter(|x| x.as_str() == w).count()
+/// Occurrences of a word or space-separated phrase, where `N` matches a number.
+fn count(words: &[String], phrase: &str) -> usize {
+    let parts: Vec<&str> = phrase.split(' ').collect();
+    words
+        .windows(parts.len())
+        .filter(|window| {
+            window.iter().zip(&parts).all(|(w, p)| match *p {
+                "N" => w.starts_with(|c: char| c.is_ascii_digit()) || number_word(w).is_some(),
+                _ => w == p,
+            })
+        })
+        .count()
 }
 
 #[cfg(test)]
@@ -147,8 +227,45 @@ mod tests {
         assert_eq!(m["url"], vec!["https://example.com/a"]);
         assert_eq!(
             m["meaning word"],
-            vec!["'not' (1 before, 0 after)", "'must' (1 before, 0 after)"]
+            vec![
+                "'not' (1 before, 0 after)",
+                "'must' (1 before, 0 after)",
+                "'up to' (1 before, 0 after)"
+            ]
         );
+    }
+
+    #[test]
+    fn reports_changed_quantifiers_modals_and_bounds() {
+        let original =
+            "Some users may see over 3,000 errors, up to 4 at once, and should retry three times.";
+        let edited = "All users must see 3,000 errors, 4 at once, and must retry 3 times.";
+        let m = missing(original, edited);
+        assert!(!m.contains_key("number"), "three and 3 are the same number");
+        assert_eq!(
+            m["meaning word"],
+            vec![
+                "'may' (1 before, 0 after)",
+                "'some' (1 before, 0 after)",
+                "'should' (1 before, 0 after)",
+                "'up to' (1 before, 0 after)",
+                "'over N' (1 before, 0 after)"
+            ]
+        );
+        let a = added(original, edited);
+        assert!(!a.contains_key("number"));
+        assert_eq!(
+            a["meaning word"],
+            vec!["'must' (0 before, 2 after)", "'all' (0 before, 1 after)"]
+        );
+    }
+
+    #[test]
+    fn number_words_match_numerals_and_over_needs_a_number() {
+        let original = "Run two checks over the weekend; twelve passed.";
+        let edited = "Run 2 checks at the weekend; 12 passed.";
+        assert!(missing(original, edited).is_empty());
+        assert!(added(original, edited).is_empty());
     }
 
     #[test]

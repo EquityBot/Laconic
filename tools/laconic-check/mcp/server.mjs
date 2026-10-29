@@ -28,7 +28,7 @@ const TOOLS = [
   {
     name: "preserve",
     description:
-      "Compare an original and an edited text and report numbers, inline code, URLs and meaning words (not, never, must, may, only, except, unless and similar) that the edit dropped, then, as advice, those it added (an added figure or obligation can be invented). A clean result rules out these losses only; it does not prove the meaning survived.",
+      "Compare an original and an edited text and report numbers, inline code, URLs and meaning words and bounds (not, never, must, may, should, some, all, only, unless, up to, over 3,000 and similar) that the edit dropped, then, as advice, those it added (an added figure or obligation can be invented). A clean result rules out these losses only; it does not prove the meaning survived.",
     inputSchema: {
       type: "object",
       properties: {
