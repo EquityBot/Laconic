@@ -240,10 +240,25 @@ fn prose(text: &str) -> String {
 /// Marks punctuation between words, so a phrase such as 'up to' cannot span 'up. To'.
 const BOUNDARY: &str = "|";
 
+/// Lowercase words, with a boundary after punctuation that ends a phrase. Link brackets
+/// do not end one ('up [to](url)'), and nor does a mark before a digit ('over .5', '3,000').
 fn words(text: &str) -> Vec<String> {
-    let text = text.to_lowercase().replace('\u{2019}', "'");
+    let chars: Vec<char> = text
+        .to_lowercase()
+        .replace('\u{2019}', "'")
+        .chars()
+        .collect();
+    let segmented: String = chars
+        .iter()
+        .enumerate()
+        .map(|(i, &c)| {
+            let ends_phrase = matches!(c, '.' | ',' | ';' | ':' | '!' | '?' | '(' | ')')
+                && !chars.get(i + 1).is_some_and(char::is_ascii_digit);
+            if ends_phrase { '\n' } else { c }
+        })
+        .collect();
     let mut out = Vec::new();
-    for segment in text.split(['.', ',', ';', ':', '!', '?', '(', ')', '[', ']']) {
+    for segment in segmented.split('\n') {
         out.extend(
             segment
                 .split(|c: char| !(c.is_alphanumeric() || c == '\''))
@@ -334,6 +349,21 @@ mod tests {
         let edited = "The service is up. Run a check to confirm.";
         assert!(missing(original, edited).is_empty());
         assert!(added(original, edited).is_empty());
+    }
+
+    #[test]
+    fn links_and_leading_decimal_points_do_not_split_phrases() {
+        let m = missing(
+            "Allow up [to](https://example.com) five retries over .5 seconds apart.",
+            "Allow five retries .5 seconds apart.",
+        );
+        assert_eq!(
+            m["meaning word"],
+            vec![
+                "'up to' (1 before, 0 after)",
+                "'over N' (1 before, 0 after)"
+            ]
+        );
     }
 
     #[test]
