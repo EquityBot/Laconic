@@ -1,0 +1,30 @@
+# Laconic
+
+> A skill for coding agents and chat assistants that makes the model lead with the answer,
+> mark what it has not verified and write in Australian English, plus a prose skill that
+> humanises AI-written text. The bundled checker's findings are reasons to look, not proof of a defect.
+
+The plugin manifests are at version 0.5.0. The only GitHub release, `laconic-check-v0.1.0`,
+ships prebuilt `laconic-check` binaries. For Claude Code, install with
+`claude plugin marketplace add EquityBot/laconic` then `claude plugin install laconic@laconic`.
+
+## Start
+
+- [README](https://github.com/EquityBot/Laconic#readme): what changes, the evaluation, the checker and always-on setup.
+- [INSTALL.md](https://github.com/EquityBot/Laconic/blob/main/INSTALL.md): installation, verification and removal for each supported agent.
+- [Session skill](https://github.com/EquityBot/Laconic/blob/main/skills/laconic/SKILL.md): the canonical response rules.
+
+## Docs
+
+- [Prose skill](https://github.com/EquityBot/Laconic/blob/main/skills/laconic-prose/SKILL.md): writing, editing, humanising and prose audits.
+- [Compact rules](https://github.com/EquityBot/Laconic/blob/main/rules/laconic.md): the always-loaded short form.
+- [AGENTS.md](https://github.com/EquityBot/Laconic/blob/main/AGENTS.md): repository map and checks for agents.
+- [Evaluations](https://github.com/EquityBot/Laconic/blob/main/evals/README.md): commands to validate, run and judge the evaluation cases.
+- [Rubric](https://github.com/EquityBot/Laconic/blob/main/evals/rubric.md): the response quality scoring contract.
+- [CONTRIBUTING.md](https://github.com/EquityBot/Laconic/blob/main/CONTRIBUTING.md): provenance, safety and verification rules for changes.
+- [NOTICE](https://github.com/EquityBot/Laconic/blob/main/NOTICE): licences of retained third-party material.
+
+## Related
+
+- [EquityBot](https://github.com/EquityBot): other EquityBot tools.
+- [i-have-adhd](https://github.com/ayghri/i-have-adhd): the upstream project Laconic is forked from.

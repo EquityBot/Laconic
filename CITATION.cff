@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this work, cite it with this metadata and the release tag or commit you used."
+title: "Laconic"
+type: software
+authors:
+  - name: "EquityBot"
+abstract: "Concise, answer-first output and an AI-text humaniser in correct Australian English for coding agents."
+repository-code: "https://github.com/EquityBot/Laconic"
+license-url: "https://github.com/EquityBot/Laconic/blob/main/LICENSE"
+keywords:
+  - agent-skills
+  - ai-humanizer
+  - ai-writing
+  - australian-english
+  - claude-code
+  - humanizer
+  - prose-linter
+  - writing-tools
+references:
+  - type: software
+    title: "i-have-adhd"
+    authors:
+      - family-names: Ghriss
+        given-names: Ayoub
+    repository-code: "https://github.com/ayghri/i-have-adhd"
