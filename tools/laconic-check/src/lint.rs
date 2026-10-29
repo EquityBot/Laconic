@@ -196,6 +196,21 @@ const INTRO_PREPOSITIONS: &[&str] = &[
     "within", "across", "through", "outside", "inside",
 ];
 
+/// Subject pronouns that open an independent clause after 'and' or 'or'.
+const SUBJECT_PRONOUNS: &[&str] = &["i", "we", "you", "he", "she", "it", "they", "there"];
+
+/// Auxiliary and linking verbs that mark a finite clause ('the tests are green').
+const FINITE_VERBS: &[&str] = &[
+    "is", "are", "was", "were", "has", "have", "had", "can", "could", "will", "would", "should",
+    "must", "may", "might", "do", "does", "did",
+];
+
+/// Determiners after which an '-ed' word is an adjective ('the signed token'), not a verb;
+/// so is one after 'not' ('sales not connected to it').
+const DETERMINERS: &[&str] = &[
+    "a", "an", "the", "my", "your", "his", "her", "its", "our", "their", "these", "those",
+];
+
 /// Words that end an introductory marker whose comma is not a list comma.
 const MARKERS_BEFORE_COMMA: &[&str] = &[
     "for example",
@@ -728,10 +743,72 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
                 || (INTRO_PREPOSITIONS.contains(&first_word)
                     && words_before_first_comma >= 3
                     && starts_sentence_at(&lower_chars, clause_start)));
-        if !list_commas.is_empty() && !compound_final && !compound_earlier && !introductory {
+        // 'We fixed it, as you suggested, and we reran it' joins a clause to a clause. A list
+        // of clauses ('it may be gitignored, or the build may be wrong') has a clause in every
+        // item, and a list of nouns as subject ('red, green, and blue are') has none.
+        let item_clauses: Vec<bool> = list_commas
+            .iter()
+            .map(|&c| c + 1)
+            .chain(std::iter::once(k))
+            .scan(clause_start, |from, to| {
+                let item = &lower_chars[*from..to];
+                *from = to;
+                Some(starts_clause(item))
+            })
+            .collect();
+        let clause_join = starts_clause(&lower_chars[item_start..])
+            && item_clauses.contains(&true)
+            && item_clauses.contains(&false);
+        if !list_commas.is_empty()
+            && !compound_final
+            && !compound_earlier
+            && !introductory
+            && !clause_join
+        {
             findings.push(Finding { line, column: k + 1, rule: "serial-comma", message: "possible comma before a final 'and' or 'or'; keep it only if it prevents a misreading".into() });
         }
     }
+}
+
+/// True when `chars` opens an independent clause: a subject pronoun, or a finite verb after
+/// a subject of up to 4 words ('the build now passes', 'recovery couldn't confirm').
+// shortcut: irregular past tenses ('it broke') and present tenses without an adverb before
+// them ('the build passes') go unrecognised, so those clause joins are still flagged.
+fn starts_clause(chars: &[char]) -> bool {
+    let text: String = chars
+        .iter()
+        .map(|&c| if c == '\u{2019}' { '\'' } else { c })
+        .collect();
+    // The words up to the first one that ends the item ('audio descriptions*, WebAIM').
+    let mut words = Vec::new();
+    for raw in text.split_whitespace().take(5) {
+        words.push(raw.trim_matches(|c: char| !c.is_alphanumeric()));
+        let closed = raw.trim_end_matches(['*', '_', ')', '\'', '"']);
+        if closed.ends_with([',', ';', ':', '.', '!', '?']) {
+            break;
+        }
+    }
+    let Some(&first) = words.first() else {
+        return false;
+    };
+    if SUBJECT_PRONOUNS.contains(&first) {
+        return true;
+    }
+    if SUBORDINATORS.contains(&first) || INTRO_PREPOSITIONS.contains(&first) || first == "as" {
+        return false;
+    }
+    (1..words.len()).any(|j| {
+        let word = words[j];
+        let auxiliary = word.strip_suffix("n't").unwrap_or(word);
+        FINITE_VERBS.contains(&auxiliary)
+            || matches!(word, "can't" | "won't" | "cannot")
+            || (j > 1 && ["now", "still", "also", "never", "already"].contains(&words[j - 1]))
+            || word.len() > 3
+                && word.ends_with("ed")
+                && !word.ends_with("eed")
+                && !DETERMINERS.contains(&words[j - 1])
+                && words[j - 1] != "not"
+    })
 }
 
 /// Commas in `chars[from..to]` that could separate list items. Skips commas inside numbers
@@ -1334,6 +1411,25 @@ mod tests {
     #[test]
     fn a_comma_joining_two_clauses_is_not_a_serial_comma() {
         assert!(rules("The build passed, and the deploy started.").is_empty());
+        // An earlier comma that does not separate clauses leaves the final join a clause
+        // join (the first 2 adapted from agent output, 30 October 2026).
+        let joins = [
+            "As planned, all 3 release runs passed, and au-fpa-pack 0.4.0 is on PyPI.",
+            "The backup started overnight, finished within an hour, and recovery couldn't confirm it.",
+            "The job retried twice, as expected, and it failed.",
+            "We fixed the lockfile, as you suggested, and we reran it.",
+            "Thanks to the new runner, the tests are green, and the build now passes.",
+        ];
+        for sentence in joins {
+            assert!(rules(sentence).is_empty(), "should not flag: {sentence}");
+        }
+        for list in [
+            "Collect logs, metrics, and traces.",
+            "Pick red, green, or blue.",
+            "The +, \u{2212}, \u{d7}, and \u{f7} symbols are called operators.",
+        ] {
+            assert_eq!(rules(list), vec!["serial-comma"], "should flag: {list}");
+        }
     }
 
     #[test]
