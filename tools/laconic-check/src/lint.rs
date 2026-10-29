@@ -801,13 +801,21 @@ fn starts_clause(chars: &[char]) -> bool {
     if SUBORDINATORS.contains(&first) || INTRO_PREPOSITIONS.contains(&first) || first == "as" {
         return false;
     }
-    // Verbs from a relative pronoun on belong to a relative clause ('the build that has failed').
-    let end = words
-        .iter()
-        .skip(1)
-        .position(|w| RELATIVE_PRONOUNS.contains(w))
-        .map_or(words.len(), |p| p + 1);
-    let words = &words[..end];
+    // Drop a relative pronoun and the verb group after it ('that has failed'), so only a
+    // main verb can mark a clause ('the build that failed has been rerun').
+    let is_auxiliary = |w: &str| FINITE_VERBS.contains(&w.strip_suffix("n't").unwrap_or(w));
+    let is_participle = |w: &str| w.len() > 3 && w.ends_with("ed") && !w.ends_with("eed");
+    let mut main = vec![first];
+    let mut rest = words[1..].iter().copied().peekable();
+    while let Some(word) = rest.next() {
+        if RELATIVE_PRONOUNS.contains(&word) {
+            while rest.next_if(|w| is_auxiliary(w)).is_some() {}
+            rest.next_if(|w| is_participle(w));
+        } else {
+            main.push(word);
+        }
+    }
+    let words = main;
     (1..words.len()).any(|j| {
         let (word, previous) = (words[j], words[j - 1]);
         // An auxiliary after an article or possessive is a noun ('a can of soup'); after
@@ -1433,6 +1441,7 @@ mod tests {
             "We fixed the lockfile, as you suggested, and we reran it.",
             "Thanks to the new runner, the tests are green, and the build now passes.",
             "As expected, the job retried, and these may fail.",
+            "As expected, the job retried, and the build that failed has been rerun.",
         ];
         for sentence in joins {
             assert!(rules(sentence).is_empty(), "should not flag: {sentence}");
