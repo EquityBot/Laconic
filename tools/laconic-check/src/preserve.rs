@@ -66,15 +66,15 @@ const MEANING_PHRASES: &[&str] = &[
     "over N",
     "under N",
     "about N",
-    "around N",
     "nearly N",
     "almost N",
     "subject to",
 ];
 
 /// Attached or following words that give a number its size or unit, with the form a
-/// quantity reports. Upper-case `M` is million and lower-case `m` is metres, so these
-/// two match case-sensitively; every other spelling matches in any case.
+/// quantity reports. Upper-case `M` is million and lower-case `m` is metres, and `Mb` is
+/// bits where `MB` is bytes, so these match case-sensitively; every other spelling
+/// matches in any case.
 const QUANTITY_WORDS: &[(&[&str], &str)] = &[
     (&["k", "thousand"], "thousand"),
     (&["mn", "million", "millions"], "million"),
@@ -105,10 +105,14 @@ const QUANTITY_WORDS: &[(&[&str], &str)] = &[
     (&["week", "weeks"], "week"),
     (&["month", "months"], "month"),
     (&["year", "years"], "year"),
-    (&["kb"], "KB"),
-    (&["mb"], "MB"),
-    (&["gb"], "GB"),
-    (&["tb"], "TB"),
+    (&["kb", "kilobyte", "kilobytes"], "KB"),
+    (&["mb", "megabyte", "megabytes"], "MB"),
+    (&["gb", "gigabyte", "gigabytes"], "GB"),
+    (&["tb", "terabyte", "terabytes"], "TB"),
+    (&["kilobit", "kilobits"], "Kb"),
+    (&["megabit", "megabits"], "Mb"),
+    (&["gigabit", "gigabits"], "Gb"),
+    (&["terabit", "terabits"], "Tb"),
 ];
 
 const MONTHS: &[(&[&str], &str)] = &[
@@ -171,12 +175,20 @@ const NUMBER_WORDS: &[(&str, &str)] = &[
 /// not seen; catching it needs a sentence splitter.
 pub fn names(original: &str, edited: &str) -> Vec<String> {
     let edited = prose(edited).replace('*', "");
+    dedup(name_runs(original))
+        .into_iter()
+        .filter(|name| !edited.contains(name))
+        .collect()
+}
+
+/// Runs of 2 or 3 capitalised words outside headings and bold labels.
+fn name_runs(text: &str) -> Vec<String> {
     let mut out = Vec::new();
     let is_label = |line: &&str| {
         let line = line.trim_start();
         line.starts_with('#') || line.starts_with("**") || line.starts_with("- **")
     };
-    for line in original.lines().filter(|line| !is_label(line)) {
+    for line in text.lines().filter(|line| !is_label(line)) {
         let line = prose(line);
         let mut run: Vec<&str> = Vec::new();
         let mut tokens = line.split_whitespace().peekable();
@@ -188,9 +200,8 @@ pub fn names(original: &str, edited: &str) -> Vec<String> {
             }
             let closes = token.ends_with(|c: char| !c.is_alphanumeric() && c != '*');
             if !capital || closes || tokens.peek().is_none() {
-                let name = run.join(" ");
-                if (2..=3).contains(&run.len()) && !edited.contains(&name) && !out.contains(&name) {
-                    out.push(name);
+                if (2..=3).contains(&run.len()) {
+                    out.push(run.join(" "));
                 }
                 run.clear();
             }
@@ -250,17 +261,15 @@ fn only_in(
             out.insert(kind, lost);
         }
     }
-    let (in_from, in_to) = (words(&prose(from)), words(&prose(to)));
-    let dated_may = |text: &str| months(text).iter().filter(|m| *m == "May").count();
-    let (may_from, may_to) = (dated_may(from), dated_may(to));
+    let (in_from, in_to) = (meaning_tokens(from), meaning_tokens(to));
     let lost: Vec<String> = MEANING_WORDS
         .iter()
         .chain(MEANING_PHRASES)
         .filter_map(|w| {
             let (mut f, mut t) = (count(&in_from, w), count(&in_to, w));
-            if *w == "may" {
-                f = f.saturating_sub(may_from);
-                t = t.saturating_sub(may_to);
+            if matches!(*w, "may" | "will") {
+                f = f.saturating_sub(not_modal(from, w));
+                t = t.saturating_sub(not_modal(to, w));
             }
             let (b, a) = order(f, t);
             (t < f).then(|| format!("'{w}' ({b} before, {a} after)"))
@@ -270,6 +279,35 @@ fn only_in(
         out.insert("meaning word", lost);
     }
     out
+}
+
+/// Words for meaning counts, with hedges on a number read as one: 'approximately 50' to
+/// 'about 50' is not a change.
+fn meaning_tokens(text: &str) -> Vec<String> {
+    let mut tokens = words(&prose(text));
+    for i in 1..tokens.len() {
+        if matches!(
+            tokens[i - 1].as_str(),
+            "approximately" | "roughly" | "around"
+        ) && is_number(&tokens[i])
+        {
+            tokens[i - 1] = "about".to_string();
+        }
+    }
+    tokens
+}
+
+/// Uses of 'may' or 'will' that are a month or part of a name, such as 'Will Smith'.
+fn not_modal(text: &str, word: &str) -> usize {
+    let dated = months(text)
+        .iter()
+        .filter(|month| month.eq_ignore_ascii_case(word))
+        .count();
+    let named = name_runs(text)
+        .iter()
+        .filter(|name| name.split(' ').any(|part| part.eq_ignore_ascii_case(word)))
+        .count();
+    dated + named
 }
 
 fn dedup(mut v: Vec<String>) -> Vec<String> {
@@ -311,7 +349,9 @@ fn without_list_markers(text: &str) -> String {
             let body = line.trim_start();
             let digits = body.len() - body.trim_start_matches(|c: char| c.is_ascii_digit()).len();
             let marker = (1..=2).contains(&digits)
-                && (body[digits..].starts_with(". ") || body[digits..].starts_with(") "));
+                && [". ", ".\t", ") ", ")\t"]
+                    .iter()
+                    .any(|marker| body[digits..].starts_with(marker));
             if marker { &body[digits + 2..] } else { line }
         })
         .collect::<Vec<_>>()
@@ -345,6 +385,9 @@ fn quantities(text: &str) -> Vec<String> {
         let (value, attached) = if value.is_empty() {
             let word = body
                 .trim_end_matches(|c: char| !c.is_alphanumeric())
+                .split('-')
+                .next()
+                .unwrap_or_default()
                 .to_lowercase();
             match number_word(&word) {
                 Some(n) => (n, &body[word.len()..]),
@@ -382,6 +425,10 @@ fn quantity_word(word: &str) -> Option<&'static str> {
     match word {
         "M" => return Some("million"),
         "m" => return Some("m"),
+        "Kb" => return Some("Kb"),
+        "Mb" => return Some("Mb"),
+        "Gb" => return Some("Gb"),
+        "Tb" => return Some("Tb"),
         _ => {}
     }
     let lower = word.to_lowercase();
@@ -579,6 +626,10 @@ fn words(text: &str) -> Vec<String> {
     out
 }
 
+fn is_number(word: &str) -> bool {
+    word.starts_with(|c: char| c.is_ascii_digit()) || number_word(word).is_some()
+}
+
 /// Occurrences of a word or space-separated phrase, where `N` matches a number.
 fn count(words: &[String], phrase: &str) -> usize {
     let parts: Vec<&str> = phrase.split(' ').collect();
@@ -586,7 +637,7 @@ fn count(words: &[String], phrase: &str) -> usize {
         .windows(parts.len())
         .filter(|window| {
             window.iter().zip(&parts).all(|(w, p)| match *p {
-                "N" => w.starts_with(|c: char| c.is_ascii_digit()) || number_word(w).is_some(),
+                "N" => is_number(w),
                 _ => w == p,
             })
         })
@@ -814,6 +865,77 @@ mod tests {
             missing("In 2026. It ran.", "It ran.")["number"],
             vec!["2026"]
         );
+    }
+
+    #[test]
+    fn a_hyphenated_number_word_matches_its_numeral() {
+        for (original, edited) in [
+            ("A five-day window.", "A 5-day window."),
+            ("A 5-day window.", "A five-day window."),
+        ] {
+            assert!(missing(original, edited).is_empty(), "{original}");
+            assert!(added(original, edited).is_empty(), "{original}");
+        }
+        assert_eq!(
+            missing("A five-day window.", "A 5-week window.")["quantity"],
+            vec!["5 day"]
+        );
+    }
+
+    #[test]
+    fn bytes_and_bits_are_different_units() {
+        assert_eq!(
+            missing("Send 100 MB.", "Send 100 Mb.")["quantity"],
+            vec!["100 MB"]
+        );
+        assert!(missing("Send 100 MB.", "Send 100 megabytes.").is_empty());
+        assert!(missing("Send 100 Mb.", "Send 100 megabits.").is_empty());
+    }
+
+    #[test]
+    fn a_name_is_not_a_modal() {
+        for original in ["Will Smith signed the plan.", "May Parker signed the plan."] {
+            let m = missing(original, "The plan was signed.");
+            assert!(!m.contains_key("meaning word"), "{m:?}");
+        }
+        assert_eq!(
+            missing("It will pass.", "It passes.")["meaning word"],
+            vec!["'will' (1 before, 0 after)"]
+        );
+        assert_eq!(
+            missing("Will Smith will sign.", "Will Smith signs.")["meaning word"],
+            vec!["'will' (1 before, 0 after)"]
+        );
+    }
+
+    #[test]
+    fn equivalent_hedges_match_and_a_dropped_hedge_reports() {
+        for hedge in ["approximately", "roughly", "around"] {
+            let hedged = format!("Costs rose {hedge} 50%.");
+            assert!(
+                missing(&hedged, "Costs rose about 50%.").is_empty(),
+                "{hedge}"
+            );
+            assert!(
+                added(&hedged, "Costs rose about 50%.").is_empty(),
+                "{hedge}"
+            );
+            assert_eq!(
+                missing(&hedged, "Costs rose 50%.")["meaning word"],
+                vec!["'about N' (1 before, 0 after)"],
+                "{hedge}"
+            );
+        }
+        assert!(missing("Walk around 3 sites.", "Walk 3 sites.").contains_key("meaning word"));
+        assert_eq!(
+            missing("Roughly half left.", "Half left.")["meaning word"],
+            vec!["'roughly' (1 before, 0 after)"]
+        );
+    }
+
+    #[test]
+    fn a_tab_after_a_list_marker_is_still_a_marker() {
+        assert!(missing("1.\tOpen it.\n2)\tSave it.", "Open it, then save it.").is_empty());
     }
 
     #[test]
