@@ -22,9 +22,9 @@ To humanise AI-written text, ask the agent to humanise it. The prose skill remov
 
 <table>
 <tr>
-<td align="center" width="33%"><h3>4.92 of 5</h3>humanising, against 4.54 and 4.50<br><sub><a href="#against-other-humanisers">20 texts, blind-judged</a></sub></td>
-<td align="center" width="33%"><h3>65% of the source</h3>against 81% for both rivals<br><sub><a href="#against-other-humanisers">0 blocking findings</a></sub></td>
-<td align="center" width="33%"><h3>4.63 against 4.07</h3>over 'Answer concisely.'<br><sub><a href="#evaluation">45 cases, 29 blockers down to 6</a></sub></td>
+<td align="center" width="33%"><h3>4.92 of 5</h3>humanising quality, against 4.54 and 4.50<br><sub><a href="#against-other-humanisers">neutral rubric, 20 texts, blind judge</a></sub></td>
+<td align="center" width="33%"><h3>65% of source length</h3>against 81% for both rivals<br><sub><a href="#against-other-humanisers">length only; fact checks are alongside</a></sub></td>
+<td align="center" width="33%"><h3>4.63 against 4.07</h3>against the plain 'Answer concisely.'<br><sub><a href="#evaluation">house rubric, 45 cases; 6 blockers against 29</a></sub></td>
 </tr>
 </table>
 
@@ -48,16 +48,16 @@ claude plugin install laconic@laconic
 For any agent the Skills CLI supports:
 
 ```bash
-npx skills add EquityBot/laconic --global --agent '*'
+npx skills add EquityBot/laconic --global --agent '*' --yes
 ```
 
 Restart the agent, then type `/laconic`. It stays on for the session until you say 'stop laconic'.
 
 ## When to choose something else
 
-- **Lowest token cost comes first:** [caveman](https://github.com/JuliusBrussee/caveman) targets that directly, and also compresses what the agent reads. Laconic's session mode cost about 27% more per task than its compact rules; it optimises for keeping facts, not for tokens.
-- **You need American or British English:** [humanizer](https://github.com/blader/humanizer) or [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing). Laconic writes Australian English only.
-- **You need an open source licence:** both are MIT and caveman is Apache-2.0. Laconic is under FSL-1.1-ALv2 (see [Licence](#licence)).
+- **Token cost comes first:** [caveman](https://github.com/JuliusBrussee/caveman) is built for that and also compresses what the agent reads. Laconic is not built for it: session mode cost about 27% more per task than its compact rules. The 2 have not been compared on token cost.
+- **You need another variety of English:** Laconic writes Australian English only.
+- **You need an open source licence:** Laconic is under FSL-1.1-ALv2 (see [Licence](#licence)). [humanizer](https://github.com/blader/humanizer) and [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) are MIT and caveman is Apache-2.0.
 
 ## What changes
 
