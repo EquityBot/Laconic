@@ -32,7 +32,7 @@ python3 scripts/run_evals.py run \
 
 The default Claude runner reports dollar cost and receives the remaining condition budget on every call. Runners without cost reporting are rejected unless `--allow-unmetered` is supplied; use that flag only when the provider account has its own hard cap.
 
-Both example runners isolate the call from the operator's own agent configuration: `--setting-sources ""` for Claude, `--ignore-user-config --ephemeral` for Codex. Keep that isolation when adding runners: without it, user-level plugins, hooks, memory and output styles leak into every condition and shape the responses being judged. The sharpest case is this repo's own always-on flag (`~/.claude/.laconic-always`), which would inject the full laconic ruleset into the **baseline** condition and make the comparison measure the skill against itself.
+The Claude example runner isolates the call from the operator's own agent configuration with `--setting-sources ""`. The Codex example does not fully isolate it: on 30 October 2026 (codex-cli 0.164.0), a call with `--ignore-user-config --ephemeral` still listed the operator's personal instruction files and skills, including Laconic's. Use Codex to compare setups only from a machine or `CODEX_HOME` that holds none of them. Keep isolation when adding runners: without it, user-level plugins, hooks, memory and output styles leak into every condition and shape the responses being judged. The sharpest case is this repo's own always-on flag (`~/.claude/.laconic-always`), which would inject the full laconic ruleset into the **baseline** condition and make the comparison measure the skill against itself.
 
 Isolation also drops the operator's saved model and effort settings, so the claude runner pins `--model` explicitly. Keep a pin when editing the runner: without one, the eval silently runs whatever the operator (or the CLI release) defaults to; the model would vary between operators and over time, and per-token cost varies with it. The pinned model is part of the result: record it with published numbers, as below.
 
@@ -82,6 +82,22 @@ python3 evals/humanise_metrics.py evals/results/responses.jsonl --avoid path/to/
 ```
 
 `humanise-rubric-neutral.md` is the rubric without Laconic's house mechanics, so a humaniser is not marked down for house rules it never claims to follow. `humanise_metrics.py` reports each condition's length as a share of the source, `laconic-check` lint findings and `preserve` drops, and optionally the avoid-ai-writing detector and dslop (with negation findings off), beside the same measures on the source texts. Read `preserve` drops before citing them: removing a staged contrast drops its 'not' legitimately. It calls whichever `laconic-check` is on the PATH, so record that build with published counts: later versions add rules. A checker that exits with an error raises rather than counting as zero findings.
+
+## Fact-survival benchmark
+
+This tests the core promise directly: does a shorter rewrite keep what the reader needs? `fact-ledgers.jsonl` lists 97 facts and 24 qualifiers (hedges, conditions, limits and commitments) from the 20 humanising sources. It was written from the sources alone, before any rewrite existed. `fact-cases.jsonl` gives every setup the same instruction, which names none of them.
+
+```bash
+python3 evals/fact_setups.py evals/results/facts
+for setup in laconic-prose laconic-session humanizer avoid stop-slop caveman concise-control no-skill; do
+  python3 scripts/run_evals.py run --cases evals/fact-cases.jsonl --runner-config evals/results/facts/runners.json --runner "$setup" --condition candidate --no-injection --trials 2 --jobs 4 --budget-usd 12 --output "evals/results/facts/run-$setup.jsonl"
+done
+cat evals/results/facts/run-*.jsonl > evals/results/facts/responses.jsonl
+python3 evals/fact_survival.py judge evals/results/facts/responses.jsonl --output evals/results/facts/scores.jsonl
+python3 evals/fact_survival.py report evals/results/facts/scores.jsonl evals/results/facts/responses.jsonl --cases evals/fact-cases.jsonl --reference laconic-prose
+```
+
+The judge sees one rewrite and the ledger, never the setup's name. It marks each item kept, hardened (present but stronger or wider than the source) or dropped, and must quote the rewrite for kept and hardened. A quote not found in the rewrite counts as dropped; the report counts those. `report` also gives length against the source and items `laconic-check preserve` lists as added, with paired 95% intervals that resample whole texts. The setups and the ledgers come from Laconic's author, so read the ledgers before relying on a margin; report the result whichever way it falls.
 
 ## Agent cost benchmark
 
