@@ -1,6 +1,8 @@
 import json
 import sys
 import tempfile
+import threading
+import time
 import unittest
 from pathlib import Path
 
@@ -128,6 +130,27 @@ class JudgeRowsTest(unittest.TestCase):
             with self.assertRaises(fact_survival.JudgeFailed):
                 fact_survival.judge_rows(self.rows()[:1], {"c": ITEMS}, {"c": "Source."}, folder / "scores.jsonl", lambda _: ("not json", 0.5))
             self.assertEqual(1.5, fact_survival.total_spend(folder))
+
+    def test_rows_running_beside_a_failure_are_saved_and_costed(self):
+        failing_attempts = []
+        failed = threading.Event()
+
+        def call(prompt):
+            if "Nothing." in prompt:
+                failing_attempts.append(prompt)
+                if len(failing_attempts) == 3:
+                    failed.set()
+                return "not json", 0.5
+            self.assertTrue(failed.wait(10))
+            time.sleep(0.2)  # Lets the failure surface before this row finishes.
+            return reply(), 0.25
+
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            with self.assertRaises(fact_survival.JudgeFailed):
+                fact_survival.judge_rows(self.rows(), {"c": ITEMS}, {"c": "Source."}, folder / "scores.jsonl", call, jobs=2)
+            self.assertEqual(["a"], [row["setup"] for row in fact_survival.read_jsonl(folder / "scores.jsonl")])
+            self.assertEqual(1.75, fact_survival.total_spend(folder))
 
     def test_stops_submitting_at_the_budget(self):
         rows = [dict(self.rows()[0], trial=n) for n in range(10)]

@@ -170,6 +170,7 @@ def judge_rows(
         return {"setup": row["runner"], "case_id": row["case_id"], "trial": row["trial"], "cost": cost, "verdicts": verdicts, "invented": invented}
 
     spent = 0.0
+    failure: Exception | None = None
     with ThreadPoolExecutor(jobs) as pool, output.open("a", encoding="utf-8") as sink:
         pending = iter(todo)
         running = {pool.submit(one, row) for row in _take(pending, jobs)}
@@ -178,15 +179,18 @@ def judge_rows(
             running.remove(finished)
             try:
                 result = finished.result()
-            except JudgeFailed as failure:
+            except Exception as error:  # Calls already running finish and are saved first.
+                failure = failure or error
                 with (output.parent / "overhead.jsonl").open("a", encoding="utf-8") as overhead:
-                    overhead.write(json.dumps({"stage": "failed-judge", "cost_usd": failure.cost}) + "\n")
-                raise
+                    overhead.write(json.dumps({"stage": "failed-judge", "cost_usd": getattr(error, "cost", 0.0)}) + "\n")
+                continue
             spent += result["cost"]
             sink.write(json.dumps(result, ensure_ascii=False) + "\n")
             sink.flush()
-            if spent < budget_usd:
+            if spent < budget_usd and failure is None:
                 running |= {pool.submit(one, row) for row in _take(pending, 1)}
+    if failure:
+        raise failure
     return spent
 
 
