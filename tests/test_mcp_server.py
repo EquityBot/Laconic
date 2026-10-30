@@ -20,8 +20,11 @@ def find_binary():
     )
 
 
-@unittest.skipUnless(shutil.which("node"), "node is unavailable")
-@unittest.skipUnless(find_binary(), "the laconic-check binary is unavailable")
+@unittest.skipUnless(shutil.which("node"), "MCP smoke test not run: node is not on the PATH")
+@unittest.skipUnless(
+    find_binary(),
+    "MCP smoke test not run: no laconic-check binary in LACONIC_CHECK, target/debug or the PATH",
+)
 class McpServerTest(unittest.TestCase):
     def exchange(self, *requests):
         """Send the requests and return the server's replies keyed by id."""
