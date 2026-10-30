@@ -152,6 +152,20 @@ class JudgeRowsTest(unittest.TestCase):
             self.assertEqual(["a"], [row["setup"] for row in fact_survival.read_jsonl(folder / "scores.jsonl")])
             self.assertEqual(1.75, fact_survival.total_spend(folder))
 
+    def test_a_process_failure_after_a_paid_retry_keeps_that_cost(self):
+        replies = iter([("not json", 0.5)])
+
+        def call(_):
+            for answer in replies:
+                return answer
+            raise RuntimeError("judge exited 1")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            with self.assertRaises(fact_survival.JudgeFailed):
+                fact_survival.judge_rows(self.rows()[:1], {"c": ITEMS}, {"c": "Source."}, folder / "scores.jsonl", call)
+            self.assertEqual(0.5, fact_survival.total_spend(folder))
+
     def test_stops_submitting_at_the_budget(self):
         rows = [dict(self.rows()[0], trial=n) for n in range(10)]
         with tempfile.TemporaryDirectory() as tmp:

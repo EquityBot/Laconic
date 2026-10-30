@@ -159,7 +159,10 @@ def judge_rows(
         items = ledgers[row["case_id"]]
         cost = 0.0
         for attempt in range(3):
-            reply, spent = call(judge_prompt(sources[row["case_id"]], row["response"], items))
+            try:
+                reply, spent = call(judge_prompt(sources[row["case_id"]], row["response"], items))
+            except Exception as error:  # Keeps what earlier attempts cost.
+                raise JudgeFailed(f"{row['runner']} {row['case_id']}: {error}", cost) from error
             cost += spent
             try:
                 verdicts, invented = parse_reply(reply, row["response"], items)
