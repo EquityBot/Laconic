@@ -3,7 +3,7 @@
     <source media="(max-width: 600px) and (prefers-color-scheme: light)" srcset=".github/assets/banner-phone-light.svg">
     <source media="(max-width: 600px)" srcset=".github/assets/banner-phone.svg">
     <source media="(prefers-color-scheme: light)" srcset=".github/assets/banner-light.svg">
-    <img src=".github/assets/banner.svg" width="100%" alt="Laconic. Answer first. Every fact kept. Australian English. Pixel art of a crested Spartan helmet beside the Laconic wordmark in slab-serif block letters.">
+    <img src=".github/assets/banner.svg" width="100%" alt="Laconic. Answer first. Built to keep facts. Australian English. Pixel art of a crested Spartan helmet beside the Laconic wordmark in slab-serif block letters.">
   </picture>
 </p>
 
@@ -16,9 +16,9 @@
 
 </div>
 
-Laconic is a skill for coding agents and chat assistants. It makes the model lead with the answer, mark what it has not verified and stop when the answer is complete, without dropping a fact, step or caveat the reader needs. It instructs the model to write every original sentence to the Australian Government Style Manual, with the house overrides listed in the skill.
+Laconic is an AI 'humanizer' (humaniser) and 'no AI slop' skill for coding agents and chat assistants. It makes the model lead with the answer, mark what it has not verified and stop when the answer is complete, and tells it to keep every fact, step and caveat the reader needs. It instructs the model to write every original sentence to the Australian Government Style Manual, with the house overrides listed in the skill.
 
-To humanise AI-written text, ask the agent to humanise it. The prose skill removes AI writing patterns, keeps every fact, number and caveat, and leaves the text shorter, not padded with performed personality.
+To humanise AI-written text, ask the agent to humanise it. The prose skill removes AI writing patterns, is written to keep every fact, number and caveat, and leaves the text shorter, not padded with performed personality. The [fact-survival benchmark](evals/README.md#fact-survival-benchmark) that tests this promise has not reported yet.
 
 <table>
 <tr>
@@ -190,7 +190,7 @@ Limits: 40 texts per setup from one generating model, judged by the same model f
 
 ## Checker
 
-`tools/laconic-check` is a small Rust CLI with no dependencies. `lint` flags candidates in Markdown prose: em dashes, US spellings, 'while' and 'among' as conjunction and preposition, double quotation marks, possible serial commas, numbers written as words, dates and times in non-Style Manual forms, weekdays that do not match their date, Latin abbreviations, chatbot closers, stock phrases such as 'Bottom line:' or 'circle back', staged contrasts ('it's not X, it's Y'; 'not just X but Y') verbless reveal questions ('The result? A 40% cut.') and unnecessary hyphens such as 'open-source' or 'e-mail', skipping code, URLs and quoted text. It also flags chat-tool residue, such as zero-width characters, citation markers and ChatGPT tracking tags, including inside links. `preserve` reports numbers, inline code, URLs and words such as 'not', 'must', 'some' and 'only' and bounds such as 'up to' and 'over 3,000' that an edit dropped, counting 'three' and '3' as the same number, and fails on them. It also lists those the edit added, such as an invented figure, as advice; `--strict` fails on them too, for a rewrite that must add nothing. A finding is a reason to look, not proof of a defect.
+`tools/laconic-check` is a small Rust CLI with no dependencies. `lint` flags candidates in Markdown prose: em dashes, US spellings, 'while' and 'among' as conjunction and preposition, double quotation marks, possible serial commas, numbers written as words, dates and times in non-Style Manual forms, weekdays that do not match their date, Latin abbreviations, chatbot closers, stock phrases such as 'Bottom line:' or 'circle back', staged contrasts ('it's not X, it's Y'; 'not just X but Y') verbless reveal questions ('The result? A 40% cut.') and unnecessary hyphens such as 'open-source' or 'e-mail', skipping code, URLs and quoted text. It also flags chat-tool residue, such as zero-width characters, citation markers and ChatGPT tracking tags, including inside links. `preserve` reports numbers, sizes and units ('$47.3 million' to '$47.3 billion', '150 km' to '150 miles'), dated months, inline code, URLs, words such as 'not', 'must', 'will', 'if', 'before' and 'likely' and bounds such as 'up to' and 'about 50%' that an edit dropped, and fails on them. It counts 'three' and '3', '1000' and '1,000', and '5 per cent' and '5%' as the same value, and ignores ordered list markers of up to 2 digits. It also lists those the edit added, such as an invented figure, as advice; `--strict` fails on them too, for a rewrite that must add nothing. Names of 2 or 3 capitalised words that an edit lost are listed to check and never fail. It does not read for meaning, so a clean result only rules out these losses. A finding is a reason to look, not proof of a defect.
 
 ```bash
 cargo run --manifest-path tools/laconic-check/Cargo.toml -- lint README.md

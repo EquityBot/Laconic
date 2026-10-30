@@ -37,7 +37,7 @@ fn an_invented_figure_is_advisory_unless_strict() {
     assert_eq!(code, 0);
     assert_eq!(
         out,
-        "No protected items dropped.\nadded meaning word: 'must' (0 before, 1 after)\nadded number: 1,200\n"
+        "No tracked items dropped; meaning not checked.\nadded meaning word: 'must' (0 before, 1 after)\nadded number: 1,200\n"
     );
     assert_eq!(preserve(&["--strict"], &pair).0, 1);
 }
@@ -59,7 +59,23 @@ fn a_faithful_edit_passes_strict() {
     );
     assert_eq!(
         preserve(&["--strict"], &pair),
-        (0, "No protected items dropped.\n".into())
+        (0, "No tracked items dropped; meaning not checked.\n".into())
+    );
+}
+
+#[test]
+fn a_dropped_name_is_advisory_even_with_strict() {
+    let pair = files(
+        "name",
+        "Priya Nair approved the plan.",
+        "The plan was approved.",
+    );
+    assert_eq!(
+        preserve(&["--strict"], &pair),
+        (
+            0,
+            "No tracked items dropped; meaning not checked.\ncheck name: Priya Nair\n".into()
+        )
     );
 }
 
@@ -159,7 +175,7 @@ fn a_repeated_value_is_not_new_but_a_repeated_meaning_word_is() {
     assert_eq!(code, 1);
     assert_eq!(
         out,
-        "No protected items dropped.\nadded meaning word: 'must' (1 before, 2 after)\n"
+        "No tracked items dropped; meaning not checked.\nadded meaning word: 'must' (1 before, 2 after)\n"
     );
 }
 

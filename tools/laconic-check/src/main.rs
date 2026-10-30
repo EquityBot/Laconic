@@ -2,7 +2,8 @@
 //!
 //! `lint` reports candidates in the original prose of Markdown files; a match is a
 //! reason to look, not proof of a defect. `preserve` compares an original and an
-//! edit and reports numbers, code spans, URLs, meaning words and bounds the edit
+//! edit and reports numbers, quantities, months, code spans, URLs, meaning words and
+//! bounds the edit
 //! dropped, and, as advice, those it added.
 
 use std::collections::BTreeMap;
@@ -20,7 +21,8 @@ fn usage() -> ExitCode {
         "usage:\n  laconic-check lint [--warn] <file.md | ->...\n  laconic-check preserve [--strict] <original> <edited>\n\n\
          lint exits 1 when it finds candidates, unless --warn is given.\n\
          preserve exits 1 when the edit dropped a protected item. It also lists items the\n\
-         edit added, which fail only with --strict (for a rewrite that must add nothing)."
+         edit added, which fail only with --strict (for a rewrite that must add nothing),\n\
+         and names to check, which never fail. A clean result does not check meaning."
     );
     ExitCode::from(2)
 }
@@ -89,7 +91,7 @@ fn main() -> ExitCode {
             let missing: BTreeMap<&str, Vec<String>> = preserve::missing(&original, &edited);
             let added = preserve::added(&original, &edited);
             if missing.is_empty() {
-                println!("No protected items dropped.");
+                println!("No tracked items dropped; meaning not checked.");
             }
             for (kind, items) in &missing {
                 for item in items {
@@ -100,6 +102,9 @@ fn main() -> ExitCode {
                 for item in items {
                     println!("added {kind}: {item}");
                 }
+            }
+            for name in preserve::names(&original, &edited) {
+                println!("check name: {name}");
             }
             if !missing.is_empty() || (strict && !added.is_empty()) {
                 ExitCode::from(1)
