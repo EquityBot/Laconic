@@ -20,6 +20,16 @@ Laconic is a skill for coding agents and chat assistants. It makes the model lea
 
 To humanise AI-written text, ask the agent to humanise it. The prose skill removes AI writing patterns, keeps every fact, number and caveat, and leaves the text shorter, not padded with performed personality.
 
+<table>
+<tr>
+<td align="center" width="33%"><h3>4.92 of 5</h3>humanising, against 4.54 and 4.50<br><sub><a href="#against-other-humanisers">20 texts, blind-judged</a></sub></td>
+<td align="center" width="33%"><h3>65% of the source</h3>against 81% for both rivals<br><sub><a href="#against-other-humanisers">0 blocking findings</a></sub></td>
+<td align="center" width="33%"><h3>4.63 against 4.07</h3>over 'Answer concisely.'<br><sub><a href="#evaluation">45 cases, 29 blockers down to 6</a></sub></td>
+</tr>
+</table>
+
+All 3 come from Laconic's own harness on 20 October 2026, with one generating model. [Evaluation](#evaluation) gives the limits and the commands to rerun them.
+
 ## Install
 
 Paste this into your agent:
@@ -35,7 +45,19 @@ claude plugin marketplace add EquityBot/laconic
 claude plugin install laconic@laconic
 ```
 
+For any agent the Skills CLI supports:
+
+```bash
+npx skills add EquityBot/laconic --global --agent '*'
+```
+
 Restart the agent, then type `/laconic`. It stays on for the session until you say 'stop laconic'.
+
+## When to choose something else
+
+- **Lowest token cost comes first:** [caveman](https://github.com/JuliusBrussee/caveman) targets that directly, and also compresses what the agent reads. Laconic's session mode cost about 27% more per task than its compact rules; it optimises for keeping facts, not for tokens.
+- **You need American or British English:** [humanizer](https://github.com/blader/humanizer) or [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing). Laconic writes Australian English only.
+- **You need an open source licence:** both are MIT and caveman is Apache-2.0. Laconic is under FSL-1.1-ALv2 (see [Licence](#licence)).
 
 ## What changes
 
