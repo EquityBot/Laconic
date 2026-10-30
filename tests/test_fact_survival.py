@@ -122,6 +122,13 @@ class JudgeRowsTest(unittest.TestCase):
             self.assertEqual(0.75, spent)
             self.assertEqual(0.75, fact_survival.read_jsonl(output)[0]["cost"])
 
+    def test_a_row_that_exhausts_its_retries_records_its_cost_for_spend(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            with self.assertRaises(fact_survival.JudgeFailed):
+                fact_survival.judge_rows(self.rows()[:1], {"c": ITEMS}, {"c": "Source."}, folder / "scores.jsonl", lambda _: ("not json", 0.5))
+            self.assertEqual(1.5, fact_survival.total_spend(folder))
+
     def test_stops_submitting_at_the_budget(self):
         rows = [dict(self.rows()[0], trial=n) for n in range(10)]
         with tempfile.TemporaryDirectory() as tmp:

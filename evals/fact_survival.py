@@ -34,6 +34,14 @@ SETUPS = {"laconic-prose", "laconic-session", "humanizer", "avoid", "stop-slop",
 ADDED = re.compile(r"^added ", re.MULTILINE)
 
 
+class JudgeFailed(Exception):
+    """A row's retries ran out; carries what those calls cost."""
+
+    def __init__(self, message: str, cost: float):
+        super().__init__(message)
+        self.cost = cost
+
+
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
@@ -156,9 +164,9 @@ def judge_rows(
             try:
                 verdicts, invented = parse_reply(reply, row["response"], items)
                 break
-            except (ValueError, KeyError, AttributeError, json.JSONDecodeError):
+            except (ValueError, KeyError, AttributeError, json.JSONDecodeError) as error:
                 if attempt == 2:
-                    raise
+                    raise JudgeFailed(f"{row['runner']} {row['case_id']}: {error}", cost) from error
         return {"setup": row["runner"], "case_id": row["case_id"], "trial": row["trial"], "cost": cost, "verdicts": verdicts, "invented": invented}
 
     spent = 0.0
@@ -168,7 +176,12 @@ def judge_rows(
         while running:
             finished = next(as_completed(running))
             running.remove(finished)
-            result = finished.result()
+            try:
+                result = finished.result()
+            except JudgeFailed as failure:
+                with (output.parent / "overhead.jsonl").open("a", encoding="utf-8") as overhead:
+                    overhead.write(json.dumps({"stage": "failed-judge", "cost_usd": failure.cost}) + "\n")
+                raise
             spent += result["cost"]
             sink.write(json.dumps(result, ensure_ascii=False) + "\n")
             sink.flush()
