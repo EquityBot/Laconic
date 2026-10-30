@@ -32,7 +32,7 @@ python3 scripts/run_evals.py run \
 
 The default Claude runner reports dollar cost and receives the remaining condition budget on every call. Runners without cost reporting are rejected unless `--allow-unmetered` is supplied; use that flag only when the provider account has its own hard cap.
 
-Both example runners isolate the call from the operator's own agent configuration: `--setting-sources ""` for Claude, `--ignore-user-config --ephemeral` for Codex. Keep that isolation when adding runners: without it, user-level plugins, hooks, memory and output styles leak into every condition and shape the responses being judged. The sharpest case is this repo's own always-on flag (`~/.claude/.laconic-always`), which would inject the full laconic ruleset into the **baseline** condition and make the comparison measure the skill against itself.
+The Claude example runner isolates the call from the operator's own agent configuration with `--setting-sources ""`. The Codex example does not fully isolate it: on 30 October 2026 (codex-cli 0.164.0), a call with `--ignore-user-config --ephemeral` still listed the operator's personal instruction files and skills, including Laconic's. Use Codex to compare setups only from a machine or `CODEX_HOME` that holds none of them. Keep isolation when adding runners: without it, user-level plugins, hooks, memory and output styles leak into every condition and shape the responses being judged. The sharpest case is this repo's own always-on flag (`~/.claude/.laconic-always`), which would inject the full laconic ruleset into the **baseline** condition and make the comparison measure the skill against itself.
 
 Isolation also drops the operator's saved model and effort settings, so the claude runner pins `--model` explicitly. Keep a pin when editing the runner: without one, the eval silently runs whatever the operator (or the CLI release) defaults to; the model would vary between operators and over time, and per-token cost varies with it. The pinned model is part of the result: record it with published numbers, as below.
 
@@ -82,6 +82,33 @@ python3 evals/humanise_metrics.py evals/results/responses.jsonl --avoid path/to/
 ```
 
 `humanise-rubric-neutral.md` is the rubric without Laconic's house mechanics, so a humaniser is not marked down for house rules it never claims to follow. `humanise_metrics.py` reports each condition's length as a share of the source, `laconic-check` lint findings and `preserve` drops, and optionally the avoid-ai-writing detector and dslop (with negation findings off), beside the same measures on the source texts. Read `preserve` drops before citing them: removing a staged contrast drops its 'not' legitimately. It calls whichever `laconic-check` is on the PATH, so record that build with published counts: later versions add rules. A checker that exits with an error raises rather than counting as zero findings.
+
+## Fact-survival benchmark
+
+This tests the core promise directly: does a shorter rewrite keep what the reader needs? `fact-ledgers.jsonl` lists 99 facts and 33 qualifiers (hedges, conditions, limits and commitments) from the 20 humanising sources. It was written from the sources alone, before any rewrite existed. `fact-cases.jsonl` gives every setup the same instruction, which names none of them.
+
+```bash
+python3 evals/fact_setups.py evals/results/facts
+python3 evals/fact_setups.py --preflight evals/results/facts
+python3 evals/fact_survival.py calibrate --overhead evals/results/facts/overhead.jsonl
+for pair in laconic-prose:6 laconic-session:6 humanizer:7 avoid:15 stop-slop:4 caveman:4 concise-control:2 no-skill:2; do
+  setup=${pair%:*}; budget=${pair#*:}
+  python3 evals/fact_survival.py spend evals/results/facts --cap 48 || break
+  python3 scripts/run_evals.py run --cases evals/fact-cases.jsonl --runner-config evals/results/facts/runners.json --runner "$setup" --condition candidate --no-injection --trials 2 --jobs 4 --budget-usd "$budget" --output "evals/results/facts/run-$setup.jsonl"
+done
+cat evals/results/facts/run-*.jsonl > evals/results/facts/responses.jsonl
+python3 evals/fact_survival.py spend evals/results/facts --cap 48 && python3 evals/fact_survival.py judge evals/results/facts/responses.jsonl --output evals/results/facts/scores.jsonl
+python3 evals/fact_survival.py spend evals/results/facts --cap 60
+python3 evals/fact_survival.py report evals/results/facts/scores.jsonl evals/results/facts/responses.jsonl --cases evals/fact-cases.jsonl --reference laconic-prose
+```
+
+The plan is US$46 of generation, about US$2 of preflight and calibration, and US$12 of judging: US$60. `spend` adds up the reported cost of every stage and stops the next one once the US$48 mark is reached. Budgets are soft thresholds, so calls already running can pass them; `spend` reports any overrun. A setup that stops early leaves `report` refusing to compare, because every setup must cover every text and trial exactly once. Preflight and calibration must pass before any result is cited.
+
+`--preflight` makes one call per skill setup and fails unless the setup called its own skill; read the replies it prints too. Caveman's rules exempt third-party messages and other text persisted outside chat, so check that it applied its style to this task. `calibrate` runs the judge on the hand-labelled rewrites in `fact-calibration.jsonl`: a verbatim copy, a faithful paraphrase, a removed hedge, omitted facts, a contradicted figure, a fabricated claim and an empty rewrite. Read its disagreements before judging.
+
+The judge sees the source, one rewrite and the ledger, never the setup's name. It marks each item kept, hardened (present but stronger or wider than the source) or dropped, and must quote the rewrite for kept and hardened. A quote not found in the rewrite counts as dropped; the report counts those. It also lists passages that state material facts the source does not support, again verified as quotes. `report` gives survival by text, facts and qualifiers separately, invented passages, length against the source and items `laconic-check preserve` lists as added, with paired 95% intervals on survival by text that resample whole texts.
+
+Survival alone proves little, since copying the source scores 100%. Decided before any run: a setup is better than another on this benchmark only if its survival interval excludes 0, it is no longer and it invents no more. Anything else is reported as a trade-off or a tie. The setups and the ledgers come from Laconic's author, and the ledgers had one independent review, so read them before relying on a margin. Report the result whichever way it falls.
 
 ## Agent cost benchmark
 
