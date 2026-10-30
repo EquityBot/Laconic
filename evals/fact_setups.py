@@ -75,7 +75,7 @@ def preflight(here: Path) -> int:
     """One call per skill setup, proving it loads its own skill. Prints each reply to read."""
     config = json.loads((here / "runners.json").read_text(encoding="utf-8"))
     prompt = json.loads((ROOT / "evals" / "fact-cases.jsonl").read_text(encoding="utf-8").splitlines()[0])["prompt"]
-    failures = 0
+    failures, cost = 0, 0.0
     for name, runner in config.items():
         if "--plugin-dir" not in runner["command"]:
             continue
@@ -83,8 +83,11 @@ def preflight(here: Path) -> int:
         done = subprocess.run(command, input=prompt, capture_output=True, text=True, encoding="utf-8", timeout=600)
         used = skills_used(done.stdout)
         failures += SKILLS[name] not in used
-        results = [json.loads(line).get("result", "") for line in done.stdout.splitlines() if line.startswith('{"type":"result"')]
-        print(f"{name}: wanted {SKILLS[name]}, called {sorted(used)}\n{(results or [''])[0][:400]}\n")
+        results = [json.loads(line) for line in done.stdout.splitlines() if line.startswith('{"type":"result"')]
+        cost += sum(float(result.get("total_cost_usd") or 0) for result in results)
+        print(f"{name}: wanted {SKILLS[name]}, called {sorted(used)}\n{(results or [{}])[0].get('result', '')[:400]}\n")
+    with (here / "overhead.jsonl").open("a", encoding="utf-8") as sink:
+        sink.write(json.dumps({"stage": "preflight", "cost_usd": cost}) + "\n")
     return 1 if failures else 0
 
 

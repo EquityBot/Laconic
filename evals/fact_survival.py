@@ -113,8 +113,10 @@ def parse_reply(reply: str, rewrite: str, items: list[dict[str, str]]) -> tuple[
             "unverified_quote": unverified,
             "quote": quote,
         })
-    invented = [q for q in parsed.get("invented", []) if isinstance(q, str) and q.strip() and _normalise(q) in body]
-    return verdicts, invented
+    if not isinstance(parsed.get("invented"), list):
+        raise ValueError("judge reply has no invented list")
+    invented = list(dict.fromkeys(_normalise(q) for q in parsed["invented"] if isinstance(q, str) and q.strip()))
+    return verdicts, [q for q in invented if q in body]
 
 
 def _call_judge(prompt: str, command: list[str], timeout: float) -> tuple[str, float]:
@@ -179,12 +181,14 @@ def calibrate(
     call: Callable[[str], tuple[str, float]],
 ) -> dict[str, Any]:
     """The judge against hand-labelled rewrites. '@source' stands for a verbatim copy."""
-    errors, compared = [], 0
+    errors, compared, cost = [], 0, 0.0
     for fixture in fixtures:
         source = sources[fixture["case_id"]]
         rewrite = source if fixture["rewrite"] == "@source" else fixture["rewrite"]
         items = ledgers[fixture["case_id"]]
-        verdicts, invented = parse_reply(call(judge_prompt(source, rewrite, items))[0], rewrite, items)
+        reply, spent = call(judge_prompt(source, rewrite, items))
+        cost += spent
+        verdicts, invented = parse_reply(reply, rewrite, items)
         for verdict in verdicts:
             expected = fixture["expected"].get(verdict["id"], fixture["default"])
             compared += 1
@@ -193,7 +197,16 @@ def calibrate(
         compared += 1
         if bool(invented) != fixture["invented"]:
             errors.append({"fixture": fixture["name"], "item": "invented", "expected": fixture["invented"], "got": invented})
-    return {"compared": compared, "agreement": 1 - len(errors) / compared, "errors": errors}
+    return {"compared": compared, "agreement": 1 - len(errors) / compared, "errors": errors, "cost_usd": cost}
+
+
+def total_spend(folder: Path) -> float:
+    """Reported cost of every stage so far: overhead, generation and judging."""
+    total = 0.0
+    for path in [*sorted(folder.glob("run-*.jsonl")), folder / "overhead.jsonl", folder / "scores.jsonl"]:
+        if path.exists():
+            total += sum(float(row.get("cost_usd") or row.get("cost") or 0) for row in read_jsonl(path))
+    return total
 
 
 def _take(iterator: Any, count: int) -> list[Any]:
@@ -245,17 +258,19 @@ def summarise(
     sources: dict[str, str],
     reference: str,
     added: Callable[[str, str], int] = _added_count,
+    trials: int = 2,
 ) -> dict[str, Any]:
     by_setup: dict[str, list[dict[str, Any]]] = {}
     for score in scores:
         by_setup.setdefault(score["setup"], []).append(score)
-    coverage = {setup: sorted((r["case_id"], r["trial"]) for r in rows) for setup, rows in by_setup.items()}
-    if reference not in coverage:
+    if reference not in by_setup:
         raise ValueError(f"reference setup has no scores: {reference}")
-    for setup, pairs in coverage.items():
+    expected = sorted((case, trial) for case in sources for trial in range(1, trials + 1))
+    for setup, rows in by_setup.items():
+        scored = sorted((r["case_id"], r["trial"]) for r in rows)
         answered = sorted((r["case_id"], r["trial"]) for r in responses if r["runner"] == setup)
-        if pairs != coverage[reference] or answered != pairs:
-            raise ValueError(f"incomplete or unequal coverage: {setup}")
+        if scored != expected or answered != expected:
+            raise ValueError(f"incomplete, duplicate or unequal coverage: {setup}")
     summary: dict[str, Any] = {}
     per_case: dict[str, dict[str, list[float]]] = {}
     for setup, rows in sorted(by_setup.items()):
@@ -279,7 +294,7 @@ def summarise(
             "length_share": mean(
                 humanise_metrics.words(r["response"]) / humanise_metrics.words(sources[r["case_id"]]) for r in answers
             ),
-            "invented_per_text": mean(len(row.get("invented", [])) for row in rows),
+            "invented_per_text": mean(len(row["invented"]) for row in rows),
             "added_per_text": mean(added(sources[r["case_id"]], r["response"]) for r in answers),
             "generation_cost": sum(float(r.get("cost_usd") or 0) for r in answers),
         }
@@ -312,11 +327,16 @@ def main() -> int:
     calibration.add_argument("--fixtures", type=Path, default=ROOT / "evals" / "fact-calibration.jsonl")
     calibration.add_argument("--ledgers", type=Path, default=DEFAULT_LEDGERS)
     calibration.add_argument("--cases", type=Path, default=ROOT / "evals" / "fact-cases.jsonl")
+    calibration.add_argument("--overhead", type=Path, help="Append this run's cost to this file")
+    spend = commands.add_parser("spend", help="Exit 1 once reported cost reaches the cap")
+    spend.add_argument("folder", type=Path)
+    spend.add_argument("--cap", type=float, required=True)
     report = commands.add_parser("report")
     report.add_argument("scores", type=Path)
     report.add_argument("responses", type=Path)
     report.add_argument("--cases", type=Path, required=True)
     report.add_argument("--reference", required=True)
+    report.add_argument("--trials", type=int, default=2)
     args = parser.parse_args()
 
     if args.command == "build-cases":
@@ -335,8 +355,18 @@ def main() -> int:
             lambda prompt: _call_judge(prompt, JUDGE_COMMAND, 300.0),
         )
         print(json.dumps(result, indent=2))
+        if args.overhead:
+            with args.overhead.open("a", encoding="utf-8") as sink:
+                sink.write(json.dumps({"stage": "calibrate", "cost_usd": result["cost_usd"]}) + "\n")
+    elif args.command == "spend":
+        total = total_spend(args.folder)
+        print(f"reported cost: ${total:.2f} of ${args.cap:.2f}")
+        return 1 if total >= args.cap else 0
     else:
-        print(json.dumps(summarise(read_jsonl(args.scores), read_jsonl(args.responses), _sources(args.cases), args.reference), indent=2))
+        summary = summarise(
+            read_jsonl(args.scores), read_jsonl(args.responses), _sources(args.cases), args.reference, trials=args.trials
+        )
+        print(json.dumps(summary, indent=2))
     return 0
 
 

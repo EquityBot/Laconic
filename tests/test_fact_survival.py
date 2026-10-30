@@ -68,6 +68,14 @@ class InventedTest(unittest.TestCase):
         _, invented = fact_survival.parse_reply(reply(invented=["costs $9", "not there", ""]), "It costs $9.", ITEMS)
         self.assertEqual(["costs $9"], invented)
 
+    def test_repeated_invented_passages_count_once(self):
+        _, invented = fact_survival.parse_reply(reply(invented=["costs $9", "Costs  $9"]), "It costs $9.", ITEMS)
+        self.assertEqual(["costs $9"], invented)
+
+    def test_a_reply_without_an_invented_list_is_an_error_not_a_zero(self):
+        with self.assertRaises(ValueError):
+            fact_survival.parse_reply(json.dumps({"items": []}), "Text.", ITEMS)
+
 
 class CalibrateTest(unittest.TestCase):
     FIXTURES = [{"name": "copy", "case_id": "c", "rewrite": "@source", "default": "kept", "expected": {}, "invented": False}]
@@ -134,17 +142,24 @@ class SummaryTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             fact_survival.summarise(scores, responses, {"c": "x", "d": "x"}, "a", added=lambda s, r: 0)
 
+    def test_a_duplicate_row_or_an_unrun_trial_is_an_error(self):
+        one = {"setup": "a", "case_id": "c", "trial": 1, "verdicts": self.marks(("fact", "kept")), "invented": []}
+        answer = {"runner": "a", "case_id": "c", "trial": 1, "response": "x"}
+        for scores, responses, trials in (([one, one], [answer, answer], 1), ([one], [answer], 2)):
+            with self.assertRaises(ValueError):
+                fact_survival.summarise(scores, responses, {"c": "x"}, "a", added=lambda s, r: 0, trials=trials)
+
     def test_rates_count_kept_only_and_gap_is_reference_minus_setup(self):
         verdicts = self.marks
         scores = [
             {"setup": "a", "case_id": "c", "trial": 1, "verdicts": verdicts(("fact", "kept"), ("qualifier", "kept")), "invented": ["x"]},
-            {"setup": "b", "case_id": "c", "trial": 1, "verdicts": verdicts(("fact", "kept"), ("qualifier", "hardened"))},
+            {"setup": "b", "case_id": "c", "trial": 1, "verdicts": verdicts(("fact", "kept"), ("qualifier", "hardened")), "invented": []},
         ]
         responses = [
             {"runner": "a", "case_id": "c", "trial": 1, "response": "one two"},
             {"runner": "b", "case_id": "c", "trial": 1, "response": "one two three four"},
         ]
-        summary = fact_survival.summarise(scores, responses, {"c": "one two three four"}, "a", added=lambda s, r: 0)
+        summary = fact_survival.summarise(scores, responses, {"c": "one two three four"}, "a", added=lambda s, r: 0, trials=1)
         self.assertEqual(1.0, summary["a"]["qualifier_survival"])
         self.assertEqual(0.0, summary["b"]["qualifier_survival"])
         self.assertEqual(1, summary["b"]["hardened"])
@@ -152,6 +167,17 @@ class SummaryTest(unittest.TestCase):
         self.assertEqual(0.5, summary["b"]["reference_gap"]["mean"])
         self.assertEqual(0.5, summary["a"]["survival_by_text"] - summary["b"]["survival_by_text"])
         self.assertEqual(1, summary["a"]["invented_per_text"])
+
+
+class SpendTest(unittest.TestCase):
+    def test_counts_generation_overhead_and_judging(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            (folder / "run-a.jsonl").write_text('{"cost_usd": 1.5}\n{"cost_usd": null}\n', encoding="utf-8")
+            (folder / "overhead.jsonl").write_text('{"stage": "preflight", "cost_usd": 0.5}\n', encoding="utf-8")
+            (folder / "scores.jsonl").write_text('{"cost": 2.0}\n', encoding="utf-8")
+            (folder / "responses.jsonl").write_text('{"cost_usd": 99}\n', encoding="utf-8")
+            self.assertEqual(4.0, fact_survival.total_spend(folder))
 
 
 class CommittedDataTest(unittest.TestCase):

@@ -90,17 +90,19 @@ This tests the core promise directly: does a shorter rewrite keep what the reade
 ```bash
 python3 evals/fact_setups.py evals/results/facts
 python3 evals/fact_setups.py --preflight evals/results/facts
-python3 evals/fact_survival.py calibrate
-for pair in laconic-prose:6 laconic-session:6 humanizer:7 avoid:17 stop-slop:4 caveman:4 concise-control:2 no-skill:2; do
+python3 evals/fact_survival.py calibrate --overhead evals/results/facts/overhead.jsonl
+for pair in laconic-prose:6 laconic-session:6 humanizer:7 avoid:15 stop-slop:4 caveman:4 concise-control:2 no-skill:2; do
   setup=${pair%:*}; budget=${pair#*:}
+  python3 evals/fact_survival.py spend evals/results/facts --cap 48 || break
   python3 scripts/run_evals.py run --cases evals/fact-cases.jsonl --runner-config evals/results/facts/runners.json --runner "$setup" --condition candidate --no-injection --trials 2 --jobs 4 --budget-usd "$budget" --output "evals/results/facts/run-$setup.jsonl"
 done
 cat evals/results/facts/run-*.jsonl > evals/results/facts/responses.jsonl
-python3 evals/fact_survival.py judge evals/results/facts/responses.jsonl --output evals/results/facts/scores.jsonl
+python3 evals/fact_survival.py spend evals/results/facts --cap 48 && python3 evals/fact_survival.py judge evals/results/facts/responses.jsonl --output evals/results/facts/scores.jsonl
+python3 evals/fact_survival.py spend evals/results/facts --cap 60
 python3 evals/fact_survival.py report evals/results/facts/scores.jsonl evals/results/facts/responses.jsonl --cases evals/fact-cases.jsonl --reference laconic-prose
 ```
 
-These budgets total US$60 with the judge's default US$12. A budget is a soft threshold, and a setup that stops early leaves `report` refusing to compare, because every setup must cover the same texts and trials.
+The plan is US$46 of generation, about US$2 of preflight and calibration, and US$12 of judging: US$60. `spend` adds up the reported cost of every stage and stops the next one once the US$48 mark is reached. Budgets are soft thresholds, so calls already running can pass them; `spend` reports any overrun. A setup that stops early leaves `report` refusing to compare, because every setup must cover every text and trial exactly once. Preflight and calibration must pass before any result is cited.
 
 `--preflight` makes one call per skill setup and fails unless the setup called its own skill; read the replies it prints too. Caveman's rules exempt third-party messages and other text persisted outside chat, so check that it applied its style to this task. `calibrate` runs the judge on the hand-labelled rewrites in `fact-calibration.jsonl`: a verbatim copy, a faithful paraphrase, a removed hedge, omitted facts, a contradicted figure, a fabricated claim and an empty rewrite. Read its disagreements before judging.
 
