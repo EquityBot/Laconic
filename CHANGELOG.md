@@ -22,6 +22,7 @@ The manifests still declare plugin 0.5.0 and `Cargo.toml` still declares `laconi
 - Move the compact rule's mechanics into a before-sending checklist (#34).
 - Relicense under FSL-1.1-ALv2 (#25), replacing the Apache-2.0 licence adopted the same day (#22).
 - Point repository links at EquityBot (#31).
+- State the fact-keeping promise as an aim until the fact-survival benchmark reports, and name 'humanizer' and 'no AI slop' in the README.
 
 ### Plugin: fixed
 
@@ -38,6 +39,7 @@ The manifests still declare plugin 0.5.0 and `Cargo.toml` still declares `laconi
 - Flag unnecessary hyphens (#13).
 - Report protected items an edit added, failing on them only with `--strict` (#26).
 - Report dropped quantifiers, modals and bounds in `preserve` (#35).
+- Report changed sizes, units and dated months, and dropped commitments, hedges, conditions and order words, in `preserve`; list possibly lost names as advice. `preserve` counts from earlier runs are not comparable.
 
 ### laconic-check: fixed
 
