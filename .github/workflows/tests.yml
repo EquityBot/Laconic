@@ -22,6 +22,9 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.x"
+      # Without the binary, tests/test_mcp_server.py would skip.
+      - name: Build laconic-check
+        run: cargo build --locked --manifest-path tools/laconic-check/Cargo.toml
       - name: Unit tests
         run: python -m unittest discover -s tests -v
       - name: Validate evaluation cases
