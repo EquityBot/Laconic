@@ -2,6 +2,7 @@
 """Fetch rival skills at pinned commits and write the fact-survival runner config.
 
 Run: python -I evals/fact_setups.py evals/results/<new folder>
+Then: python -I evals/fact_setups.py --preflight evals/results/<that folder>
 """
 
 import json
@@ -16,6 +17,10 @@ RIVALS = {
     "avoid": ("conorbronsdon/avoid-ai-writing", "9cd07215982eca9736e14caaa63241c0264856f3"),
     "stop-slop": ("hardikpandya/stop-slop", "8da1f030185bdfe8471220585162991eaeb970e9"),
     "caveman": ("JuliusBrussee/caveman", "9b68f7ed12b05e7efaff18e65c5a3fc2849fd0a4"),
+}
+SKILLS = {
+    "laconic-prose": "laconic-prose", "laconic-session": "laconic", "humanizer": "humanizer",
+    "avoid": "avoid-ai-writing", "stop-slop": "stop-slop", "caveman": "caveman",
 }
 BASE = [
     "claude", "--print", "--output-format", "json", "--no-session-persistence",
@@ -55,7 +60,37 @@ def runners(setups: Path, skills: dict[str, tuple[Path, str]]) -> dict[str, dict
     return {name: {"command": command, "response_format": "claude-json", "budget_flag": "--max-budget-usd"} for name, command in config.items()}
 
 
+def skills_used(stream: str) -> set[str]:
+    """Skill names called in a Claude stream-json transcript."""
+    used = set()
+    for line in stream.splitlines():
+        event = json.loads(line) if line.startswith("{") else {}
+        for block in (event.get("message") or {}).get("content") or []:
+            if isinstance(block, dict) and block.get("type") == "tool_use" and block.get("name") == "Skill":
+                used.add(str(block["input"].get("skill", "")).split(":")[-1])
+    return used
+
+
+def preflight(here: Path) -> int:
+    """One call per skill setup, proving it loads its own skill. Prints each reply to read."""
+    config = json.loads((here / "runners.json").read_text(encoding="utf-8"))
+    prompt = json.loads((ROOT / "evals" / "fact-cases.jsonl").read_text(encoding="utf-8").splitlines()[0])["prompt"]
+    failures = 0
+    for name, runner in config.items():
+        if "--plugin-dir" not in runner["command"]:
+            continue
+        command = [part for arg in runner["command"] for part in (["stream-json", "--verbose"] if arg == "json" else [arg])]
+        done = subprocess.run(command, input=prompt, capture_output=True, text=True, encoding="utf-8", timeout=600)
+        used = skills_used(done.stdout)
+        failures += SKILLS[name] not in used
+        results = [json.loads(line).get("result", "") for line in done.stdout.splitlines() if line.startswith('{"type":"result"')]
+        print(f"{name}: wanted {SKILLS[name]}, called {sorted(used)}\n{(results or [''])[0][:400]}\n")
+    return 1 if failures else 0
+
+
 def main() -> int:
+    if len(sys.argv) == 3 and sys.argv[1] == "--preflight":
+        return preflight(Path(sys.argv[2]).resolve())
     if len(sys.argv) != 2:
         raise SystemExit(__doc__)
     here = Path(sys.argv[1]).resolve()

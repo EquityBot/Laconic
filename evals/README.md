@@ -85,19 +85,28 @@ python3 evals/humanise_metrics.py evals/results/responses.jsonl --avoid path/to/
 
 ## Fact-survival benchmark
 
-This tests the core promise directly: does a shorter rewrite keep what the reader needs? `fact-ledgers.jsonl` lists 97 facts and 24 qualifiers (hedges, conditions, limits and commitments) from the 20 humanising sources. It was written from the sources alone, before any rewrite existed. `fact-cases.jsonl` gives every setup the same instruction, which names none of them.
+This tests the core promise directly: does a shorter rewrite keep what the reader needs? `fact-ledgers.jsonl` lists 99 facts and 33 qualifiers (hedges, conditions, limits and commitments) from the 20 humanising sources. It was written from the sources alone, before any rewrite existed. `fact-cases.jsonl` gives every setup the same instruction, which names none of them.
 
 ```bash
 python3 evals/fact_setups.py evals/results/facts
-for setup in laconic-prose laconic-session humanizer avoid stop-slop caveman concise-control no-skill; do
-  python3 scripts/run_evals.py run --cases evals/fact-cases.jsonl --runner-config evals/results/facts/runners.json --runner "$setup" --condition candidate --no-injection --trials 2 --jobs 4 --budget-usd 12 --output "evals/results/facts/run-$setup.jsonl"
+python3 evals/fact_setups.py --preflight evals/results/facts
+python3 evals/fact_survival.py calibrate
+for pair in laconic-prose:6 laconic-session:6 humanizer:7 avoid:17 stop-slop:4 caveman:4 concise-control:2 no-skill:2; do
+  setup=${pair%:*}; budget=${pair#*:}
+  python3 scripts/run_evals.py run --cases evals/fact-cases.jsonl --runner-config evals/results/facts/runners.json --runner "$setup" --condition candidate --no-injection --trials 2 --jobs 4 --budget-usd "$budget" --output "evals/results/facts/run-$setup.jsonl"
 done
 cat evals/results/facts/run-*.jsonl > evals/results/facts/responses.jsonl
 python3 evals/fact_survival.py judge evals/results/facts/responses.jsonl --output evals/results/facts/scores.jsonl
 python3 evals/fact_survival.py report evals/results/facts/scores.jsonl evals/results/facts/responses.jsonl --cases evals/fact-cases.jsonl --reference laconic-prose
 ```
 
-The judge sees one rewrite and the ledger, never the setup's name. It marks each item kept, hardened (present but stronger or wider than the source) or dropped, and must quote the rewrite for kept and hardened. A quote not found in the rewrite counts as dropped; the report counts those. `report` also gives length against the source and items `laconic-check preserve` lists as added, with paired 95% intervals that resample whole texts. The setups and the ledgers come from Laconic's author, so read the ledgers before relying on a margin; report the result whichever way it falls.
+These budgets total US$60 with the judge's default US$12. A budget is a soft threshold, and a setup that stops early leaves `report` refusing to compare, because every setup must cover the same texts and trials.
+
+`--preflight` makes one call per skill setup and fails unless the setup called its own skill; read the replies it prints too. Caveman's rules exempt third-party messages and other text persisted outside chat, so check that it applied its style to this task. `calibrate` runs the judge on the hand-labelled rewrites in `fact-calibration.jsonl`: a verbatim copy, a faithful paraphrase, a removed hedge, omitted facts, a contradicted figure, a fabricated claim and an empty rewrite. Read its disagreements before judging.
+
+The judge sees the source, one rewrite and the ledger, never the setup's name. It marks each item kept, hardened (present but stronger or wider than the source) or dropped, and must quote the rewrite for kept and hardened. A quote not found in the rewrite counts as dropped; the report counts those. It also lists passages that state material facts the source does not support, again verified as quotes. `report` gives survival by text, facts and qualifiers separately, invented passages, length against the source and items `laconic-check preserve` lists as added, with paired 95% intervals on survival by text that resample whole texts.
+
+Survival alone proves little, since copying the source scores 100%. Decided before any run: a setup is better than another on this benchmark only if its survival interval excludes 0, it is no longer and it invents no more. Anything else is reported as a trade-off or a tie. The setups and the ledgers come from Laconic's author, and the ledgers had one independent review, so read them before relying on a margin. Report the result whichever way it falls.
 
 ## Agent cost benchmark
 

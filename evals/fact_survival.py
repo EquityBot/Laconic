@@ -64,7 +64,7 @@ def load_ledgers(path: Path) -> dict[str, list[dict[str, str]]]:
     return ledgers
 
 
-def judge_prompt(rewrite: str, items: list[dict[str, str]]) -> str:
+def judge_prompt(source: str, rewrite: str, items: list[dict[str, str]]) -> str:
     listing = "\n".join(f"{item['id']} ({item['kind']}): {item['text']}" for item in items)
     return (
         "You check whether a rewritten text still carries specific claims. Judge only the "
@@ -77,8 +77,11 @@ def judge_prompt(rewrite: str, items: list[dict[str, str]]) -> str:
         "- dropped: the text does not carry the claim.\n\n"
         "For kept and hardened, give `quote`: the shortest exact passage of the text that "
         "carries the claim, copied character for character. For dropped, give an empty quote.\n\n"
-        'Reply with JSON only: {"items": [{"id": "f1", "verdict": "kept", "quote": "..."}]}\n\n'
-        f"<text>\n{rewrite}\n</text>\n\nItems:\n{listing}\n"
+        "Also list under `invented` each exact passage of the text that states a material fact, "
+        "figure, promise or experience the source does not support. Ignore rewording, tone and "
+        "reasonable inference.\n\n"
+        'Reply with JSON only: {"items": [{"id": "f1", "verdict": "kept", "quote": "..."}], "invented": ["..."]}\n\n'
+        f"<source>\n{source}\n</source>\n\n<text>\n{rewrite}\n</text>\n\nItems:\n{listing}\n"
     )
 
 
@@ -87,12 +90,13 @@ def _normalise(text: str) -> str:
     return " ".join(text.split()).casefold()
 
 
-def parse_verdicts(reply: str, rewrite: str, items: list[dict[str, str]]) -> list[dict[str, Any]]:
-    """One verdict per ledger item. An unverifiable quote or a missing item is dropped."""
+def parse_reply(reply: str, rewrite: str, items: list[dict[str, str]]) -> tuple[list[dict[str, Any]], list[str]]:
+    """Verdicts and verified invented passages. An unverifiable quote or a missing item is dropped."""
     match = re.search(r"\{.*\}", reply, re.DOTALL)
     if not match:
         raise ValueError("judge reply holds no JSON")
-    given = {row.get("id"): row for row in json.loads(match.group())["items"]}
+    parsed = json.loads(match.group())
+    given = {row.get("id"): row for row in parsed["items"]}
     body = _normalise(rewrite)
     verdicts = []
     for item in items:
@@ -109,7 +113,8 @@ def parse_verdicts(reply: str, rewrite: str, items: list[dict[str, str]]) -> lis
             "unverified_quote": unverified,
             "quote": quote,
         })
-    return verdicts
+    invented = [q for q in parsed.get("invented", []) if isinstance(q, str) and q.strip() and _normalise(q) in body]
+    return verdicts, invented
 
 
 def _call_judge(prompt: str, command: list[str], timeout: float) -> tuple[str, float]:
@@ -123,10 +128,11 @@ def _call_judge(prompt: str, command: list[str], timeout: float) -> tuple[str, f
 def judge_rows(
     rows: Iterable[dict[str, Any]],
     ledgers: dict[str, list[dict[str, str]]],
+    sources: dict[str, str],
     output: Path,
     call: Callable[[str], tuple[str, float]],
     jobs: int = 4,
-    budget_usd: float = 15.0,
+    budget_usd: float = 12.0,
 ) -> float:
     """Judge rows not yet in `output`; resumable. Returns the cost of this run."""
     done = set()
@@ -141,14 +147,14 @@ def judge_rows(
     def one(row: dict[str, Any]) -> dict[str, Any]:
         items = ledgers[row["case_id"]]
         for attempt in range(3):
-            reply, cost = call(judge_prompt(row["response"], items))
+            reply, cost = call(judge_prompt(sources[row["case_id"]], row["response"], items))
             try:
-                verdicts = parse_verdicts(reply, row["response"], items)
+                verdicts, invented = parse_reply(reply, row["response"], items)
                 break
             except (ValueError, KeyError, AttributeError, json.JSONDecodeError):
                 if attempt == 2:
                     raise
-        return {"setup": row["runner"], "case_id": row["case_id"], "trial": row["trial"], "cost": cost, "verdicts": verdicts}
+        return {"setup": row["runner"], "case_id": row["case_id"], "trial": row["trial"], "cost": cost, "verdicts": verdicts, "invented": invented}
 
     spent = 0.0
     with ThreadPoolExecutor(jobs) as pool, output.open("a", encoding="utf-8") as sink:
@@ -164,6 +170,30 @@ def judge_rows(
             if spent < budget_usd:
                 running |= {pool.submit(one, row) for row in _take(pending, 1)}
     return spent
+
+
+def calibrate(
+    fixtures: list[dict[str, Any]],
+    ledgers: dict[str, list[dict[str, str]]],
+    sources: dict[str, str],
+    call: Callable[[str], tuple[str, float]],
+) -> dict[str, Any]:
+    """The judge against hand-labelled rewrites. '@source' stands for a verbatim copy."""
+    errors, compared = [], 0
+    for fixture in fixtures:
+        source = sources[fixture["case_id"]]
+        rewrite = source if fixture["rewrite"] == "@source" else fixture["rewrite"]
+        items = ledgers[fixture["case_id"]]
+        verdicts, invented = parse_reply(call(judge_prompt(source, rewrite, items))[0], rewrite, items)
+        for verdict in verdicts:
+            expected = fixture["expected"].get(verdict["id"], fixture["default"])
+            compared += 1
+            if verdict["verdict"] != expected:
+                errors.append({"fixture": fixture["name"], "item": verdict["id"], "expected": expected, "got": verdict["verdict"]})
+        compared += 1
+        if bool(invented) != fixture["invented"]:
+            errors.append({"fixture": fixture["name"], "item": "invented", "expected": fixture["invented"], "got": invented})
+    return {"compared": compared, "agreement": 1 - len(errors) / compared, "errors": errors}
 
 
 def _take(iterator: Any, count: int) -> list[Any]:
@@ -219,6 +249,13 @@ def summarise(
     by_setup: dict[str, list[dict[str, Any]]] = {}
     for score in scores:
         by_setup.setdefault(score["setup"], []).append(score)
+    coverage = {setup: sorted((r["case_id"], r["trial"]) for r in rows) for setup, rows in by_setup.items()}
+    if reference not in coverage:
+        raise ValueError(f"reference setup has no scores: {reference}")
+    for setup, pairs in coverage.items():
+        answered = sorted((r["case_id"], r["trial"]) for r in responses if r["runner"] == setup)
+        if pairs != coverage[reference] or answered != pairs:
+            raise ValueError(f"incomplete or unequal coverage: {setup}")
     summary: dict[str, Any] = {}
     per_case: dict[str, dict[str, list[float]]] = {}
     for setup, rows in sorted(by_setup.items()):
@@ -232,6 +269,7 @@ def summarise(
         per_case[setup] = cases
         summary[setup] = {
             "texts": len(rows),
+            "survival_by_text": mean(mean(values) for values in cases.values()),
             "fact_survival": _rate(verdicts, "fact"),
             "qualifier_survival": _rate(verdicts, "qualifier"),
             "hardened": sum(v["verdict"] == "hardened" for v in verdicts),
@@ -241,16 +279,19 @@ def summarise(
             "length_share": mean(
                 humanise_metrics.words(r["response"]) / humanise_metrics.words(sources[r["case_id"]]) for r in answers
             ),
+            "invented_per_text": mean(len(row.get("invented", [])) for row in rows),
             "added_per_text": mean(added(sources[r["case_id"]], r["response"]) for r in answers),
             "generation_cost": sum(float(r.get("cost_usd") or 0) for r in answers),
         }
-    if reference not in per_case:
-        raise ValueError(f"reference setup has no scores: {reference}")
     for setup, cases in per_case.items():
         if setup != reference:
             gap, low, high = paired_interval(per_case[reference], cases)
             summary[setup]["reference_gap"] = {"mean": gap, "low": low, "high": high}
     return summary
+
+
+def _sources(path: Path) -> dict[str, str]:
+    return {case["id"]: humanise_metrics.source_text(case["prompt"]) for case in read_jsonl(path)}
 
 
 def main() -> int:
@@ -264,8 +305,13 @@ def main() -> int:
     judge.add_argument("--ledgers", type=Path, default=DEFAULT_LEDGERS)
     judge.add_argument("--output", type=Path, required=True)
     judge.add_argument("--jobs", type=int, default=4)
-    judge.add_argument("--budget-usd", type=float, default=15.0)
+    judge.add_argument("--cases", type=Path, default=ROOT / "evals" / "fact-cases.jsonl")
+    judge.add_argument("--budget-usd", type=float, default=12.0)
     judge.add_argument("--call-timeout", type=float, default=300.0)
+    calibration = commands.add_parser("calibrate")
+    calibration.add_argument("--fixtures", type=Path, default=ROOT / "evals" / "fact-calibration.jsonl")
+    calibration.add_argument("--ledgers", type=Path, default=DEFAULT_LEDGERS)
+    calibration.add_argument("--cases", type=Path, default=ROOT / "evals" / "fact-cases.jsonl")
     report = commands.add_parser("report")
     report.add_argument("scores", type=Path)
     report.add_argument("responses", type=Path)
@@ -278,14 +324,19 @@ def main() -> int:
         args.output.write_text("\n".join(lines) + "\n", encoding="utf-8")
     elif args.command == "judge":
         spent = judge_rows(
-            read_jsonl(args.responses), load_ledgers(args.ledgers), args.output,
+            read_jsonl(args.responses), load_ledgers(args.ledgers), _sources(args.cases), args.output,
             lambda prompt: _call_judge(prompt, JUDGE_COMMAND, args.call_timeout),
             args.jobs, args.budget_usd,
         )
         print(f"judge cost: ${spent:.2f}")
+    elif args.command == "calibrate":
+        result = calibrate(
+            read_jsonl(args.fixtures), load_ledgers(args.ledgers), _sources(args.cases),
+            lambda prompt: _call_judge(prompt, JUDGE_COMMAND, 300.0),
+        )
+        print(json.dumps(result, indent=2))
     else:
-        sources = {c["id"]: humanise_metrics.source_text(c["prompt"]) for c in read_jsonl(args.cases)}
-        print(json.dumps(summarise(read_jsonl(args.scores), read_jsonl(args.responses), sources, args.reference), indent=2))
+        print(json.dumps(summarise(read_jsonl(args.scores), read_jsonl(args.responses), _sources(args.cases), args.reference), indent=2))
     return 0
 
 
