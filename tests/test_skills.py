@@ -46,6 +46,14 @@ class SkillStructureTest(unittest.TestCase):
             with self.subTest(file=path.name):
                 self.assertNotIn("\u2014", path.read_text(encoding="utf-8"))
 
+    def test_gemini_command_keeps_the_canonical_error_rule(self):
+        skill = (SKILLS / "laconic" / "SKILL.md").read_text(encoding="utf-8")
+        title, rule = re.search(r"^7\. \*\*(State errors plainly\.)\*\* (.+)$", skill, re.M).groups()
+        relative = pathlib.Path("skills/laconic/agents/gemini.toml")
+        for path in [ROOT / relative, ROOT / ".cursor" / relative]:
+            with self.subTest(file=str(path.relative_to(ROOT))):
+                self.assertIn(f"7. {title} {rule}\n", path.read_text(encoding="utf-8"))
+
 
 if __name__ == "__main__":
     unittest.main()

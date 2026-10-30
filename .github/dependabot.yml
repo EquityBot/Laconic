@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  # The pinned CLIs behind the load checks; see .github/ci/README.md.
+  - package-ecosystem: npm
+    directories:
+      - /.github/ci/claude-code
+      - /.github/ci/pi
+    schedule:
+      interval: weekly

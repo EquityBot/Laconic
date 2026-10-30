@@ -63,6 +63,32 @@ class CiInstallTest(unittest.TestCase):
                     step = checkout.split("\n      - ", 1)[0]
                     self.assertIn("persist-credentials: false", step)
 
+    def test_workflow_actions_are_pinned_to_full_commit_shas(self):
+        workflows = (ROOT / ".github/workflows").iterdir()
+        for path in sorted(p for p in workflows if p.suffix in (".yml", ".yaml")):
+            text = path.read_text(encoding="utf8")
+            for use in re.findall(r"^\s*(?:- )?uses:\s*(.+?)\s*$", text, re.M):
+                with self.subTest(workflow=path.name, uses=use):
+                    self.assertRegex(use, r"^[\w./-]+@[0-9a-f]{40} # v\d")
+
+    def test_dependabot_covers_actions_and_every_ci_lockfile(self):
+        # The suite has no YAML parser, so match each line exactly, block by block.
+        config = (ROOT / ".github/dependabot.yml").read_text(encoding="utf8")
+        self.assertRegex(config, r"(?m)^version: 2$")
+        self.assertRegex(config, r"(?m)^updates:$")
+        pieces = re.split(r"(?m)^  - package-ecosystem: (\S+)$", config)[1:]
+        blocks = dict(zip(pieces[::2], pieces[1::2]))
+        self.assertEqual({"github-actions", "npm"}, set(blocks))
+        for ecosystem, block in blocks.items():
+            with self.subTest(ecosystem=ecosystem):
+                self.assertRegex(block, r"(?m)^    schedule:\n      interval: \w+$")
+        self.assertRegex(blocks["github-actions"], r"(?m)^    directory: /$")
+        lockfiles = sorted((ROOT / ".github/ci").glob("*/package-lock.json"))
+        self.assertTrue(lockfiles)
+        for lock in lockfiles:
+            with self.subTest(directory=lock.parent.name):
+                self.assertRegex(blocks["npm"], rf"(?m)^      - /\.github/ci/{lock.parent.name}$")
+
 
 if __name__ == "__main__":
     unittest.main()

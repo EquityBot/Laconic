@@ -8,21 +8,13 @@
 - [ ] **Autonomous agent-authored:** an agent planned and produced most of the substantive change.
 - [ ] **Hybrid:** a human and one or more agents both made substantive contributions.
 
-**Agent/tool and model/version:** <!-- Write “None” for human-authored PRs. -->
+**Agent/tool and model/version:** <!-- Write 'None' for human-authored PRs. -->
 
 **Agent contribution:** <!-- Planning, code, tests, docs, review or other work. -->
 
 **Human verification:** <!-- What the submitting human personally reviewed and ran. -->
 
-**Known limitations or uncertain results:** <!-- Write “None known” only after review. -->
-
-## Labels
-
-**Target label:** <!-- Select exactly one: Target:Integrations, Target:Evals, Target:Rules or Target:Docs. -->
-
-**Author label:** <!-- Select exactly one: Author:Human, Author:Hybrid or Author:AI. -->
-
-**Workflow labels:** <!-- Add applicable labels: bug, enhancement, issue, question or duplicate. -->
+**Known limitations or uncertain results:** <!-- Write 'None known' only after review. -->
 
 ## Safety and side effects
 
@@ -34,7 +26,7 @@
 
 **Side effects, permissions, network access and cost:**
 
-<!-- State “None” when applicable; otherwise describe exact scope and rollback. -->
+<!-- State 'None' when applicable; otherwise describe exact scope and rollback. -->
 
 ## Compatibility
 
