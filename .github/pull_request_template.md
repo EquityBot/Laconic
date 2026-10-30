@@ -16,14 +16,6 @@
 
 **Known limitations or uncertain results:** <!-- Write “None known” only after review. -->
 
-## Labels
-
-**Target label:** <!-- Select exactly one: Target:Integrations, Target:Evals, Target:Rules or Target:Docs. -->
-
-**Author label:** <!-- Select exactly one: Author:Human, Author:Hybrid or Author:AI. -->
-
-**Workflow labels:** <!-- Add applicable labels: bug, enhancement, issue, question or duplicate. -->
-
 ## Safety and side effects
 
 - [ ] The change does not access or expose secrets, private files or unrelated user/repository data.

@@ -14,15 +14,11 @@ For autonomous-agent or hybrid contributions, disclose the agent or tool and mod
 
 The submitting human remains accountable for the full diff. Before submission, read the changed files, remove unrelated generated changes and verify the claims in the PR description.
 
-## Labels
+## Issues and labels
 
-Use one label from each applicable group:
+Open an issue for a bug, a feature proposal or a question. Report suspected vulnerabilities privately, as `SECURITY.md` describes, not in an issue.
 
-- **Target:** `Target:Integrations` for a CLI integration, `Target:Evals` for evaluation scripts, `Target:Rules` for skill rules, or `Target:Docs` for documentation and translations.
-- **Author:** `Author:Human`, `Author:Hybrid` or `Author:AI`, matching the authorship category above.
-- **Workflow:** `bug` for defects, `enhancement` for new features, `issue` for general issue tracking, `question` when more information is needed, or `duplicate` when the issue or PR already exists.
-
-Choose the labels that describe the change; do not use labels as a substitute for the PR description or provenance disclosure. Use `issue` only when no more specific workflow label applies.
+Labels are optional and help triage: `bug` for defects, `enhancement` for new features, `documentation` for documentation, `question` when more information is needed and `duplicate` when the issue or PR already exists. A label does not replace the PR description or provenance disclosure.
 
 ## Scope and reviewability
 

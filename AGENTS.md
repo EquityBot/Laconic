@@ -27,9 +27,9 @@ Agents can access the complete project by reading repository-relative files afte
 | OpenCode | `.opencode/` | Auto-discovered plugin and command entry points for V1 (1.18.29+) and V2. |
 | Other runtimes | `qwen-extension.json`, `kimi.plugin.json`, `gemini-extension.json`, `GEMINI.md`, `plugin.json` | Qwen, Kimi, Gemini and additional plugin metadata. |
 | Writing references | `skills/laconic-prose/references/` | Writing, editing and audit modes, patterns, venues, Style Manual rules and regression cases. |
-| Documentation | `README.md`, `INSTALL.md` | User-facing overview and installation. |
+| Documentation | `README.md`, `INSTALL.md`, `CHANGELOG.md`, `SECURITY.md` | User-facing overview, installation, changes and vulnerability reporting. |
 | Verification | `tests/`, `scripts/` | Unit tests, compatibility checks and evaluation tooling. |
-| Contribution workflow | `CONTRIBUTING.md`, `.github/pull_request_template.md` | Authorship, labels, safety, review and PR requirements. |
+| Contribution workflow | `CONTRIBUTING.md`, `.github/pull_request_template.md` | Authorship, issues, safety, review and PR requirements. |
 
 ## Runtime entry points
 
