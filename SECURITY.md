@@ -4,7 +4,7 @@ Laconic runs code on your machine: its hooks and plugins start with your coding 
 
 ## Report a vulnerability
 
-Use GitHub's private vulnerability reporting: open the [Security tab](https://github.com/EquityBot/laconic/security) and choose 'Report a vulnerability'. Do not open a public issue or PR for a suspected vulnerability.
+Use GitHub's private vulnerability reporting: open the [Security tab](https://github.com/EquityBot/laconic/security) and choose 'Report a vulnerability'. If that option is not shown, private reporting is switched off for now: keep the details private and check back later. Do not open a public issue or PR for a suspected vulnerability.
 
 Include the affected file or command, the commit or release, the steps to reproduce and the impact you expect.
 
@@ -12,7 +12,7 @@ Laconic has one maintainer, so handling is best effort and no response or fix ti
 
 ## Supported versions
 
-Only `main` and the latest `laconic-check` [release](https://github.com/EquityBot/laconic/releases) are supported. Earlier commits and releases receive no fixes.
+Only `main` is supported. Fixes land on `main` and reach the `laconic-check` binaries only through a later [release](https://github.com/EquityBot/laconic/releases). No published binary, including 0.1.0, will be patched or reissued, and no release date is promised.
 
 ## In scope
 
