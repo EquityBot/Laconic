@@ -130,8 +130,8 @@ const MONTHS: &[(&[&str], &str)] = &[
     (&["December", "Dec"], "December"),
 ];
 
-/// Capitalised words that start a sentence more often than they start a name.
-const NOT_NAME_START: &[&str] = &[
+/// Capitalised words that are not part of a name, so 'May I' and 'The Board' read right.
+const NOT_NAME_WORDS: &[&str] = &[
     "A", "An", "And", "As", "At", "But", "By", "For", "From", "He", "Her", "His", "I", "If", "In",
     "It", "Its", "My", "No", "Not", "Of", "On", "Or", "Our", "She", "So", "The", "Their", "These",
     "They", "This", "Those", "To", "We", "When", "With", "You", "Your",
@@ -194,8 +194,8 @@ fn name_runs(text: &str) -> Vec<String> {
         let mut tokens = line.split_whitespace().peekable();
         while let Some(token) = tokens.next() {
             let word = token.trim_matches(|c: char| !c.is_alphanumeric());
-            let capital = word.starts_with(char::is_uppercase);
-            if capital && !(run.is_empty() && NOT_NAME_START.contains(&word)) {
+            let capital = word.starts_with(char::is_uppercase) && !NOT_NAME_WORDS.contains(&word);
+            if capital {
                 run.push(word);
             }
             let closes = token.ends_with(|c: char| !c.is_alphanumeric() && c != '*');
@@ -298,6 +298,8 @@ fn meaning_tokens(text: &str) -> Vec<String> {
 }
 
 /// Uses of 'may' or 'will' that are a month or part of a name, such as 'Will Smith'.
+/// shortcut: 'Will Priya sign?' reads as a name, so its modal is listed as a name to check
+/// and not counted; telling them apart needs a parser.
 fn not_modal(text: &str, word: &str) -> usize {
     let dated = months(text)
         .iter()
@@ -902,6 +904,14 @@ mod tests {
             missing("It will pass.", "It passes.")["meaning word"],
             vec!["'will' (1 before, 0 after)"]
         );
+        for (original, word) in [("May I leave?", "may"), ("Will you attend?", "will")] {
+            assert_eq!(
+                missing(original, "Please confirm.")["meaning word"],
+                vec![format!("'{word}' (1 before, 0 after)")],
+                "{original}"
+            );
+        }
+        assert!(names("May I leave?", "Please confirm.").is_empty());
         assert_eq!(
             missing("Will Smith will sign.", "Will Smith signs.")["meaning word"],
             vec!["'will' (1 before, 0 after)"]
