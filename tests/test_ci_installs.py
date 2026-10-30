@@ -63,6 +63,23 @@ class CiInstallTest(unittest.TestCase):
                     step = checkout.split("\n      - ", 1)[0]
                     self.assertIn("persist-credentials: false", step)
 
+    def test_workflow_actions_are_pinned_to_full_commit_shas(self):
+        for path in sorted((ROOT / ".github/workflows").glob("*.yml")):
+            text = path.read_text(encoding="utf8")
+            for use in re.findall(r"^\s*(?:- )?uses:\s*(.+?)\s*$", text, re.M):
+                with self.subTest(workflow=path.name, uses=use):
+                    self.assertRegex(use, r"^[\w./-]+@[0-9a-f]{40} # v\d")
+
+    def test_dependabot_covers_actions_and_every_ci_lockfile(self):
+        config = (ROOT / ".github/dependabot.yml").read_text(encoding="utf8")
+        self.assertIn("package-ecosystem: github-actions", config)
+        self.assertIn("package-ecosystem: npm", config)
+        lockfiles = sorted((ROOT / ".github/ci").glob("*/package-lock.json"))
+        self.assertTrue(lockfiles)
+        for lock in lockfiles:
+            with self.subTest(directory=lock.parent.name):
+                self.assertRegex(config, rf"(?m)^\s*- /\.github/ci/{lock.parent.name}$")
+
 
 if __name__ == "__main__":
     unittest.main()
