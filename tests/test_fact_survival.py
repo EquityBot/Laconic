@@ -114,6 +114,14 @@ class JudgeRowsTest(unittest.TestCase):
             self.assertEqual(2, len(calls))
             self.assertEqual(2, len(fact_survival.read_jsonl(output)))
 
+    def test_a_retried_judge_call_still_counts_its_cost(self):
+        replies = iter([("not json", 0.5), (reply(), 0.25)])
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp, "scores.jsonl")
+            spent = fact_survival.judge_rows(self.rows()[:1], {"c": ITEMS}, {"c": "Source."}, output, lambda _: next(replies))
+            self.assertEqual(0.75, spent)
+            self.assertEqual(0.75, fact_survival.read_jsonl(output)[0]["cost"])
+
     def test_stops_submitting_at_the_budget(self):
         rows = [dict(self.rows()[0], trial=n) for n in range(10)]
         with tempfile.TemporaryDirectory() as tmp:
@@ -141,6 +149,12 @@ class SummaryTest(unittest.TestCase):
         responses = [{"runner": s["setup"], "case_id": s["case_id"], "trial": 1, "response": "x"} for s in scores]
         with self.assertRaises(ValueError):
             fact_survival.summarise(scores, responses, {"c": "x", "d": "x"}, "a", added=lambda s, r: 0)
+
+    def test_a_setup_missing_from_the_plan_is_an_error(self):
+        one = {"setup": "a", "case_id": "c", "trial": 1, "verdicts": self.marks(("fact", "kept")), "invented": []}
+        answer = {"runner": "a", "case_id": "c", "trial": 1, "response": "x"}
+        with self.assertRaises(ValueError):
+            fact_survival.summarise([one], [answer], {"c": "x"}, "a", added=lambda s, r: 0, trials=1, setups={"a", "b"})
 
     def test_a_duplicate_row_or_an_unrun_trial_is_an_error(self):
         one = {"setup": "a", "case_id": "c", "trial": 1, "verdicts": self.marks(("fact", "kept")), "invented": []}

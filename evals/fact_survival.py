@@ -30,6 +30,7 @@ JUDGE_COMMAND = [
     "--strict-mcp-config", "--setting-sources", "", "--tools", "", "--model", "claude-sonnet-5-5",
 ]
 VERDICTS = {"kept", "hardened", "dropped"}
+SETUPS = {"laconic-prose", "laconic-session", "humanizer", "avoid", "stop-slop", "caveman", "concise-control", "no-skill"}
 ADDED = re.compile(r"^added ", re.MULTILINE)
 
 
@@ -148,8 +149,10 @@ def judge_rows(
 
     def one(row: dict[str, Any]) -> dict[str, Any]:
         items = ledgers[row["case_id"]]
+        cost = 0.0
         for attempt in range(3):
-            reply, cost = call(judge_prompt(sources[row["case_id"]], row["response"], items))
+            reply, spent = call(judge_prompt(sources[row["case_id"]], row["response"], items))
+            cost += spent
             try:
                 verdicts, invented = parse_reply(reply, row["response"], items)
                 break
@@ -259,12 +262,15 @@ def summarise(
     reference: str,
     added: Callable[[str, str], int] = _added_count,
     trials: int = 2,
+    setups: set[str] | None = None,
 ) -> dict[str, Any]:
     by_setup: dict[str, list[dict[str, Any]]] = {}
     for score in scores:
         by_setup.setdefault(score["setup"], []).append(score)
     if reference not in by_setup:
         raise ValueError(f"reference setup has no scores: {reference}")
+    if setups is not None and set(by_setup) != setups:
+        raise ValueError(f"setups differ from the plan: {sorted(set(by_setup) ^ setups)}")
     expected = sorted((case, trial) for case in sources for trial in range(1, trials + 1))
     for setup, rows in by_setup.items():
         scored = sorted((r["case_id"], r["trial"]) for r in rows)
@@ -364,7 +370,7 @@ def main() -> int:
         return 1 if total >= args.cap else 0
     else:
         summary = summarise(
-            read_jsonl(args.scores), read_jsonl(args.responses), _sources(args.cases), args.reference, trials=args.trials
+            read_jsonl(args.scores), read_jsonl(args.responses), _sources(args.cases), args.reference, trials=args.trials, setups=SETUPS
         )
         print(json.dumps(summary, indent=2))
     return 0
