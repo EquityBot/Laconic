@@ -57,7 +57,7 @@ The manifests still declare plugin 0.5.0 and `Cargo.toml` still declares `laconi
 ### Added
 
 - The `lint` and `preserve` commands (#2).
-- The MCP server and seeded-fault measurement (#4).
+- The MCP server and seeded-fault measurement.
 - Stock-phrase linting (#5).
 - Flags for mismatched weekdays (#6).
 - Prebuilt binaries published on a release tag (#8).
