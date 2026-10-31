@@ -25,7 +25,43 @@ jobs:
       # Without the binary, tests/test_mcp_server.py would skip.
       - name: Build laconic-check
         run: cargo build --locked --manifest-path tools/laconic-check/Cargo.toml
+      # Coverage only records the run for the Codecov badge; no threshold.
+      - name: Install coverage
+        run: python -m pip install --only-binary=":all:" coverage==7.17.0
       - name: Unit tests
-        run: python -m unittest discover -s tests -v
+        run: python -m coverage run --source=scripts,tools/laconic-check -m unittest discover -s tests -v
+      - name: Write coverage for Codecov
+        run: python -m coverage xml -o coverage-codecov.xml
+      - name: Keep the coverage report for the Codecov upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-codecov
+          path: coverage-codecov.xml
+          retention-days: 1
       - name: Validate evaluation cases
         run: python scripts/run_evals.py validate
+
+  # The upload runs apart from the tests so the OIDC token is never available
+  # whilst test code runs.
+  codecov:
+    name: upload coverage to Codecov
+    needs: [unittest]
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # Authenticate the Codecov upload with OIDC; no stored token.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: coverage-codecov
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          use_oidc: true
+          files: coverage-codecov.xml
+          disable_search: true
+          fail_ci_if_error: true

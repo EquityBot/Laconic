@@ -74,6 +74,8 @@ Keep `.opencode/command/laconic.md` frontmatter as a JSON object between the `--
 
 ## Verification
 
+New functionality and bug fixes come with automated tests: Python in `tests/`, run by `python -m unittest discover -s tests -v` in the `tests` workflow, and `laconic-check` in its Rust test modules and `tools/laconic-check/tests/`, run by `cargo test` in the `laconic-check` workflow.
+
 Run relevant checks and include the commands and results in the PR. For Python and evaluation-harness changes:
 
 ```sh
