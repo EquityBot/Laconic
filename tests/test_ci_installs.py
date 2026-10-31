@@ -52,6 +52,16 @@ class CiInstallTest(unittest.TestCase):
             version = tuple(int(part) for part in package["version"].split("."))
             self.assertFalse((8, 0, 0) <= version < (8, 12, 2), package["version"])
 
+    def test_pi_glob_matcher_excludes_the_known_vulnerable_range(self):
+        # GHSA-g3hv-75wg-m249: minimatch before 11.0.1.
+        lock = json.loads((ROOT / ".github/ci/pi/package-lock.json").read_text())
+        matchers = [package for path, package in lock["packages"].items()
+                    if path.endswith("node_modules/minimatch")]
+        self.assertTrue(matchers)
+        for package in matchers:
+            version = tuple(int(part) for part in package["version"].split("."))
+            self.assertGreaterEqual(version, (11, 0, 1), package["version"])
+
     def test_load_checks_do_not_retain_checkout_credentials(self):
         for name in WORKFLOWS:
             text = (ROOT / ".github/workflows" / name).read_text(encoding="utf8")
