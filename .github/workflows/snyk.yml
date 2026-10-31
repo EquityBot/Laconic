@@ -1,0 +1,63 @@
+name: Snyk
+
+# Tests the npm locks that pin the load checks' CLIs. laconic-check has no
+# third-party crates, so there is no Cargo graph to test. It runs weekly and
+# when a dependency file changes, which keeps it inside the free plan's monthly
+# test allowance.
+on:
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/ci/*/package-lock.json"
+      - ".github/workflows/snyk.yml"
+  pull_request:
+    paths:
+      - ".github/ci/*/package-lock.json"
+      - ".github/workflows/snyk.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Snyk open source test
+    # Pull requests from forks, and Dependabot's (which get Dependabot secrets
+    # only), receive no SNYK_TOKEN; the weekly run on main scans their changes.
+    if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # One dependency set per line: npm:<package-lock.json>.
+      SNYK_TARGETS: |
+        npm:.github/ci/claude-code/package-lock.json
+        npm:.github/ci/pi/package-lock.json
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04 # v1.0.0
+      - name: Test each dependency set
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          set -uo pipefail
+          if [ -z "$SNYK_TOKEN" ]; then
+            echo "::error::The SNYK_TOKEN repository secret is not set, so nothing was scanned."
+            exit 1
+          fi
+          status=0
+          while IFS=: read -r kind target; do
+            [ -n "$kind" ] || continue
+            case "$kind" in
+              npm) snyk test --file="$target" --project-name="$target" || status=1 ;;
+              *) echo "::error::Unknown dependency set $kind:$target"; status=1 ;;
+            esac
+          done <<< "$SNYK_TARGETS"
+          exit "$status"
