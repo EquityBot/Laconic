@@ -4,6 +4,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      # CodeQL refuses a workflow whose init, analyze and upload-sarif steps differ in version.
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"
   # The pinned CLIs behind the load checks; see .github/ci/README.md.
   - package-ecosystem: npm
     directories:
