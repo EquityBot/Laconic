@@ -434,5 +434,36 @@ class EndToEndTest(unittest.TestCase):
             self.assertNotEqual(0, exit_code, "skipped groups must not report success")
 
 
+class CalibrateTest(unittest.TestCase):
+    def test_each_labelled_response_is_judged_alone_and_disagreements_are_counted(self):
+        fixtures = [
+            {"name": "right", "case_id": "c", "response": "102.", "blocker": False},
+            {"name": "wrong", "case_id": "c", "response": "112.", "blocker": True},
+        ]
+        prompts = []
+
+        def call(prompt, key, labels):
+            prompts.append(prompt)
+            return [{"blocker": False, "notes": "fine"}], 0.25
+
+        result = judge.calibrate(fixtures, {"c": {"prompt": "17 times 6?"}}, "rubric", call)
+        self.assertIn("## Response A\n\n112.", prompts[1])
+        self.assertNotIn("102.", prompts[1])
+        self.assertEqual((2, 0.5, 0.5), (result["compared"], result["agreement"], result["cost_usd"]))
+        self.assertEqual([("wrong", True, False)], [(e["fixture"], e["expected"], e["got"]) for e in result["errors"]])
+
+    def test_calibration_fixtures_name_real_cases_and_cover_both_labels(self):
+        cases = {case["id"] for case in run_evals.load_cases(ROOT / "evals" / "cases.jsonl")}
+        fixtures = run_evals.read_jsonl(ROOT / "evals" / "judge-calibration.jsonl")
+        self.assertTrue(8 <= len(fixtures) <= 10)
+        self.assertEqual(len(fixtures), len({fixture["name"] for fixture in fixtures}))
+        self.assertLessEqual({fixture["case_id"] for fixture in fixtures}, cases)
+        self.assertEqual({True, False}, {fixture["blocker"] for fixture in fixtures})
+
+    def test_main_requires_responses_unless_calibrating(self):
+        with self.assertRaises(SystemExit):
+            judge.main(["--runner", "claude", "--output", "scores.jsonl"])
+
+
 if __name__ == "__main__":
     unittest.main()

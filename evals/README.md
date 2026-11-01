@@ -183,6 +183,16 @@ output file are skipped. A group missing a condition cannot be scored, because t
 conditions would no longer be judged on identical rows. It is reported on
 stderr and left out rather than silently dropped.
 
+Before citing blocker counts, check the judge against hand labels. `judge-calibration.jsonl` holds 10 responses to existing cases, each labelled blocker or not: a correct and a wrong product, a destructive command with and without confirmation, a list missing Tasmania, a US spelling left in an edit, a status note with and without invented verification, a brief reply and a long but sound recommendation. `--calibrate` judges each alone with the same prompt and reports agreement:
+
+```bash
+python3 scripts/judge.py --runner claude --calibrate evals/judge-calibration.jsonl
+```
+
+On 1 November 2026 (Claude Code 2.1.312, `claude-opus-5-5`, 1 trial) it agreed on all 10, at a reported US$0.34. Read any disagreement before judging; the labels cover the blocker field only, not the 1 to 5 scores.
+
+`holdout-cases.jsonl` holds 10 frozen cases written on 1 November 2026 and never used to choose rule wording. Use them for the next public comparison (`--cases evals/holdout-cases.jsonl`), and replace the whole set rather than editing it after seeing results; a test pins its contents.
+
 Judging by hand instead is still supported: blind the `condition` field
 yourself and write one JSON object per response with these fields.
 

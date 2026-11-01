@@ -3,7 +3,7 @@
 //! including legitimate forms that look like faults, must produce no findings, and
 //! planting one known fault in it must produce exactly that rule, once.
 
-use crate::lint::lint;
+use crate::lint::{ADVISORY, lint};
 
 /// Clean prose. Each sentence is correct house style; several are near misses.
 const CLEAN: &[&str] = &[
@@ -78,6 +78,11 @@ const SEEDS: &[(&str, &str, &str)] = &[
         "Two reviewers checked",
         "The result? Two reviewers checked",
     ),
+    (
+        "clause-dashes",
+        "and stayed low for a while.",
+        "and stayed low - for a while. Supply rose - slowly.",
+    ),
     ("hyphen", "the program", "the open-source program"),
     ("hyphen", "left for the centre", "e-mailed the centre"),
     ("word-choice", "whilst demand", "while demand"),
@@ -148,6 +153,9 @@ fn every_seeded_fault_is_caught_exactly_once() {
 /// 'while' and 'among', which the house style overrides. The ceiling only moves down;
 /// it guards against a net increase on this corpus, not against every new false finding.
 const STYLE_MANUAL_CEILING: usize = 82;
+/// Advisory findings have their own ceiling: 2 paragraphs of the manual's own prose put
+/// clause dashes in 2 sentences when the rule was calibrated on 1 November 2026.
+const STYLE_MANUAL_ADVISORY_CEILING: usize = 2;
 
 #[test]
 fn human_corpus_findings_stay_under_the_ceiling() {
@@ -156,11 +164,18 @@ fn human_corpus_findings_stay_under_the_ceiling() {
         "/../../skills/laconic-prose/references/australian-government-style-manual.md"
     );
     let text = std::fs::read_to_string(path).expect("Style Manual copy");
-    let findings = lint(&text);
+    let (advisory, findings): (Vec<_>, Vec<_>) = lint(&text)
+        .into_iter()
+        .partition(|f| ADVISORY.contains(&f.rule));
     assert!(
         findings.len() <= STYLE_MANUAL_CEILING,
         "{} findings on the Style Manual, ceiling {STYLE_MANUAL_CEILING}",
         findings.len()
+    );
+    assert!(
+        advisory.len() <= STYLE_MANUAL_ADVISORY_CEILING,
+        "{} advisory findings on the Style Manual: {advisory:?}",
+        advisory.len()
     );
     let tells: Vec<_> = findings
         .iter()
@@ -179,6 +194,7 @@ fn every_rule_has_a_seed() {
     for rule in [
         "us-spelling",
         "em-dash",
+        "clause-dashes",
         "double-quotes",
         "serial-comma",
         "number-word",

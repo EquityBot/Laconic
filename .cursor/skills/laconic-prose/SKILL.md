@@ -76,7 +76,7 @@ For spelling choices, grammatical word pairs, compounds and other mechanics (cap
 
 - **Leave effective writing alone.** Tie each edit to a defect, a requested change or a house style rule. When the difference is only taste in a human's draft, keep theirs.
 - **Lead with what the reader needs.** The first sentence carries the answer, result or required action. Cut generic setup; keep personal context that contributes.
-- **Write literally.** Use the plain word where a metaphor stands in for it. Expand shorthand the reader has not seen. Do not compress a sentence until it loses its verb or its caveat.
+- **Write literally.** Use the plain word where a metaphor stands in for it. Expand shorthand the reader has not seen. Do not compress a sentence until it loses its verb or its caveat. In fiction, keep figurative language and judge only its density: metaphors, triads and pivots in sentence after sentence.
 - **Name the actor.** Use active voice when it clarifies responsibility; keep passive voice when the actor is unknown or unimportant. An abstract subject may show, indicate or allow; if the verb needs intent or proof (decide, argue, demonstrate, tell us), name who did it.
 - **Make verbs do the work.** 'Made a decision' becomes 'decided'; 'serves as' becomes 'is'. Keep the original certainty.
 - **Hedge once.** Keep one qualifier at the confidence the evidence supports. Preserve 'I think' and 'maybe' when they carry a human writer's real doubt.

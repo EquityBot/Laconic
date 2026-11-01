@@ -19,7 +19,8 @@ mod seeded_faults;
 fn usage() -> ExitCode {
     eprintln!(
         "usage:\n  laconic-check lint [--warn] <file.md | ->...\n  laconic-check preserve [--strict] <original> <edited>\n\n\
-         lint exits 1 when it finds candidates, unless --warn is given.\n\
+         lint exits 1 when it finds candidates, unless --warn is given; advisory\n\
+         findings (clause-dashes) never fail it.\n\
          preserve exits 1 when the edit dropped a protected item. It also lists items the\n\
          edit added, which fail only with --strict (for a rewrite that must add nothing),\n\
          and names to check, which never fail. A clean result does not check meaning."
@@ -58,7 +59,9 @@ fn main() -> ExitCode {
                 };
                 for f in lint::lint(&text) {
                     println!("{file}:{}:{}: {}: {}", f.line, f.column, f.rule, f.message);
-                    total += 1;
+                    if !lint::ADVISORY.contains(&f.rule) {
+                        total += 1;
+                    }
                 }
             }
             if total > 0 && !warn {

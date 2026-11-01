@@ -10,7 +10,7 @@ import sys
 import time
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -253,9 +253,34 @@ def _judge_group(
     raise last_error
 
 
+def calibrate(
+    fixtures: list[dict[str, Any]],
+    cases: dict[str, dict[str, Any]],
+    rubric: str,
+    judge: Callable[[str, tuple, dict[str, str]], tuple[list[dict[str, Any]], Optional[float]]],
+) -> dict[str, Any]:
+    """The judge's `blocker` against hand-labelled responses, one response per call."""
+    errors, cost = [], 0.0
+    labels = {"fixture": "A"}
+    for fixture in fixtures:
+        prompt = build_judge_prompt(cases[fixture["case_id"]], {"fixture": fixture["response"]}, labels, rubric)
+        rows, spent = judge(prompt, (fixture["case_id"], fixture["name"]), labels)
+        cost += float(spent or 0)
+        if rows[0]["blocker"] != fixture["blocker"]:
+            errors.append(
+                {"fixture": fixture["name"], "expected": fixture["blocker"], "got": rows[0]["blocker"], "notes": rows[0]["notes"]}
+            )
+    return {"compared": len(fixtures), "agreement": 1 - len(errors) / len(fixtures), "errors": errors, "cost_usd": cost}
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--responses", type=Path, required=True)
+    parser.add_argument(
+        "--calibrate",
+        type=Path,
+        help="Judge these hand-labelled responses and report blocker agreement instead of judging --responses",
+    )
+    parser.add_argument("--responses", type=Path)
     parser.add_argument("--cases", type=Path, default=ROOT / "evals" / "cases.jsonl")
     parser.add_argument("--rubric", type=Path, default=ROOT / "evals" / "rubric.md")
     parser.add_argument(
@@ -274,14 +299,32 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--retries", type=int, default=2)
     parser.add_argument("--call-timeout", type=float, default=300.0, help="Seconds before one judge call counts as failed")
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
     return parser
 
 
 def main(argv: Optional[list[str]] = None) -> int:
-    args = _build_parser().parse_args(argv)
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+    if not args.calibrate and not (args.responses and args.output):
+        parser.error("--responses and --output are required unless --calibrate is given")
     rubric = grader_rubric(args.rubric.read_text(encoding="utf-8"))
     cases = {case["id"]: case for case in run_evals.load_cases(args.cases)}
+    config = json.loads(args.runner_config.read_text(encoding="utf-8"))
+    runner = config[args.runner]
+    command = list(runner["command"])
+    response_format = runner.get("response_format", "text")
+    if args.calibrate:
+        result = calibrate(
+            run_evals.read_jsonl(args.calibrate),
+            cases,
+            rubric,
+            lambda prompt, key, labels: _judge_group(
+                command, response_format, prompt, key, labels, args.retries, args.call_timeout
+            ),
+        )
+        print(json.dumps(result, indent=2))
+        return 0
     rows = run_evals.read_jsonl(args.responses)
     if not rows:
         raise ValueError(f"{args.responses}: no responses to judge")
@@ -310,11 +353,6 @@ def main(argv: Optional[list[str]] = None) -> int:
     judged: set[tuple] = set()
     if args.output.exists():
         judged = {(row["case_id"], row["trial"]) for row in run_evals.read_jsonl(args.output)}
-
-    config = json.loads(args.runner_config.read_text(encoding="utf-8"))
-    runner = config[args.runner]
-    command = list(runner["command"])
-    response_format = runner.get("response_format", "text")
 
     total_cost = 0.0
     skipped: list[tuple] = []
