@@ -260,6 +260,8 @@ def calibrate(
     judge: Callable[[str, tuple, dict[str, str]], tuple[list[dict[str, Any]], Optional[float]]],
 ) -> dict[str, Any]:
     """The judge's `blocker` against hand-labelled responses, one response per call."""
+    if not fixtures:
+        raise ValueError("no calibration fixtures to judge")
     errors, cost = [], 0.0
     labels = {"fixture": "A"}
     for fixture in fixtures:

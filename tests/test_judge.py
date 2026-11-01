@@ -452,6 +452,10 @@ class CalibrateTest(unittest.TestCase):
         self.assertEqual((2, 0.5, 0.5), (result["compared"], result["agreement"], result["cost_usd"]))
         self.assertEqual([("wrong", True, False)], [(e["fixture"], e["expected"], e["got"]) for e in result["errors"]])
 
+    def test_calibration_rejects_an_empty_fixture_file(self):
+        with self.assertRaisesRegex(ValueError, "no calibration fixtures"):
+            judge.calibrate([], {}, "rubric", lambda *_: ([], None))
+
     def test_calibration_fixtures_name_real_cases_and_cover_both_labels(self):
         cases = {case["id"] for case in run_evals.load_cases(ROOT / "evals" / "cases.jsonl")}
         fixtures = run_evals.read_jsonl(ROOT / "evals" / "judge-calibration.jsonl")

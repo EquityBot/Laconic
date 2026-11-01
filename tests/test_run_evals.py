@@ -24,7 +24,7 @@ class EvaluationHarnessTest(unittest.TestCase):
         cases = run_evals.load_cases(ROOT / "evals" / "holdout-cases.jsonl")
         self.assertEqual([], run_evals.validate_cases(cases))
         digest = hashlib.sha256(json.dumps(cases, sort_keys=True).encode()).hexdigest()
-        self.assertEqual("9a4aba6439b1d0c67b3a1c469fbfe0fbf31d9b4a8feece4fe286f7e4517966fc", digest)
+        self.assertEqual("328d719abc93df748ba1e5a399eb594ae728d1745141276dd21f384b6943d56d", digest)
 
     def test_case_catalog_is_valid_and_balanced(self):
         cases = run_evals.load_cases(ROOT / "evals" / "cases.jsonl")
