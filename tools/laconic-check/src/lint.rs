@@ -7,6 +7,9 @@
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
+/// Rules that report a pattern worth a look but never fail `lint`.
+pub const ADVISORY: &[&str] = &["clause-dashes"];
+
 #[derive(Debug, PartialEq)]
 pub struct Finding {
     pub line: usize,
@@ -52,6 +55,12 @@ const STOCK_PHRASES: &[&str] = &[
     "game changer",
     "game-changer",
     "paradigm shift",
+    "innovative",
+    "practical solutions",
+    "since the dawn of time",
+    "since time immemorial",
+    "has fascinated people",
+    "have fascinated people",
 ];
 
 /// Unnecessary hyphens: set phrases the house writes open and established compounds
@@ -555,6 +564,53 @@ fn closes_quote(chars: &[char], j: usize) -> bool {
     !before.is_whitespace() && !after.is_alphanumeric()
 }
 
+/// Columns (0-based) of clause dashes in a paragraph: an em dash after a word, or an en
+/// dash, hyphen or double hyphen spaced between words. Spans ('2017–2019'), compounds,
+/// list markers and table rows hold none.
+fn clause_dashes(chars: &[char]) -> Vec<usize> {
+    if chars.iter().find(|c| !c.is_whitespace()) == Some(&'|') {
+        return Vec::new();
+    }
+    let word_before = |i: usize| {
+        chars[..i]
+            .iter()
+            .rev()
+            .find(|c| !c.is_whitespace())
+            .is_some_and(|&c| c.is_alphanumeric() || matches!(c, ')' | '\'' | '\u{2019}' | '%'))
+    };
+    let word_after = |i: usize| {
+        chars[i..]
+            .iter()
+            .find(|c| !c.is_whitespace())
+            .is_some_and(|&c| c.is_alphanumeric() || matches!(c, '(' | '\'' | '\u{2018}' | '$'))
+    };
+    let mut found = Vec::new();
+    let mut i = 0;
+    while i < chars.len() {
+        let width = if chars[i..].starts_with(&['-', '-']) {
+            2
+        } else {
+            1
+        };
+        let dash = match chars[i] {
+            '\u{2014}' => word_before(i),
+            '\u{2013}' | '-' => {
+                i > 0
+                    && chars[i - 1].is_whitespace()
+                    && chars.get(i + width).is_some_and(|c| c.is_whitespace())
+                    && word_before(i)
+                    && word_after(i + width)
+            }
+            _ => false,
+        };
+        if dash {
+            found.push(i);
+        }
+        i += width;
+    }
+    found
+}
+
 fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
     for (k, &c) in masked.iter().enumerate() {
         if c == '\u{2014}' {
@@ -565,6 +621,23 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
                 message: "em dash in original prose".into(),
             });
         }
+    }
+    // A pair of dashes around one aside is one device; dashes count once per sentence.
+    let mut sentences = clause_dashes(masked).into_iter().map(|at| {
+        let mut start = 0;
+        while sentence_end(masked, start) <= at {
+            start = sentence_end(masked, start);
+        }
+        (start, at)
+    });
+    let first = sentences.next();
+    if let Some((_, at)) = sentences.find(|&(start, _)| Some(start) != first.map(|f| f.0)) {
+        findings.push(Finding {
+            line,
+            column: at + 1,
+            rule: "clause-dashes",
+            message: "clause dashes in 2 or more sentences of one paragraph (advisory); use a comma, colon or full stop where one reads as well".into(),
+        });
     }
     let lower: String = masked.iter().collect::<String>().to_lowercase();
     let lower_chars: Vec<char> = lower.chars().collect();
@@ -1398,6 +1471,59 @@ mod tests {
             rules("Recircle back. Bottom line:works."),
             vec!["stock-phrase"]
         );
+    }
+
+    #[test]
+    fn flags_timeless_openers_and_vague_praise() {
+        assert_eq!(
+            rules("Tax has fascinated people for centuries. We offer practical solutions."),
+            vec!["stock-phrase", "stock-phrase"]
+        );
+        assert_eq!(rules("An innovative, timely fix."), vec!["stock-phrase"]);
+        assert!(rules("Innovation grants open in March. The comet fascinated people.").is_empty());
+    }
+
+    #[test]
+    fn flags_clause_dashes_in_two_sentences_of_a_paragraph() {
+        // One aside in a pair of dashes is one device, as in the Style Manual.
+        assert!(
+            rules("The manual is for the people \u{2013} our audience \u{2013} who read it.")
+                .is_empty()
+        );
+        assert!(rules("It failed \u{2013} twice. Then it passed.").is_empty());
+        for dash in ["\u{2014}", " \u{2013} ", " - ", " -- "] {
+            let text = format!("It failed{dash}twice. Then it{dash}passed.");
+            let found = lint(&text);
+            let rules: Vec<_> = found
+                .iter()
+                .map(|f| f.rule)
+                .filter(|r| *r != "em-dash")
+                .collect();
+            assert_eq!(rules, vec!["clause-dashes"], "{dash:?}");
+            let at = found
+                .iter()
+                .find(|f| f.rule == "clause-dashes")
+                .unwrap()
+                .column;
+            assert_eq!(
+                at,
+                text.rfind(dash.trim())
+                    .map(|b| text[..b].chars().count() + 1)
+                    .unwrap(),
+                "{dash:?}"
+            );
+        }
+        // Wrapped lines join into one paragraph; a blank line separates two.
+        assert_eq!(
+            rules("It failed - twice.\nThen it - passed."),
+            vec!["clause-dashes"]
+        );
+        assert!(rules("It failed - twice.\n\nThen it - passed.").is_empty());
+        // Spans, compounds, list markers, table rows and code are not clause dashes.
+        assert!(rules("Run 2017\u{2013}2019 and 2026-27. The well-known go-ahead.").is_empty());
+        assert!(rules("- First item. - Second item.").is_empty());
+        assert!(rules("| a - b. | c - d. |").is_empty());
+        assert!(rules("Use `a - b`. Then `c - d`.").is_empty());
     }
 
     #[test]

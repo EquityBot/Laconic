@@ -34,6 +34,14 @@ Before drafting for a repository or a recurring venue, read 2 or 3 recent exampl
 - Give the cause the facts support and the fix, in the order the user acts.
 - No restated question, no closing summary, no offer of more help.
 
+## Social post
+
+- First line: the news, result or point itself, with its figure or date. No one-line hook that withholds it ('I almost quit.').
+- State credentials once, and only when the claim depends on them.
+- Sentences, or a list of real items when there are 3 or more. No emoji-led bullets and no bullet per sentence.
+- End on the point or the requested call to action. No moral, lesson or aphorism ('Consistency beats talent.').
+- Keep the writer's voice and any hashtags or links they supplied. Invent no anecdote to open the post.
+
 ## End-of-task report to the user
 
 - First sentence: what is done, in their terms.

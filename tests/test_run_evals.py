@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import hashlib
 import json
 import subprocess
 import sys
@@ -17,6 +18,14 @@ import run_evals  # noqa: E402
 
 
 class EvaluationHarnessTest(unittest.TestCase):
+    def test_holdout_cases_are_valid_and_frozen(self):
+        # Changing a held-out case after seeing results would make it a tuning case;
+        # replace the whole set for a new comparison instead.
+        cases = run_evals.load_cases(ROOT / "evals" / "holdout-cases.jsonl")
+        self.assertEqual([], run_evals.validate_cases(cases))
+        digest = hashlib.sha256(json.dumps(cases, sort_keys=True).encode()).hexdigest()
+        self.assertEqual("328d719abc93df748ba1e5a399eb594ae728d1745141276dd21f384b6943d56d", digest)
+
     def test_case_catalog_is_valid_and_balanced(self):
         cases = run_evals.load_cases(ROOT / "evals" / "cases.jsonl")
         errors = run_evals.validate_cases(cases)

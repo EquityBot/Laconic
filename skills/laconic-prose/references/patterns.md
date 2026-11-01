@@ -4,7 +4,7 @@ Apply these patterns in context using the meaning, voice and protected text rule
 
 ## Words to inspect
 
-Current models favour these; inspect them first: load-bearing, carries (meaning holds or conveys), anchor (figurative), fires (meaning triggers, outside platform terms), earns its keep, quietly, landscape, surface (as a verb for show), genuinely, real, actual, crisp, sharp, robust (outside statistics), nuanced.
+Current models favour these; inspect them first: load-bearing, carries (meaning holds or conveys), anchor (figurative), fires (meaning triggers, outside platform terms), earns its keep, quietly, landscape, surface (as a verb for show), genuinely, real, actual, crisp, sharp, robust (outside statistics), nuanced, innovative.
 
 The older list still applies but is now rarer in agent output: delve, foster, leverage, utilize, facilitate, empower, streamline, robust, cutting-edge, paradigm shift, game changer, this is huge, this changes everything, tapestry, realm, beacon, multifaceted, meticulous, intricate, paramount, transformative, elevate, embark, supercharge, harness, ever-evolving.
 
@@ -12,7 +12,7 @@ Replace empty or inflated uses with plain wording. Preserve precise technical or
 
 Adverbs that are often empty include just, literally, honestly, simply, actually, truly, fundamentally, importantly, crucially, inherently and inevitably. Cut them when they add nothing; retain real emphasis, uncertainty or characteristic voice.
 
-Phrases that are often empty include it's worth noting, it's important to note, at the end of the day, when it comes to, at its core, in today's world, in a world where, in the age of, in the world of, in this article, the reality is, the truth is, in terms of, with regard to, in order to, going forward and let's dive in. Remove delay and repetition without erasing meaning or ordinary spoken language.
+Phrases that are often empty include it's worth noting, it's important to note, at the end of the day, when it comes to, at its core, in today's world, in a world where, in the age of, in the world of, in this article, the reality is, the truth is, in terms of, with regard to, in order to, going forward, let's dive in and practical solutions, and timeless openers such as 'has fascinated people for centuries' and 'since the dawn of time'. Remove delay and repetition without erasing meaning or ordinary spoken language.
 
 Business jargon stands in for a plain verb: navigate (a problem), unpack, lean into, double down, deep dive, take a step back, circle back, on the same page and moving forward. Write what happens: 'handle the backlog', 'explain the variance', 'review it again on Friday'. Keep literal uses ('navigate to Settings', 'the diver made a deep dive').
 
