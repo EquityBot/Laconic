@@ -16,6 +16,11 @@ updates:
       - /.github/ci/pi
     schedule:
       interval: weekly
+  # The fuzz targets' libFuzzer bindings; laconic-check itself has no dependencies.
+  - package-ecosystem: cargo
+    directory: /tools/laconic-check/fuzz
+    schedule:
+      interval: weekly
   # Coverage for the Codecov upload, pinned by hash in requirements-coverage.txt.
   - package-ecosystem: pip
     directory: /.github/ci

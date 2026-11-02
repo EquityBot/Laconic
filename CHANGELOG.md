@@ -40,6 +40,7 @@ The manifests still declare plugin 0.5.0 and `Cargo.toml` still declares `laconi
 - Report protected items an edit added, failing on them only with `--strict` (#26).
 - Report dropped quantifiers, modals and bounds in `preserve` (#35).
 - Report changed sizes, units and dated months, and dropped commitments, hedges, conditions and order words, in `preserve`; list possibly lost names as advice. `preserve` counts from earlier runs are not comparable.
+- Fuzz `lint` and `preserve` weekly in CI, through a new library target.
 
 ### laconic-check: fixed
 
