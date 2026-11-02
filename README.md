@@ -57,8 +57,10 @@ Restart the agent, then type `/laconic`. It stays on for the session until you s
 ## When to choose something else
 
 - **Token cost comes first:** [caveman](https://github.com/JuliusBrussee/caveman) is built for that and also compresses what the agent reads. Laconic is not built for it: session mode cost about 27% more per task than its compact rules. The 2 have not been compared on token cost.
-- **You need another variety of English:** Laconic writes Australian English only.
-- **You need an open source licence:** Laconic is under FSL-1.1-ALv2 (see [Licence](#licence)). [humanizer](https://github.com/blader/humanizer) and [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) are MIT and caveman is Apache-2.0.
+- **You need another variety of English:** Laconic writes Australian English only. [LanguageTool](https://github.com/languagetool-org/languagetool) checks grammar and style in Australian, British, Canadian, New Zealand, South African and US English, after the text is written.
+- **You want only the writing guidance:** [No AI Slop](https://github.com/petergyang/no-ai-slop), which Laconic's writing guidance builds on, has it without the response rules or Australian English.
+- **You want your own house style checked in CI:** [Vale](https://github.com/vale-cli/vale) lints prose against rules you configure; `laconic-check` checks only Laconic's.
+- **You need an open source licence:** Laconic is under FSL-1.1-ALv2 (see [Licence](#licence)). [humanizer](https://github.com/blader/humanizer), [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing), No AI Slop and Vale are MIT; LanguageTool is LGPL-2.1; caveman is Apache-2.0.
 
 ## What changes
 
