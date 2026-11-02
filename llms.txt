@@ -4,8 +4,8 @@
 > mark what it has not verified and write in Australian English, plus a prose skill that
 > humanises AI-written text. The bundled checker's findings are reasons to look, not proof of a defect.
 
-The plugin manifests are at version 0.5.0. The GitHub releases, the latest `laconic-check-v0.2.0`,
-ship prebuilt `laconic-check` binaries. For Claude Code, install with
+The plugin manifests are at version 0.5.0. The latest GitHub release, `laconic-check-v0.2.0`,
+ships prebuilt `laconic-check` binaries. For Claude Code, install with
 `claude plugin marketplace add EquityBot/laconic` then `claude plugin install laconic@laconic`.
 
 ## Start
