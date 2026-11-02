@@ -178,7 +178,8 @@ def main(source: str, manual: str) -> None:
             for us, au in zip(us_forms, au_forms):
                 if us and au and us != au and us.islower() and au.islower() and us.isalpha():
                     pairs.setdefault(us, au)
-    manual_words = set(re.findall(r"[a-z]+", pathlib.Path(manual).read_text(encoding="utf-8").lower()))
+    # The maintainer who runs this names the file, as with the ESDB data above.
+    manual_words = set(re.findall(r"[a-z]+", pathlib.Path(manual).read_text(encoding="utf-8").lower()))  # NOSONAR
     kept = {
         us: au
         for us, au in pairs.items()
