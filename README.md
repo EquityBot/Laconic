@@ -228,13 +228,13 @@ Delete the file to turn session mode off. Choose one or the other: session mode 
 
 ## Credits
 
-Laconic is a fork of [i-have-adhd](https://github.com/ayghri/i-have-adhd) by Ayoub G. (MIT), which supplies the response rules, the platform adapters, the hooks and the evaluation harness. The writing guidance comes from No AI Slop, based on No AI Slop by Peter Yang and Stop Slop by Hardik Pandya, with material adapted from [humanizer](https://github.com/blader/humanizer), [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) and [Sepia](https://github.com/Nanako0129/sepia) (all MIT). The Australian English rules follow the [Australian Government Style Manual](https://www.stylemanual.gov.au/) (Commonwealth of Australia, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)); the copy in `skills/laconic-prose/references/` was scraped from the site on 13 September 2026, with navigation, release notes and feedback widgets removed.
+Laconic is a fork of [i-have-adhd](https://github.com/ayghri/i-have-adhd) by Ayoub G. (MIT), which supplies the response rules, the platform adapters, the hooks and the evaluation harness. The writing guidance comes from No AI Slop, based on No AI Slop by Peter Yang and Stop Slop by Hardik Pandya, with material adapted from [humanizer](https://github.com/blader/humanizer), [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) and [Sepia](https://github.com/Nanako0129/sepia) (all MIT). The Australian English rules follow the [Australian Government Style Manual](https://www.stylemanual.gov.au/) (copyright Commonwealth of Australia), restated in Laconic's own words; the manual is not published under an open licence, and Laconic includes no copy of it. The `laconic-check` calibration corpus is text from 3 [Productivity Commission](https://www.pc.gov.au/) reports (CC BY 3.0 AU); its sources are in `tools/laconic-check/tests/corpus/NOTICE`.
 
 The banner's lettering and emblem are drawn from Cascadia Mono and Besley glyphs (SIL OFL 1.1).
 
 ## Licence
 
-Licensed under the Functional Source License, Version 1.1, ALv2 Future License (FSL-1.1-ALv2). You may use, modify and redistribute it for any purpose except a Competing Use as defined in LICENSE (making it available to others in a competing commercial product or service), and each version becomes available under Apache-2.0 2 years after it is made available. Portions from i-have-adhd and the other sources in Credits remain under the MIT License, and the Style Manual material is CC BY 4.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+Licensed under the Functional Source License, Version 1.1, ALv2 Future License (FSL-1.1-ALv2). You may use, modify and redistribute it for any purpose except a Competing Use as defined in LICENSE (making it available to others in a competing commercial product or service), and each version becomes available under Apache-2.0 2 years after it is made available. Portions from i-have-adhd and the other sources in Credits remain under the MIT License, and the `laconic-check` test corpus remains under CC BY 3.0 AU. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
 ---
 

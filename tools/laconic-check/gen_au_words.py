@@ -15,9 +15,15 @@ tags each spelling of a word sense: A for American, D for Australian, B for Brit
 - the Style Manual does not use the US form itself (focused), unless it names the form
   only to reject it (percent).
 
-Run from the repository root with a local copy of ESDB's data/scowl-pre.txt:
+Run from the repository root with a local copy of ESDB's data/scowl-pre.txt and a
+text file of the Style Manual:
 
-    python tools/laconic-check/gen_au_words.py path/to/scowl-pre.txt
+    python tools/laconic-check/gen_au_words.py path/to/scowl-pre.txt path/to/style-manual.txt
+
+Laconic does not ship the Style Manual, which is not published under an open licence.
+To make the file, save the text of every page that https://www.stylemanual.gov.au/sitemap.xml
+lists, as plain text or Markdown, into one file. Do not save the HTML: its markup and
+style words, such as color, would hide US forms the manual never uses.
 """
 
 import pathlib
@@ -25,7 +31,6 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-MANUAL = ROOT / "skills/laconic-prose/references/australian-government-style-manual.md"
 OUT = ROOT / "tools/laconic-check/src/us_words.txt"
 MAX_SIZE = 60
 VARIANT = re.compile(r"^(?:[ABZCD_][.=?v~V\-@x]?|\+)$")
@@ -143,7 +148,7 @@ def groups(path: pathlib.Path):
         yield group
 
 
-def main(source: str) -> None:
+def main(source: str, manual: str) -> None:
     pairs, au_valid = {}, set()
     for group in groups(pathlib.Path(source)):
         rows = [r for r in (parse(l) for l in group) if r]
@@ -173,7 +178,7 @@ def main(source: str) -> None:
             for us, au in zip(us_forms, au_forms):
                 if us and au and us != au and us.islower() and au.islower() and us.isalpha():
                     pairs.setdefault(us, au)
-    manual_words = set(re.findall(r"[a-z]+", MANUAL.read_text(encoding="utf-8").lower()))
+    manual_words = set(re.findall(r"[a-z]+", pathlib.Path(manual).read_text(encoding="utf-8").lower()))
     kept = {
         us: au
         for us, au in pairs.items()
@@ -194,6 +199,6 @@ def main(source: str) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        sys.exit("usage: gen_au_words.py path/to/scowl-pre.txt")
-    main(sys.argv[1])
+    if len(sys.argv) != 3:
+        sys.exit("usage: gen_au_words.py path/to/scowl-pre.txt path/to/style-manual.txt")
+    main(sys.argv[1], sys.argv[2])

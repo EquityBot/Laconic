@@ -1,6 +1,6 @@
 # Australian Government Style Manual: editing rules
 
-Distilled from the seventh edition at https://www.stylemanual.gov.au/ (Commonwealth of Australia, CC BY 4.0), scraped 13 September 2026. The full text of all 186 pages sits in [australian-government-style-manual.md](australian-government-style-manual.md); grep that file for a rule this page does not cover. Do not read the full corpus end to end, it is about 1.3 MB. Each page's own Evidence and References appear there under `### Sources for this page`, so the manual's authority for a given rule is checkable.
+Restated in Laconic's own words from the seventh edition of the Australian Government Style Manual at https://www.stylemanual.gov.au/ (copyright Commonwealth of Australia), as it stood on 13 September 2026. The manual is not published under an open licence, and Laconic includes no copy of it. Look up a rule this page does not cover on stylemanual.gov.au. Where a page there cites evidence, its Evidence and References sections show the manual's authority for the rule.
 
 For citing Australian legislation, cases, ATO rulings and explanatory memoranda, read [aglc4-citation.md](aglc4-citation.md) instead. AGLC governs inside a citation; this page governs the prose around it.
 
@@ -24,7 +24,7 @@ The manual's editors publish the habits they catch in their own drafts. The list
 - writing things in 3s
 - hedging phrases such as 'I think' and 'would you be able to' instead of being direct
 
-It also warns against editing to satisfy a tool: "Don't edit and revise your writing simply to improve a readability score. Use the tool's editing suggestions to identify potential issues, then exercise judgement." Treat word lists and scanners the same way.
+It also warns against editing to satisfy a tool: never revise only to raise a readability score; use a tool's suggestions to find possible problems, then decide for yourself. Treat word lists and scanners the same way.
 
 ## Plain language and word choice
 
@@ -243,7 +243,7 @@ The manual sets few firm rules and defers to the dictionary. Remove a hyphen whe
 - Preserve a hyphen that changes the action: re-sign means sign again; resign means leave a position. If the intended action is unclear, query it before editing.
 - Fixed compound nouns keep their established form regardless of position: go-ahead and mother-in-law. The before-noun test applies to temporary modifiers, not every compound.
 - Hyphenate two-word numbers from twenty-one to ninety-nine when written as words, including that part of a larger number: one hundred and forty-five. Preserve numerals where the format calls for them.
-- Settle an established compound from a source, not by ear. Where dictionaries disagree, grep the scraped manual and follow its dominant spelling: plain language 98 uses to 6, lower case 94 to 4, stand-alone 33 to 1, high-level 3 to 1.
+- Settle an established compound from a source, not by ear. Where dictionaries disagree, search stylemanual.gov.au and follow the manual's dominant spelling. Its text of 13 September 2026 preferred plain language (98 uses to 6), lower case (94 to 4), stand-alone (33 to 1) and high-level (3 to 1).
 - Hanging hyphens are hard to follow. Repeat the word: 'full-time and part-time positions', not 'full- and part-time positions'.
 - **Protected literals keep every hyphen:** paths, identifiers, code, URLs, citation pinpoints such as `s 8-1`, quoted text and the word lists in the pattern catalogue.
 

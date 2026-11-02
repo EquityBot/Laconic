@@ -8,7 +8,7 @@
   },
   "homepage": "https://github.com/EquityBot/laconic",
   "repository": "https://github.com/EquityBot/laconic",
-  "license": "FSL-1.1-ALv2 AND MIT AND CC-BY-4.0",
+  "license": "FSL-1.1-ALv2 AND MIT",
   "keywords": [
     "concise",
     "output-style",

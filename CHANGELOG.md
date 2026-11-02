@@ -28,6 +28,7 @@ The manifests still declare plugin 0.5.0 and `Cargo.toml` still declares `laconi
 
 - Validate eval inputs and record requested model metadata (#20).
 - Make hook trimming linear (#29).
+- Remove the copy of the Australian Government Style Manual and correct the claim that it is CC BY 4.0: the manual is not openly licensed. The references now send agents to stylemanual.gov.au for rules they do not cover.
 
 ### Plugin: security
 
@@ -40,6 +41,10 @@ The manifests still declare plugin 0.5.0 and `Cargo.toml` still declares `laconi
 - Report protected items an edit added, failing on them only with `--strict` (#26).
 - Report dropped quantifiers, modals and bounds in `preserve` (#35).
 - Report changed sizes, units and dated months, and dropped commitments, hedges, conditions and order words, in `preserve`; list possibly lost names as advice. `preserve` counts from earlier runs are not comparable.
+
+### laconic-check: changed
+
+- Calibrate the human-prose test on 3 Productivity Commission reports (CC BY 3.0 AU) instead of the Style Manual copy, and make `gen_au_words.py` take the manual's text as an argument.
 
 ### laconic-check: fixed
 
