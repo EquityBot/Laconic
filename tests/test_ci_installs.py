@@ -108,6 +108,8 @@ class CiInstallTest(unittest.TestCase):
         expected = {"tests.yml": ['        run: python -m pip install --only-binary=":all:" --require-hashes'
                                   ' -r .github/ci/requirements-coverage.txt']}
         workflows = (ROOT / ".github/workflows").iterdir()
+        for name in expected:
+            self.assertTrue((ROOT / ".github/workflows" / name).is_file(), name)
         for path in sorted(p for p in workflows if p.suffix in (".yml", ".yaml")):
             with self.subTest(workflow=path.name):
                 self.assertEqual(expected.get(path.name, []), pip_lines(path.read_text(encoding="utf8")))
