@@ -159,7 +159,7 @@ const HUMAN_CORPUS: &[&str] = &[
 /// overrides: spaced em dashes, words for numbers below 10, 'while' and 'among', and serial
 /// commas. The ceilings only move down; they guard against a net increase on this corpus,
 /// not against every new false finding.
-const HUMAN_CORPUS_CEILING: usize = 2249;
+const HUMAN_CORPUS_CEILING: usize = 2246;
 /// Advisory findings have their own ceiling: 41 paragraphs put clause dashes in 2 or more
 /// sentences when the corpus was calibrated on 2 November 2026.
 const HUMAN_CORPUS_ADVISORY_CEILING: usize = 41;

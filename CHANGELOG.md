@@ -52,6 +52,7 @@ The manifests still declare plugin 0.5.0 and `Cargo.toml` still declares `laconi
 - Stop date checks from joining separate clauses (#17).
 - Make dictionary parsing linear (#29).
 - Stop flagging commas that join 2 clauses as serial commas (#36).
+- Stop suggesting -ise forms for words built on size, seize and prize, such as downsizing, outsized, resized, prized and seizing.
 
 ## [laconic-check 0.2.0] - 2026-10-20
 

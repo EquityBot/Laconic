@@ -251,11 +251,18 @@ const MONTHS: [&str; 12] = [
     "december",
 ];
 
-/// Words that end in -ize but are not US spellings of -ise words.
-const IZE_EXCEPTIONS: &[&str] = &[
-    "size", "sizes", "sized", "sizing", "seize", "seized", "seizes", "prize", "prizes", "capsize",
-    "maize", "baize", "assize",
-];
+/// Stems whose -ize is part of the word, not a US suffix, alone or compounded and inflected:
+/// downsizing, outsized, capsize, prized, seizing. US -ise words with these endings, such as
+/// emphasize, are in the word lists, which are checked first.
+const IZE_STEMS: &[&str] = &["size", "seize", "prize", "maize", "baize"];
+
+fn ize_is_part_of_word(word: &str) -> bool {
+    let base = match word.strip_suffix("ing") {
+        Some(stem) => format!("{stem}e"),
+        None => word.strip_suffix(['s', 'd']).unwrap_or(word).to_string(),
+    };
+    IZE_STEMS.iter().any(|stem| base.ends_with(stem))
+}
 
 pub fn lint(text: &str) -> Vec<Finding> {
     let mut findings = Vec::new();
@@ -1305,7 +1312,7 @@ fn au_form(word: &str) -> Option<String> {
     if let Some(au) = esdb_us_words().get(word) {
         return Some((*au).to_string());
     }
-    if IZE_EXCEPTIONS.contains(&word) || word.len() < 6 {
+    if word.len() < 6 || ize_is_part_of_word(word) {
         return None;
     }
     for (us, au) in [
@@ -1447,6 +1454,16 @@ mod tests {
             vec!["em-dash", "us-spelling", "us-spelling"]
         );
         assert_eq!(rules("He said \"approved\" today."), vec!["double-quotes"]);
+        assert_eq!(
+            rules(
+                "They prized the resized, outsized and capsized boats, seizing them whilst downsizing."
+            ),
+            Vec::<&str>::new()
+        );
+        assert_eq!(
+            rules("We emphasized and synthesized it."),
+            vec!["us-spelling", "us-spelling"]
+        );
         assert_eq!(
             rules("Bring apples, pears, and plums."),
             vec!["serial-comma"]
