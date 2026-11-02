@@ -2,7 +2,7 @@
 
 This file follows the shape of [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and is built from `git log`. The plugin and `laconic-check` are versioned separately. Dates are commit dates. Numbers in brackets are pull requests.
 
-The manifests still declare plugin 0.5.0 and `Cargo.toml` still declares `laconic-check` 0.2.0, so a build from `main` carries those versions plus the Unreleased changes. Only `v0.4.1` and `laconic-check-v0.1.0` are tagged; neither plugin 0.5.0 nor `laconic-check` 0.2.0 has a tag or release.
+The manifests still declare plugin 0.5.0, so a build from `main` carries that version plus the Unreleased changes. `v0.4.1`, `laconic-check-v0.1.0` and `laconic-check-v0.2.0` are tagged; plugin 0.5.0 has no tag or release.
 
 ## [Unreleased]
 
@@ -14,6 +14,7 @@ The manifests still declare plugin 0.5.0 and `Cargo.toml` still declares `laconi
 - Benchmark Laconic against `humanizer` and `avoid-ai-writing` (#12).
 - A revisit trigger for each shortcut marker (#24).
 - A README badge row, CodeQL, `CITATION.cff` and `llms.txt` (#37).
+- Calibrate the eval judge with `judge.py --calibrate` against 10 hand-labelled responses; add a social post venue and 10 frozen holdout cases (#55).
 
 ### Plugin: changed
 
@@ -22,44 +23,43 @@ The manifests still declare plugin 0.5.0 and `Cargo.toml` still declares `laconi
 - Move the compact rule's mechanics into a before-sending checklist (#34).
 - Relicense under FSL-1.1-ALv2 (#25), replacing the Apache-2.0 licence adopted the same day (#22).
 - Point repository links at EquityBot (#31).
+- Keep figurative language in fiction, judging only its density (#55).
 - State the fact-keeping promise as an aim until the fact-survival benchmark reports, and name 'humanizer' and 'no AI slop' in the README.
 
 ### Plugin: fixed
 
 - Validate eval inputs and record requested model metadata (#20).
 - Make hook trimming linear (#29).
-- Remove the copy of the Australian Government Style Manual and correct the claim that it is CC BY 4.0: the manual is not openly licensed. The references now send agents to stylemanual.gov.au for rules they do not cover.
+- Remove the copy of the Australian Government Style Manual and correct the claim that it is CC BY 4.0: the manual is not openly licensed. The references now send agents to stylemanual.gov.au for rules they do not cover (#62).
 
 ### Plugin: security
 
 - Pin CI agent installs and disable lifecycle scripts (#28).
 - Keep scenario prompts out of Claude CLI arguments and reject model values that could become options (#30).
 
-### laconic-check: added
+## [laconic-check 0.2.0] - 2026-11-03
 
+### Added
+
+- Flag staged contrasts and reveal questions (#10).
 - Flag unnecessary hyphens (#13).
 - Report protected items an edit added, failing on them only with `--strict` (#26).
 - Report dropped quantifiers, modals and bounds in `preserve` (#35).
-- Report changed sizes, units and dated months, and dropped commitments, hedges, conditions and order words, in `preserve`; list possibly lost names as advice. `preserve` counts from earlier runs are not comparable.
-- Fuzz `lint` and `preserve` weekly in CI, through a new library target.
+- Report changed sizes, units and dated months, and dropped commitments, hedges, conditions and order words, in `preserve`; list possibly lost names as advice (#42). `preserve` counts from earlier runs are not comparable.
+- Advise, without failing `lint`, on clause dashes in 2 or more sentences of one paragraph; flag the stock phrases 'innovative' and 'practical solutions' and timeless openers (#55).
+- Fuzz `lint` and `preserve` weekly in CI, through a new library target (#60).
 
-### laconic-check: changed
+### Changed
 
-- Calibrate the human-prose test on 3 Productivity Commission reports (CC BY 3.0 AU) instead of the Style Manual copy, and make `gen_au_words.py` take the manual's text as an argument.
+- Calibrate the human-prose test on 3 Productivity Commission reports (CC BY 3.0 AU) instead of the Style Manual copy, and make `gen_au_words.py` take the manual's text as an argument (#62).
 
-### laconic-check: fixed
+### Fixed
 
 - Catch prose patterns across wrapped Markdown lines (#16).
 - Stop date checks from joining separate clauses (#17).
 - Make dictionary parsing linear (#29).
 - Stop flagging commas that join 2 clauses as serial commas (#36).
-- Stop suggesting -ise forms for words built on size, seize and prize, such as downsizing, outsized, resized, prized and seizing.
-
-## [laconic-check 0.2.0] - 2026-10-20
-
-### Added
-
-- Flag staged contrasts and reveal questions (#10).
+- Stop suggesting -ise forms for words built on size, seize and prize, such as downsizing, outsized, resized, prized and seizing (#62).
 
 ## [laconic-check 0.1.0] - 2026-10-20
 
@@ -89,6 +89,6 @@ The manifests still declare plugin 0.5.0 and `Cargo.toml` still declares `laconi
 For versions before 0.5.0, see the history from tag `v0.4.1`.
 
 [Unreleased]: https://github.com/EquityBot/laconic/commits/main
-[laconic-check 0.2.0]: https://github.com/EquityBot/laconic/commit/b633217
+[laconic-check 0.2.0]: https://github.com/EquityBot/laconic/releases/tag/laconic-check-v0.2.0
 [laconic-check 0.1.0]: https://github.com/EquityBot/laconic/releases/tag/laconic-check-v0.1.0
 [plugin 0.5.0]: https://github.com/EquityBot/laconic/commit/3eb0a03
