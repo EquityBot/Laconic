@@ -51,6 +51,7 @@ The manifests still declare plugin 0.5.0, so a build from `main` carries that ve
 
 ### Changed
 
+- Relicense under FSL-1.1-ALv2 (#25); 0.1.0 was MIT.
 - Calibrate the human-prose test on 3 Productivity Commission reports (CC BY 3.0 AU) instead of the Style Manual copy, and make `gen_au_words.py` take the manual's text as an argument (#62).
 
 ### Fixed
