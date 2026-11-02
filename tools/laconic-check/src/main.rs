@@ -11,10 +11,7 @@ use std::env;
 use std::fs;
 use std::process::ExitCode;
 
-mod lint;
-mod preserve;
-#[cfg(test)]
-mod seeded_faults;
+use laconic_check::{lint, preserve};
 
 fn usage() -> ExitCode {
     eprintln!(

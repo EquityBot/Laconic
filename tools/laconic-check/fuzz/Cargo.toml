@@ -1,0 +1,29 @@
+[package]
+name = "laconic-check-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+laconic-check = { path = ".." }
+libfuzzer-sys = "0.4.12"
+
+# Keep the fuzz crate out of any parent workspace.
+[workspace]
+
+[[bin]]
+name = "lint"
+path = "fuzz_targets/lint.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "preserve"
+path = "fuzz_targets/preserve.rs"
+test = false
+doc = false
+bench = false
