@@ -11,9 +11,20 @@ on:
       - .github/workflows/pi-load-check.yml
   push:
     branches: [main]
+    paths:
+      - extensions/**
+      - skills/**
+      - package.json
+      - scripts/check_pi_extension.py
+      - .github/ci/pi/**
+      - .github/workflows/pi-load-check.yml
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   load:

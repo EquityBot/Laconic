@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   unittest:
     runs-on: ubuntu-latest
@@ -22,6 +26,12 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.x"
+      # unittest is the only required check, so laconic-check's format and lints block here.
+      - name: Format and lint laconic-check
+        working-directory: tools/laconic-check
+        run: |
+          cargo fmt --check
+          cargo clippy --locked --all-targets -- -D warnings
       # Without the binary, tests/test_mcp_server.py would skip.
       - name: Build laconic-check
         run: cargo build --locked --manifest-path tools/laconic-check/Cargo.toml
