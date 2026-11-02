@@ -14,9 +14,20 @@ on:
       - .github/workflows/plugin-load-check.yml
   push:
     branches: [main]
+    paths:
+      - .claude-plugin/**
+      - hooks/**
+      - skills/**
+      - tests/test_always_on_hooks.py
+      - .github/ci/claude-code/**
+      - .github/workflows/plugin-load-check.yml
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   hook-parity:
@@ -24,6 +35,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -36,6 +48,7 @@ jobs:
 
   load:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

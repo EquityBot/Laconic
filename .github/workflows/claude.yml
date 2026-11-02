@@ -10,8 +10,12 @@ permissions: {}
 
 jobs:
   claude:
-    if: contains(github.event.comment.body, '@claude')
+    # Only the owner, members and collaborators may start a run, which can mint an OIDC token.
+    if: >-
+      contains(github.event.comment.body, '@claude') &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       pull-requests: read

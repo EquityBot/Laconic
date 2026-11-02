@@ -14,9 +14,22 @@ on:
       - .github/workflows/laconic-check.yml
   push:
     branches: [main]
+    paths:
+      - tools/laconic-check/**
+      - skills/**
+      - rules/**
+      - README.md
+      - INSTALL.md
+      - AGENTS.md
+      - evals/README.md
+      - .github/workflows/laconic-check.yml
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:
