@@ -10,6 +10,11 @@ Update manifests and regenerate the corresponding lockfile on Linux with
 or `npm install --package-lock-only --ignore-scripts --prefix .github/ci/pi`.
 Check `npm audit` and run the isolated load checks before changing the pins.
 
+`requirements-coverage.txt` pins coverage for the Codecov upload in `tests.yml` by
+version and SHA-256 hash, and the workflow installs it with `--require-hashes`. It
+lists the Linux x86_64 wheels and the pure-Python wheel from the release's PyPI
+files; Dependabot checks it weekly.
+
 Pi's Undici override excludes the vulnerable 8.0.0 through 8.12.1 range, and its
 minimatch override excludes versions before 11.0.1 (GHSA-g3hv-75wg-m249). Pi pins
 minimatch 10.2.6 but calls only `minimatch()`, which 11 keeps. Remove each override
