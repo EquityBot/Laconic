@@ -88,7 +88,7 @@ class CiInstallTest(unittest.TestCase):
         self.assertRegex(config, r"(?m)^updates:$")
         pieces = re.split(r"(?m)^  - package-ecosystem: (\S+)$", config)[1:]
         blocks = dict(zip(pieces[::2], pieces[1::2]))
-        self.assertEqual({"github-actions", "npm", "pip"}, set(blocks))
+        self.assertEqual({"cargo", "github-actions", "npm", "pip"}, set(blocks))
         for ecosystem, block in blocks.items():
             with self.subTest(ecosystem=ecosystem):
                 self.assertRegex(block, r"(?m)^    schedule:\n      interval: \w+$")
@@ -101,6 +101,9 @@ class CiInstallTest(unittest.TestCase):
         # Dependabot's pip updater reads every requirements file in the directory.
         self.assertTrue(sorted((ROOT / ".github/ci").glob("requirements-*.txt")))
         self.assertRegex(blocks["pip"], r"(?m)^    directory: /\.github/ci$")
+        # laconic-check has no dependencies, so only the fuzz crate's lockfile lists any.
+        self.assertTrue((ROOT / "tools/laconic-check/fuzz/Cargo.lock").is_file())
+        self.assertRegex(blocks["cargo"], r"(?m)^    directory: /tools/laconic-check/fuzz$")
 
     def test_pip_runs_only_the_hashed_coverage_install(self):
         # Like the npm guard, this expects one exact command, so any other line naming pip, however it is spelt,
