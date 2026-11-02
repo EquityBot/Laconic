@@ -148,33 +148,42 @@ fn every_seeded_fault_is_caught_exactly_once() {
     );
 }
 
-/// Findings on the scraped Style Manual, about 208,700 words of human Australian
-/// Government prose. Many are the manual's own examples of forms to avoid or its
-/// 'while' and 'among', which the house style overrides. The ceiling only moves down;
-/// it guards against a net increase on this corpus, not against every new false finding.
-const STYLE_MANUAL_CEILING: usize = 82;
-/// Advisory findings have their own ceiling: 2 paragraphs of the manual's own prose put
-/// clause dashes in 2 sentences when the rule was calibrated on 1 November 2026.
-const STYLE_MANUAL_ADVISORY_CEILING: usize = 2;
+/// Human Australian Government prose in tests/corpus: 3 Productivity Commission reports
+/// released in 2018 and 2021, about 198,500 words under CC BY 3.0 AU (sources in its NOTICE).
+const HUMAN_CORPUS: &[&str] = &[
+    "rising-inequality-2018.md",
+    "right-to-repair-2021.md",
+    "vulnerable-supply-chains-2021.md",
+];
+/// Findings on the human corpus. Most follow the Commission's house style, which Laconic's
+/// overrides: spaced em dashes, words for numbers below 10, 'while' and 'among', and serial
+/// commas. The ceilings only move down; they guard against a net increase on this corpus,
+/// not against every new false finding.
+const HUMAN_CORPUS_CEILING: usize = 2246;
+/// Advisory findings have their own ceiling: 41 paragraphs put clause dashes in 2 or more
+/// sentences when the corpus was calibrated on 2 November 2026.
+const HUMAN_CORPUS_ADVISORY_CEILING: usize = 41;
+/// AI-tell findings at calibration, all human uses: 'it is important to note' 3 times,
+/// 'innovative', 'deep dive', 'not just X, but Y' and 'time-frame'.
+const HUMAN_CORPUS_TELL_CEILING: usize = 7;
 
 #[test]
 fn human_corpus_findings_stay_under_the_ceiling() {
-    let path = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../skills/laconic-prose/references/australian-government-style-manual.md"
-    );
-    let text = std::fs::read_to_string(path).expect("Style Manual copy");
-    let (advisory, findings): (Vec<_>, Vec<_>) = lint(&text)
-        .into_iter()
+    let (advisory, findings): (Vec<_>, Vec<_>) = HUMAN_CORPUS
+        .iter()
+        .flat_map(|name| {
+            let path = format!("{}/tests/corpus/{name}", env!("CARGO_MANIFEST_DIR"));
+            lint(&std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{path}: {e}")))
+        })
         .partition(|f| ADVISORY.contains(&f.rule));
     assert!(
-        findings.len() <= STYLE_MANUAL_CEILING,
-        "{} findings on the Style Manual, ceiling {STYLE_MANUAL_CEILING}",
+        findings.len() <= HUMAN_CORPUS_CEILING,
+        "{} findings on the human corpus, ceiling {HUMAN_CORPUS_CEILING}",
         findings.len()
     );
     assert!(
-        advisory.len() <= STYLE_MANUAL_ADVISORY_CEILING,
-        "{} advisory findings on the Style Manual: {advisory:?}",
+        advisory.len() <= HUMAN_CORPUS_ADVISORY_CEILING,
+        "{} advisory findings on the human corpus, ceiling {HUMAN_CORPUS_ADVISORY_CEILING}",
         advisory.len()
     );
     let tells: Vec<_> = findings
@@ -186,7 +195,11 @@ fn human_corpus_findings_stay_under_the_ceiling() {
             )
         })
         .collect();
-    assert!(tells.is_empty(), "AI tells in human prose: {tells:?}");
+    assert!(
+        tells.len() <= HUMAN_CORPUS_TELL_CEILING,
+        "{} AI tells in human prose, ceiling {HUMAN_CORPUS_TELL_CEILING}: {tells:?}",
+        tells.len()
+    );
 }
 
 #[test]

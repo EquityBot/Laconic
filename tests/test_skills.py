@@ -7,7 +7,6 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SKILLS = ROOT / "skills"
 LINK = re.compile(r"\]\(([^)\s#]+)(?:#[^)]*)?\)")
-SCRAPE = "australian-government-style-manual.md"
 
 
 def frontmatter(path: pathlib.Path) -> str:
@@ -32,8 +31,6 @@ class SkillStructureTest(unittest.TestCase):
 
     def test_relative_links_resolve(self):
         for path in SKILLS.rglob("*.md"):
-            if path.name == SCRAPE:
-                continue
             text = re.sub(r"```.*?```", "", path.read_text(encoding="utf-8"), flags=re.S)
             for target in LINK.findall(text):
                 if re.match(r"[a-z]+:", target):

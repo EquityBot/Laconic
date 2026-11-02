@@ -41,10 +41,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-# Australian English rules adapted from the Australian Government Style Manual
-# (https://www.stylemanual.gov.au/), copyright Commonwealth of Australia, CC BY 4.0
-# (https://creativecommons.org/licenses/by/4.0/). Neither FSL-1.1-ALv2 nor
-# the MIT License applies to that material.
+# Australian English rules restated in Laconic's own words from the Australian
+# Government Style Manual (https://www.stylemanual.gov.au/), copyright
+# Commonwealth of Australia, which is not published under an open licence.
+# Laconic includes no copy of it.
 #
 # Gemini CLI custom command for laconic.
 # Install: copy to ~/.gemini/commands/laconic.toml, then type /laconic.

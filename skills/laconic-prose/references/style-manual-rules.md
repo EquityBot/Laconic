@@ -1,6 +1,6 @@
 # Australian Government Style Manual: editing rules
 
-This required reference keeps the mechanics used in ordinary Australian English prose. The complete rules and examples from the seventh edition, scraped 13 September 2026, are preserved in [style-manual-detail.md](style-manual-detail.md), under the same headings. Source: [Australian Government Style Manual](https://www.stylemanual.gov.au/), Commonwealth of Australia, CC BY 4.0.
+This required reference keeps the mechanics used in ordinary Australian English prose. [style-manual-detail.md](style-manual-detail.md) restates the seventh edition's rules and examples in more detail, under the same headings, as the manual stood on 13 September 2026. Source: [Australian Government Style Manual](https://www.stylemanual.gov.au/), copyright Commonwealth of Australia, which is not published under an open licence. Laconic restates its rules in its own words and includes no copy of it.
 
 ## When to apply it
 
@@ -8,7 +8,7 @@ Apply the mechanics below to all Australian English prose. Read and apply [style
 
 For other prose, preserve the writer's register. Read the relevant detailed section whenever a rule, exception, grammatical role or wording choice needs clarification, or the task specifically concerns that topic. The user's requirements, factual fidelity, reader comprehension and a human writer's voice take priority over stylistic preference.
 
-For legislation, cases, ATO rulings and explanatory memoranda, read [aglc4-citation.md](aglc4-citation.md). It governs inside citations. For an uncovered rule, search [australian-government-style-manual.md](australian-government-style-manual.md) for the topic; never read that 1.3 MB corpus end to end. Each page includes its evidence and references.
+For legislation, cases, ATO rulings and explanatory memoranda, read [aglc4-citation.md](aglc4-citation.md). It governs inside citations. For a rule neither reference covers, look it up on [stylemanual.gov.au](https://www.stylemanual.gov.au/), whose pages give their evidence and references where they cite any.
 
 ## Australian English mechanics
 
@@ -38,7 +38,7 @@ Prefer words for spans: from 57 to 65, between 1970 and 1980. Never combine from
 
 ### Hyphens
 
-Remove a hyphen when the phrase reads the same without it. Keep set phrases open: open source, plain language, public sector. Close established compounds: email, online, website, codebase, dataset, timeframe, roadmap, coordinate. Resolve uncertain compounds from a dictionary or the scraped manual.
+Remove a hyphen when the phrase reads the same without it. Keep set phrases open: open source, plain language, public sector. Close established compounds: email, online, website, codebase, dataset, timeframe, roadmap, coordinate. Resolve uncertain compounds from a dictionary or the Style Manual's website.
 
 Temporary compound modifiers take a hyphen before a noun only when needed, and stay open after it: up-to-date accounts; accounts are up to date. Compounds with 2 adjectives or a noun plus an adjective keep it in both positions. Never hyphenate compounds modified by very, particularly, least or most. Preserve meaningful participle, numeral and fixed compounds: well-known, 4-part, forty-five, go-ahead, mother-in-law. An adverb ending in -ly takes no hyphen; fully-fashioned and fully-fledged are exceptions.
 
@@ -62,4 +62,4 @@ No full stops in acronyms, initialisms or contractions, except sentence punctuat
 
 ## Register, structure and specialist editing
 
-The complete reference retains every original rule and example. Read the relevant section for a task about sentences, paragraph structure, headings, lists, links, tone, inclusive language, accessibility or editing levels. Read it in full at the government, corporate, compliance and plain language triggers above. Apply judgement to tool warnings and preserve the core skill's meaning and voice rules.
+The detailed reference restates these rules. Read the relevant section for a task about sentences, paragraph structure, headings, lists, links, tone, inclusive language, accessibility or editing levels. Read it in full at the government, corporate, compliance and plain language triggers above. Apply judgement to tool warnings and preserve the core skill's meaning and voice rules.

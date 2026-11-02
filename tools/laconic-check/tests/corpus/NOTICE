@@ -1,0 +1,46 @@
+laconic-check calibration corpus
+
+These files are human-written Australian Government prose that
+src/seeded_faults.rs lints to measure false findings. They are test data, not
+part of the Laconic skills, and neither FSL-1.1-ALv2 nor the MIT License
+applies to them.
+
+Each file is based on a Productivity Commission report, copyright
+Commonwealth of Australia, licensed under the Creative Commons Attribution 3.0
+Australia licence (https://creativecommons.org/licenses/by/3.0/au/), as the
+copyright page of each report states. The Commission's own copyright page
+(https://www.pc.gov.au/copyright/) licenses its copyright work under the
+Creative Commons Attribution 4.0 International licence. Both were checked on
+2 November 2026. Neither licence covers the Commonwealth Coat of Arms or
+content supplied by third parties. These files keep the reports' text and
+drop their images, figures, tables and set-off quotations; short quotations
+inside the running text remain.
+
+- rising-inequality-2018.md. Source: based on Productivity Commission data,
+  Rising inequality? A stocktake of the evidence. Productivity Commission 2018,
+  Commission Research Paper, Canberra; released 28 August 2018.
+  https://assets.pc.gov.au/research/completed/rising-inequality/rising-inequality.docx
+- right-to-repair-2021.md. Source: based on Productivity Commission data,
+  Right to Repair. Productivity Commission 2021, Inquiry Report no. 97,
+  Canberra; publicly released 1 December 2021.
+  https://assets.pc.gov.au/inquiries/completed/repair/report/repair.docx
+- vulnerable-supply-chains-2021.md. Source: based on Productivity Commission
+  data, Vulnerable Supply Chains, Study Report. Productivity Commission 2021,
+  Study Report, July; publicly released 13 August 2021.
+  https://assets.pc.gov.au/inquiries/completed/supply-chains/report/supply-chains.docx
+
+Changes: the Word versions above were downloaded on 2 November 2026 and
+converted to Markdown with pandoc 3.13:
+
+    pandoc REPORT.docx -t gfm --wrap=none --eol=lf --lua-filter=prose.lua
+
+where prose.lua drops images, figures, tables and block quotes, so the boxes,
+data tables and set-off quotations from inquiry participants are omitted:
+
+    function Image() return {} end
+    function Figure() return {} end
+    function Table() return {} end
+    function BlockQuote() return {} end
+
+Trailing spaces were then removed from each line. The text is otherwise as
+published, in the Commission's own style.

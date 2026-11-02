@@ -1,6 +1,6 @@
 ---
 name: laconic-prose
-license: FSL-1.1-ALv2 AND MIT AND CC-BY-4.0
+license: FSL-1.1-ALv2 AND MIT
 description: Write, edit, humanise or audit prose in concise, correct Australian English while preserving meaning and the writer's voice. Use when asked to humanise ('humanize') AI-written text, to audit prose or flag AI-like writing, to edit a supplied draft, or to write substantial prose such as reports, documentation, UI copy and PR text. Routine chat, emails, comments, handoffs and small edits need only the compact Laconic rules.
 ---
 
@@ -91,7 +91,7 @@ For spelling choices, grammatical word pairs, compounds and other mechanics (cap
 - [references/venues.md](references/venues.md): client emails, reports and file notes, READMEs, chat answers, end-of-task reports and handoff notes. Read it when drafting.
 - [references/github-prose.md](references/github-prose.md): PR and issue replies, review comments, release notes and changelogs.
 - [references/examples.md](references/examples.md): worked before and after examples.
-- [references/style-manual-rules.md](references/style-manual-rules.md): Australian Government Style Manual mechanics and plain language. [references/aglc4-citation.md](references/aglc4-citation.md): citing legislation, cases and ATO rulings. [references/australian-government-style-manual.md](references/australian-government-style-manual.md) is the full scraped manual (about 1.3 MB); search it for one rule and never read it end to end.
+- [references/style-manual-rules.md](references/style-manual-rules.md): Australian Government Style Manual mechanics and plain language. [references/aglc4-citation.md](references/aglc4-citation.md): citing legislation, cases and ATO rulings. For a rule these references do not cover, look it up on [stylemanual.gov.au](https://www.stylemanual.gov.au/).
 
 ## Workflow
 
@@ -107,4 +107,4 @@ When changing this skill, read [references/regression-cases.md](references/regre
 
 ## Licence
 
-FSL-1.1-ALv2 for Laconic's own work, with each version available under Apache-2.0 2 years after it is made available; the third-party portions below remain under the MIT License. Preserve [LICENSE](LICENSE), [NOTICE](NOTICE) and the attribution notices below. Based on No AI Slop by Peter Yang and Stop Slop by Hardik Pandya, as customised for Laconic. Pattern, draft mode, quick pass, venue and editor constraint guidance is adapted from [humanizer](https://github.com/blader/humanizer) (MIT, Siqi Chen) and its MIT forks by jooray and sbfnk, [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) (MIT, Conor Bronsdon) and [Sepia](https://github.com/Nanako0129/sepia) (MIT, Nanako Tsai). The Australian Government Style Manual material is copyright Commonwealth of Australia, CC BY 4.0.
+FSL-1.1-ALv2 for Laconic's own work, with each version available under Apache-2.0 2 years after it is made available; the third-party portions below remain under the MIT License. Preserve [LICENSE](LICENSE), [NOTICE](NOTICE) and the attribution notices below. Based on No AI Slop by Peter Yang and Stop Slop by Hardik Pandya, as customised for Laconic. Pattern, draft mode, quick pass, venue and editor constraint guidance is adapted from [humanizer](https://github.com/blader/humanizer) (MIT, Siqi Chen) and its MIT forks by jooray and sbfnk, [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) (MIT, Conor Bronsdon) and [Sepia](https://github.com/Nanako0129/sepia) (MIT, Nanako Tsai). The Australian English rules are restated in Laconic's own words from the [Australian Government Style Manual](https://www.stylemanual.gov.au/), copyright Commonwealth of Australia, which is not published under an open licence; Laconic includes no copy of it.
