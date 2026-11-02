@@ -61,3 +61,10 @@ licence (https://creativecommons.org/licenses/by/4.0/). The text was scraped on
 13 September 2026 with navigation, release notes and feedback widgets removed,
 and the derived rules summarise and adapt it. Neither FSL-1.1-ALv2 nor
 the MIT License applies to that material.
+
+Test data: tools/laconic-check/tests/corpus/ holds text based on 3
+Productivity Commission reports, copyright Commonwealth of Australia,
+licensed under the Creative Commons Attribution 3.0 Australia licence
+(https://creativecommons.org/licenses/by/3.0/au/). It is used only to test
+laconic-check; its NOTICE gives the sources and the changes made. Neither
+FSL-1.1-ALv2 nor the MIT License applies to that material.
