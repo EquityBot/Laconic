@@ -88,7 +88,7 @@ class CiInstallTest(unittest.TestCase):
         self.assertRegex(config, r"(?m)^updates:$")
         pieces = re.split(r"(?m)^  - package-ecosystem: (\S+)$", config)[1:]
         blocks = dict(zip(pieces[::2], pieces[1::2]))
-        self.assertEqual({"github-actions", "npm"}, set(blocks))
+        self.assertEqual({"github-actions", "npm", "pip"}, set(blocks))
         for ecosystem, block in blocks.items():
             with self.subTest(ecosystem=ecosystem):
                 self.assertRegex(block, r"(?m)^    schedule:\n      interval: \w+$")
@@ -98,6 +98,36 @@ class CiInstallTest(unittest.TestCase):
         for lock in lockfiles:
             with self.subTest(directory=lock.parent.name):
                 self.assertRegex(blocks["npm"], rf"(?m)^      - /\.github/ci/{lock.parent.name}$")
+        # Dependabot's pip updater reads every requirements file in the directory.
+        self.assertTrue(sorted((ROOT / ".github/ci").glob("requirements-*.txt")))
+        self.assertRegex(blocks["pip"], r"(?m)^    directory: /\.github/ci$")
+
+    def test_pip_runs_only_the_hashed_coverage_install(self):
+        # Like the npm guard, this expects one exact command, so any other line naming pip, however it is spelt,
+        # chained, continued or folded, fails until it is reviewed and added here.
+        expected = {"tests.yml": ['        run: python -m pip install --only-binary=":all:" --require-hashes'
+                                  ' -r .github/ci/requirements-coverage.txt']}
+        workflows = (ROOT / ".github/workflows").iterdir()
+        for name in expected:
+            self.assertTrue((ROOT / ".github/workflows" / name).is_file(), name)
+        for path in sorted(p for p in workflows if p.suffix in (".yml", ".yaml")):
+            with self.subTest(workflow=path.name):
+                self.assertEqual(expected.get(path.name, []), pip_lines(path.read_text(encoding="utf8")))
+        for text in ("run: pip3.11 install foo", "run: python -m pip --no-input install foo",
+                     "run: >\n  python -m pip\n  install foo", "run: uv pip install foo", "run: pipx install foo"):
+            with self.subTest(sees=text):
+                self.assertTrue(pip_lines(text))
+        # Each entry of the requirements file is an exact version followed by sha256 hashes.
+        text = (ROOT / ".github/ci/requirements-coverage.txt").read_text(encoding="utf8").replace("\\\n", " ")
+        entries = [e for e in text.splitlines() if e.strip() and not e.lstrip().startswith("#")]
+        self.assertTrue(entries)
+        for entry in entries:
+            self.assertRegex(entry, r"^[\w.-]+==[\w.]+( +--hash=sha256:[0-9a-f]{64})+ *$")
+
+
+def pip_lines(text):
+    """Every line of workflow text that names pip, pip3, pip3.11, pipx and the like."""
+    return re.findall(r"^.*\bpip(?:x|[\d.]*)\b.*$", text, re.M)
 
 
 if __name__ == "__main__":

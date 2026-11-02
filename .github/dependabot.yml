@@ -16,3 +16,8 @@ updates:
       - /.github/ci/pi
     schedule:
       interval: weekly
+  # Coverage for the Codecov upload, pinned by hash in requirements-coverage.txt.
+  - package-ecosystem: pip
+    directory: /.github/ci
+    schedule:
+      interval: weekly
