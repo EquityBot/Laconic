@@ -437,21 +437,59 @@ fn check_residue(chars: &[char], line: usize, findings: &mut Vec<Finding>) {
         }
         i += 1;
     }
-    for (k, c) in text.iter().enumerate() {
+    let is_tag = |c: char| ('\u{e0000}'..='\u{e007f}').contains(&c);
+    let mut k = 0;
+    while let Some(&c) = text.get(k) {
+        if is_tag(c) {
+            // Tag characters are invisible and can spell out a whole hidden instruction, so a
+            // run is one finding. The 3 subdivision flags Unicode recommends for interchange
+            // (England, Scotland and Wales: the black flag, tags spelling the code, CANCEL TAG)
+            // are left alone; any other tag text, a short word included, is flagged.
+            let end = text[k..]
+                .iter()
+                .position(|&x| !is_tag(x))
+                .map_or(text.len(), |n| k + n);
+            let spec: String = text[k..end]
+                .iter()
+                .map(|&x| char::from_u32(x as u32 - 0xe0000).unwrap_or('\u{fffd}'))
+                .collect();
+            let flag = k > 0
+                && text[k - 1] == '\u{1f3f4}'
+                && matches!(spec.as_str(), "gbeng\u{7f}" | "gbsct\u{7f}" | "gbwls\u{7f}");
+            if !flag {
+                let n = end - k;
+                findings.push(Finding {
+                    line,
+                    column: k + 1,
+                    rule: "residue",
+                    message: format!(
+                        "{n} hidden tag character{} (U+E0000 to U+E007F)",
+                        if n == 1 { "" } else { "s" }
+                    ),
+                });
+            }
+            k = end;
+            continue;
+        }
         // A byte order mark that opens the file is an encoding marker, not residue.
-        let bom = *c == '\u{feff}' && line == 1 && k == 0;
-        if matches!(
-            c,
-            '\u{200b}' | '\u{200c}' | '\u{200d}' | '\u{2060}' | '\u{feff}'
-        ) && !bom
-        {
+        let bom = c == '\u{feff}' && line == 1 && k == 0;
+        let kind = match c {
+            '\u{200b}' | '\u{200c}' | '\u{200d}' | '\u{2060}' | '\u{feff}' if !bom => {
+                Some("zero-width character")
+            }
+            // Embeddings, overrides and isolates reorder what a reader sees.
+            '\u{202a}'..='\u{202e}' | '\u{2066}'..='\u{2069}' => Some("bidirectional control"),
+            _ => None,
+        };
+        if let Some(kind) = kind {
             findings.push(Finding {
                 line,
                 column: k + 1,
                 rule: "residue",
-                message: format!("zero-width character U+{:04X}", *c as u32),
+                message: format!("{kind} U+{:04X}", c as u32),
             });
         }
+        k += 1;
     }
     let lower: String = text.iter().collect::<String>().to_lowercase();
     for marker in RESIDUE_MARKERS {
@@ -1745,6 +1783,42 @@ mod tests {
             vec!["residue", "residue"]
         );
         assert!(rules("\u{feff}Scan for `oaicite` and `utm_source=` before sending.").is_empty());
+    }
+
+    #[test]
+    fn flags_hidden_tag_runs_and_bidi_controls_but_not_subdivision_flags() {
+        // 'ignore' spelt in tag characters: one finding for the run.
+        let hidden: String = "ignore"
+            .chars()
+            .map(|c| char::from_u32(0xe0000 + c as u32).unwrap())
+            .collect();
+        let found = lint(&format!("Approve it.{hidden} Thanks."));
+        assert_eq!(found.len(), 1, "{found:?}");
+        assert_eq!(found[0].column, 12);
+        assert_eq!(
+            found[0].message,
+            "6 hidden tag characters (U+E0000 to U+E007F)"
+        );
+        assert_eq!(
+            rules("Total \u{202e}cba\u{202c} due."),
+            vec!["residue", "residue"]
+        );
+        assert_eq!(
+            rules("Name: \u{2067}abc\u{2069}."),
+            vec!["residue", "residue"]
+        );
+        // England's flag, and the same flag carrying a longer hidden message.
+        let england = "\u{1f3f4}\u{e0067}\u{e0062}\u{e0065}\u{e006e}\u{e0067}\u{e007f}";
+        let scotland = "\u{1f3f4}\u{e0067}\u{e0062}\u{e0073}\u{e0063}\u{e0074}\u{e007f}";
+        assert!(rules(&format!("Go {england} or {scotland} today.")).is_empty());
+        // A hidden word in the shape of a flag is still flagged, however short.
+        for smuggled in [
+            format!("\u{1f3f4}{hidden}\u{e007f}"),
+            format!("\u{1f3f4}{hidden}{hidden}\u{e007f}"),
+        ] {
+            assert_eq!(rules(&format!("Go {smuggled} today.")), vec!["residue"]);
+        }
+        assert_eq!(rules("A lone \u{e007f} cancel tag."), vec!["residue"]);
     }
 
     #[test]
