@@ -435,7 +435,12 @@ pub fn handle_line(line: &str) -> Option<String> {
     let method = request.get("method").and_then(Json::as_str);
     let (true, true, Some(method)) = (
         matches!(request, Json::Object(_)),
-        id_valid && request.get("jsonrpc").and_then(Json::as_str) == Some("2.0"),
+        id_valid
+            && request.get("jsonrpc").and_then(Json::as_str) == Some("2.0")
+            && matches!(
+                request.get("params"),
+                None | Some(Json::Object(_) | Json::Array(_))
+            ),
         method,
     ) else {
         let id = match id {
@@ -660,6 +665,10 @@ mod tests {
             (r#"{"jsonrpc":"2.0","id":1,"method":5}"#, "1"),
             (r#"{"jsonrpc":"2.0","id":{},"method":"ping"}"#, "null"),
             (r#"{"foo":"boo"}"#, "null"),
+            (
+                r#"{"jsonrpc":"2.0","id":1,"method":"ping","params":42}"#,
+                "1",
+            ),
         ] {
             assert_eq!(handle_line(line), Some(invalid(id)), "{line}");
         }
