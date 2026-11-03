@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [lint, preserve]
+        target: [lint, preserve, mcp]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:

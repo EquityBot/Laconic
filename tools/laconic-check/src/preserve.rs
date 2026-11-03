@@ -210,6 +210,42 @@ fn name_runs(text: &str) -> Vec<String> {
     out
 }
 
+/// What `preserve` reports, as the CLI prints it.
+pub struct Report {
+    /// A line for each item the edit dropped, then each it added and each name to check,
+    /// after a clean line when nothing was dropped.
+    pub lines: Vec<String>,
+    /// The edit dropped a protected item.
+    pub dropped: bool,
+    /// The edit added a protected item, which fails only under `--strict`.
+    pub added: bool,
+}
+
+pub fn report(original: &str, edited: &str) -> Report {
+    let missing = missing(original, edited);
+    let added = added(original, edited);
+    let mut lines = Vec::new();
+    if missing.is_empty() {
+        lines.push("No tracked items dropped; meaning not checked.".to_string());
+    }
+    for (kind, items) in &missing {
+        lines.extend(items.iter().map(|item| format!("dropped {kind}: {item}")));
+    }
+    for (kind, items) in &added {
+        lines.extend(items.iter().map(|item| format!("added {kind}: {item}")));
+    }
+    lines.extend(
+        names(original, edited)
+            .into_iter()
+            .map(|name| format!("check name: {name}")),
+    );
+    Report {
+        lines,
+        dropped: !missing.is_empty(),
+        added: !added.is_empty(),
+    }
+}
+
 /// Items the original had and the edit lost.
 pub fn missing(original: &str, edited: &str) -> BTreeMap<&'static str, Vec<String>> {
     only_in(original, edited, |had, has| (had, has))

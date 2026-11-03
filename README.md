@@ -204,7 +204,13 @@ Prebuilt binaries for Linux (x86_64, static), Windows (x86_64) and macOS (Apple 
 
 `lint -` reads standard input, so an agent can check a draft without saving it. When `laconic-check` is on the PATH, both skills run it on written deliverables before sending. Its US-to-Australian word list combines a hand-written list with about 2,400 pairs generated from the [English Speller Database](https://github.com/en-wl/wordlist) and reviewed against the Style Manual (`tools/laconic-check/gen_au_words.py`). Seeded-fault tests plant one known fault per rule into clean prose and require the checker to catch each one exactly once, with no findings on the clean text. A calibration test runs `lint` over 3 Productivity Commission reports released in 2018 and 2021 (about 198,500 words of human prose, CC BY 3.0 AU) and fails if its 2,246 findings, its 41 clause-dash advisories or the 7 stock phrases, staged contrasts and unnecessary hyphens amongst them rise, which guards against a net increase in findings on human text.
 
-`tools/laconic-check/mcp/server.mjs` exposes `lint` and `preserve` as MCP tools, with no dependencies beyond Node:
+`laconic-check mcp` serves `lint` and `preserve` as MCP tools over standard input and output, with nothing else to install:
+
+```bash
+claude mcp add --scope user laconic-check -- laconic-check mcp
+```
+
+It is in builds from `main` and will be in the next release. A laconic-check 0.2.0 binary needs the earlier Node server, `tools/laconic-check/mcp/server.mjs`, which runs the binary once a call; it is deprecated and will be removed in a later release:
 
 ```bash
 claude mcp add --scope user laconic-check -- node /path/to/laconic/tools/laconic-check/mcp/server.mjs

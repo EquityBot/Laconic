@@ -4,23 +4,24 @@
 //! reason to look, not proof of a defect. `preserve` compares an original and an
 //! edit and reports numbers, quantities, months, code spans, URLs, meaning words and
 //! bounds the edit
-//! dropped, and, as advice, those it added.
+//! dropped, and, as advice, those it added. `mcp` serves both as MCP tools on standard
+//! input and output.
 
-use std::collections::BTreeMap;
 use std::env;
 use std::fs;
 use std::process::ExitCode;
 
-use laconic_check::{lint, preserve};
+use laconic_check::{lint, mcp, preserve};
 
 fn usage() -> ExitCode {
     eprintln!(
-        "usage:\n  laconic-check lint [--warn] <file.md | ->...\n  laconic-check preserve [--strict] <original> <edited>\n\n\
+        "usage:\n  laconic-check lint [--warn] <file.md | ->...\n  laconic-check preserve [--strict] <original> <edited>\n  laconic-check mcp\n\n\
          lint exits 1 when it finds candidates, unless --warn is given; advisory\n\
          findings (clause-dashes) never fail it.\n\
          preserve exits 1 when the edit dropped a protected item. It also lists items the\n\
          edit added, which fail only with --strict (for a rewrite that must add nothing),\n\
-         and names to check, which never fail. A clean result does not check meaning."
+         and names to check, which never fail. A clean result does not check meaning.\n\
+         mcp serves lint and preserve as MCP tools over standard input and output."
     );
     ExitCode::from(2)
 }
@@ -88,30 +89,29 @@ fn main() -> ExitCode {
                 (Ok(o), Ok(e)) => (o, e),
                 (Err(code), _) | (_, Err(code)) => return code,
             };
-            let missing: BTreeMap<&str, Vec<String>> = preserve::missing(&original, &edited);
-            let added = preserve::added(&original, &edited);
-            if missing.is_empty() {
-                println!("No tracked items dropped; meaning not checked.");
+            let report = preserve::report(&original, &edited);
+            for line in &report.lines {
+                println!("{line}");
             }
-            for (kind, items) in &missing {
-                for item in items {
-                    println!("dropped {kind}: {item}");
-                }
-            }
-            for (kind, items) in &added {
-                for item in items {
-                    println!("added {kind}: {item}");
-                }
-            }
-            for name in preserve::names(&original, &edited) {
-                println!("check name: {name}");
-            }
-            if !missing.is_empty() || (strict && !added.is_empty()) {
+            if report.dropped || (strict && report.added) {
                 ExitCode::from(1)
             } else {
                 ExitCode::SUCCESS
             }
         }
+        Some("mcp") if args.len() == 1 => serve(),
         _ => usage(),
+    }
+}
+
+/// Answers MCP requests, one JSON-RPC message a line, until standard input closes. A line
+/// that is not UTF-8 is read with replacement characters and answered like any other.
+fn serve() -> ExitCode {
+    match mcp::serve(std::io::stdin().lock(), std::io::stdout().lock()) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(e) => {
+            eprintln!("mcp: {e}");
+            ExitCode::from(2)
+        }
     }
 }

@@ -27,3 +27,10 @@ path = "fuzz_targets/preserve.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "mcp"
+path = "fuzz_targets/mcp.rs"
+test = false
+doc = false
+bench = false

@@ -1,6 +1,6 @@
 # Security policy
 
-Laconic runs code on your machine: its hooks and plugins start with your coding agent, and its MCP server launches a local binary. Please report suspected vulnerabilities privately.
+Laconic runs code on your machine: its hooks and plugins start with your coding agent, and its MCP server is a local binary (or a deprecated Node script that launches one). Please report suspected vulnerabilities privately.
 
 ## Report a vulnerability
 
@@ -18,7 +18,7 @@ Only `main` is supported. Fixes land on `main` and reach the `laconic-check` bin
 
 - Hooks in `hooks/`, which run when an agent session starts.
 - Plugins and extensions in `.opencode/plugins/` and `extensions/`.
-- `tools/laconic-check`: the CLI, `mcp/server.mjs` and the binaries on GitHub Releases.
+- `tools/laconic-check`: the CLI and its `mcp` server, the deprecated `mcp/server.mjs` and the binaries on GitHub Releases.
 - Install, update and uninstall commands in `INSTALL.md` that do more than they state.
 - `scripts/` and `.github/workflows/`, where untrusted input could run code or expose a secret.
 - Skill and rule text that tells an agent to do anything the safety list in `CONTRIBUTING.md` forbids, such as reading credentials or bypassing confirmation.
