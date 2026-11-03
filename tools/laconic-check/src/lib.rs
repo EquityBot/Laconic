@@ -2,6 +2,7 @@
 //! `laconic-check` binary is the supported interface.
 
 pub mod lint;
+pub mod mcp;
 pub mod preserve;
 #[cfg(test)]
 mod seeded_faults;

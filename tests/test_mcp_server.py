@@ -1,4 +1,5 @@
-"""Smoke test for the laconic-check MCP server over stdio."""
+"""Smoke tests for the laconic-check MCP servers over stdio: `laconic-check mcp` and the
+deprecated Node `mcp/server.mjs`."""
 
 import json
 import os
@@ -20,16 +21,20 @@ def find_binary():
     )
 
 
-@unittest.skipUnless(shutil.which("node"), "MCP smoke test not run: node is not on the PATH")
 @unittest.skipUnless(
     find_binary(),
     "MCP smoke test not run: no laconic-check binary in LACONIC_CHECK, target/debug or the PATH",
 )
 class McpServerTest(unittest.TestCase):
+    """`laconic-check mcp`."""
+
+    def command(self):
+        return [str(find_binary()), "mcp"]
+
     def exchange(self, *requests):
         """Send the requests and return the server's replies keyed by id."""
         result = subprocess.run(
-            ["node", str(SERVER)],
+            self.command(),
             input="".join(json.dumps({"jsonrpc": "2.0", **r}) + "\n" for r in requests),
             capture_output=True,
             encoding="utf-8",
@@ -79,6 +84,14 @@ class McpServerTest(unittest.TestCase):
     def test_tool_errors_are_reported_in_the_result(self):
         result = self.call("lint", text=1)
         self.assertTrue(result["isError"])
+
+
+@unittest.skipUnless(shutil.which("node"), "Node MCP smoke test not run: node is not on the PATH")
+class NodeServerTest(McpServerTest):
+    """The deprecated `mcp/server.mjs`, which runs the binary once a call."""
+
+    def command(self):
+        return ["node", str(SERVER)]
 
 
 if __name__ == "__main__":
