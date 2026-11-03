@@ -2,10 +2,17 @@
 //! `preserve` as tools. It speaks newline-delimited JSON-RPC 2.0 through the small JSON
 //! reader and writer below, so the crate keeps no dependencies.
 
+use std::io::{BufRead, Read, Write};
+
 use crate::{lint, preserve};
 
 /// The longest text argument, in characters.
 const MAX_INPUT: usize = 200_000;
+/// The longest request line, in bytes: both `preserve` texts at their longest, every character
+/// escaped as a surrogate pair (12 bytes), with room for the rest of the request.
+const MAX_LINE: usize = 2 * 12 * MAX_INPUT + 65_536;
+/// The MCP versions with the `initialize` handshake this server speaks, newest first.
+const PROTOCOL_VERSIONS: [&str; 4] = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 /// The deepest nesting a request may use; deeper input is a parse error, not a stack overflow.
 const MAX_DEPTH: usize = 64;
 
@@ -420,22 +427,37 @@ pub fn handle_line(line: &str) -> Option<String> {
     let Some(request) = parse(line) else {
         return Some(reply(Json::Null, Err((-32700, "parse error".into()))));
     };
-    if !matches!(request, Json::Object(_)) {
-        return Some(reply(Json::Null, Err((-32600, "invalid request".into()))));
-    }
-    let id = request.get("id")?.clone();
+    let id = request.get("id");
+    let id_valid = matches!(
+        id,
+        None | Some(Json::Null | Json::Number(_) | Json::String(_))
+    );
+    let method = request.get("method").and_then(Json::as_str);
+    let (true, true, Some(method)) = (
+        matches!(request, Json::Object(_)),
+        id_valid && request.get("jsonrpc").and_then(Json::as_str) == Some("2.0"),
+        method,
+    ) else {
+        let id = match id {
+            Some(id) if id_valid => id.clone(),
+            _ => Json::Null,
+        };
+        return Some(reply(id, Err((-32600, "invalid request".into()))));
+    };
+    let id = id?.clone();
     let params = request.get("params");
-    let method = request
-        .get("method")
-        .and_then(Json::as_str)
-        .unwrap_or_default();
     let outcome = match method {
         "initialize" => {
-            let version = params
+            // The requested version if this server speaks it, otherwise its newest.
+            let requested = params
                 .and_then(|p| p.get("protocolVersion"))
                 .and_then(Json::as_str);
+            let version = PROTOCOL_VERSIONS
+                .into_iter()
+                .find(|&v| Some(v) == requested)
+                .unwrap_or(PROTOCOL_VERSIONS[0]);
             Ok(object(vec![
-                ("protocolVersion", text(version.unwrap_or("2025-06-18"))),
+                ("protocolVersion", text(version)),
                 ("capabilities", object(vec![("tools", object(vec![]))])),
                 (
                     "serverInfo",
@@ -458,6 +480,30 @@ pub fn handle_line(line: &str) -> Option<String> {
         _ => Err((-32601, format!("method not found: {method}"))),
     };
     Some(reply(id, outcome))
+}
+
+/// Answer requests from `input`, one per line, until it ends. A line longer than `MAX_LINE`
+/// gets an error and is skipped without being held, so no request can exhaust memory.
+pub fn serve(mut input: impl BufRead, mut output: impl Write) -> std::io::Result<()> {
+    let mut line = Vec::new();
+    loop {
+        line.clear();
+        let limit = MAX_LINE as u64 + 1;
+        if input.by_ref().take(limit).read_until(b'\n', &mut line)? == 0 {
+            return Ok(());
+        }
+        let answer = if line.len() > MAX_LINE && line.last() != Some(&b'\n') {
+            input.skip_until(b'\n')?;
+            let message = format!("request longer than {MAX_LINE} bytes");
+            Some(reply(Json::Null, Err((-32600, message))))
+        } else {
+            handle_line(&String::from_utf8_lossy(&line))
+        };
+        if let Some(answer) = answer {
+            writeln!(output, "{answer}")?;
+            output.flush()?;
+        }
+    }
 }
 
 fn content(s: &str) -> Json {
@@ -581,15 +627,59 @@ mod tests {
     }
 
     #[test]
-    fn initialise_echoes_the_protocol_and_reports_this_version() {
+    fn initialise_agrees_a_protocol_it_speaks_and_reports_this_version() {
         let r = result(
             r#"{"jsonrpc":"2.0","id":"x","method":"initialize","params":{"protocolVersion":"2025-03-26"}}"#,
         );
         assert_eq!(r.get("protocolVersion"), Some(&text("2025-03-26")));
         let info = r.get("serverInfo").unwrap();
         assert_eq!(info.get("version"), Some(&text(env!("CARGO_PKG_VERSION"))));
-        let r = result(r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#);
-        assert_eq!(r.get("protocolVersion"), Some(&text("2025-06-18")));
+        for line in [
+            r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#,
+            r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"1900-01-01"}}"#,
+        ] {
+            let r = result(line);
+            assert_eq!(
+                r.get("protocolVersion"),
+                Some(&text("2025-11-25")),
+                "{line}"
+            );
+        }
+    }
+
+    #[test]
+    fn requests_that_are_not_json_rpc_2_are_invalid() {
+        let invalid = |id: &str| {
+            format!(
+                r#"{{"jsonrpc":"2.0","id":{id},"error":{{"code":-32600,"message":"invalid request"}}}}"#
+            )
+        };
+        for (line, id) in [
+            (r#"{"jsonrpc":"1.0","id":1,"method":"ping"}"#, "1"),
+            (r#"{"id":"a","method":"ping"}"#, r#""a""#),
+            (r#"{"jsonrpc":"2.0","id":1,"method":5}"#, "1"),
+            (r#"{"jsonrpc":"2.0","id":{},"method":"ping"}"#, "null"),
+            (r#"{"foo":"boo"}"#, "null"),
+        ] {
+            assert_eq!(handle_line(line), Some(invalid(id)), "{line}");
+        }
+    }
+
+    #[test]
+    fn serve_skips_a_line_too_long_and_answers_the_next() {
+        let ping = r#"{"jsonrpc":"2.0","id":1,"method":"ping"}"#;
+        let padded = |len: usize| format!("{ping}{}\n", " ".repeat(len - ping.len()));
+        let input = padded(MAX_LINE) + &padded(MAX_LINE + 1) + ping + "\n";
+        let mut output = Vec::new();
+        serve(input.as_bytes(), &mut output).unwrap();
+        let ok = r#"{"jsonrpc":"2.0","id":1,"result":{}}"#;
+        let too_long = format!(
+            r#"{{"jsonrpc":"2.0","id":null,"error":{{"code":-32600,"message":"request longer than {MAX_LINE} bytes"}}}}"#
+        );
+        assert_eq!(
+            String::from_utf8(output).unwrap(),
+            format!("{ok}\n{too_long}\n{ok}\n")
+        );
     }
 
     #[test]

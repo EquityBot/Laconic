@@ -9,7 +9,6 @@
 
 use std::env;
 use std::fs;
-use std::io::{BufRead, Write};
 use std::process::ExitCode;
 
 use laconic_check::{lint, mcp, preserve};
@@ -108,25 +107,11 @@ fn main() -> ExitCode {
 /// Answers MCP requests, one JSON-RPC message a line, until standard input closes. A line
 /// that is not UTF-8 is read with replacement characters and answered like any other.
 fn serve() -> ExitCode {
-    let mut input = std::io::stdin().lock();
-    let mut output = std::io::stdout().lock();
-    let mut line = Vec::new();
-    loop {
-        line.clear();
-        match input.read_until(b'\n', &mut line) {
-            Ok(0) => return ExitCode::SUCCESS,
-            Ok(_) => {}
-            Err(e) => {
-                eprintln!("mcp: {e}");
-                return ExitCode::from(2);
-            }
-        }
-        if let Some(reply) = mcp::handle_line(&String::from_utf8_lossy(&line))
-            && writeln!(output, "{reply}")
-                .and_then(|()| output.flush())
-                .is_err()
-        {
-            return ExitCode::from(2);
+    match mcp::serve(std::io::stdin().lock(), std::io::stdout().lock()) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(e) => {
+            eprintln!("mcp: {e}");
+            ExitCode::from(2)
         }
     }
 }
