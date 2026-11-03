@@ -3,3 +3,4 @@ __pycache__/
 *.py[cod]
 evals/results/
 tools/laconic-check/target/
+tools/laconic-tools/target/

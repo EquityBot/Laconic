@@ -74,7 +74,7 @@ Keep `.opencode/command/laconic.md` frontmatter as a JSON object between the `--
 
 ## Verification
 
-New functionality and bug fixes come with automated tests: Python in `tests/`, run by `python -m unittest discover -s tests -v` in the `tests` workflow, and `laconic-check` in its Rust test modules and `tools/laconic-check/tests/`, run by `cargo test` in the `laconic-check` workflow.
+New functionality and bug fixes come with automated tests: Python in `tests/`, run by `python -m unittest discover -s tests -v` in the `tests` workflow, and `laconic-check` in its Rust test modules and `tools/laconic-check/tests/`, run by `cargo test` in the `laconic-check` workflow. The `tests` workflow also runs `cargo test` for `tools/laconic-tools`, which checks that every always-on snippet in `INSTALL.md` matches `rules/laconic.md`.
 
 Changes to `lint` or `preserve` should also survive the fuzz targets in `tools/laconic-check/fuzz/`, which CI runs for 5 minutes each every Monday. They need a nightly toolchain and `cargo install cargo-fuzz`; from `tools/laconic-check`, run one with `cargo +nightly fuzz run lint` (or `preserve`). A crash leaves its input in `fuzz/artifacts/`; turn it into a test before fixing it.
 

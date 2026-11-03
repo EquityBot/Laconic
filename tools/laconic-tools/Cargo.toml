@@ -1,0 +1,9 @@
+[package]
+name = "laconic-tools"
+version = "0.1.0"
+edition = "2024"
+license = "FSL-1.1-ALv2"
+description = "Maintainer tooling for Laconic: copies the compact rules into every always-on snippet in INSTALL.md."
+publish = false
+
+[dependencies]

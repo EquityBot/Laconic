@@ -32,6 +32,13 @@ jobs:
         run: |
           cargo fmt --check
           cargo clippy --locked --all-targets -- -D warnings
+      # Its test fails when an INSTALL.md snippet differs from rules/laconic.md.
+      - name: Format, lint and test laconic-tools
+        working-directory: tools/laconic-tools
+        run: |
+          cargo fmt --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked
       # Without the binary, tests/test_mcp_server.py would skip.
       - name: Build laconic-check
         run: cargo build --locked --manifest-path tools/laconic-check/Cargo.toml
