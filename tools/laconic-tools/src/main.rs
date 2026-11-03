@@ -22,9 +22,13 @@ fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
+/// `text` with CRLF and lone CR line endings as LF, as the Python script read it.
+fn lf(text: &str) -> String {
+    text.replace("\r\n", "\n").replace('\r', "\n")
+}
+
 /// The compact rules: rules/laconic.md without its title line.
 fn rules_body(rules: &str) -> Result<String, String> {
-    let rules = rules.replace("\r\n", "\n");
     let (_, body) = rules
         .split_once('\n')
         .ok_or("rules/laconic.md has no rules under its title")?;
@@ -43,7 +47,9 @@ fn synced(install: &str, body: &str) -> (String, usize) {
         };
         out.push_str(&rest[..inner]);
         out.push_str(body);
-        rest = &rest[inner + len..];
+        out.push_str(CLOSE);
+        // Past the closing fence, so it cannot open the next snippet.
+        rest = &rest[inner + len + CLOSE.len()..];
         count += 1;
     }
     out.push_str(rest);
@@ -53,7 +59,9 @@ fn synced(install: &str, body: &str) -> (String, usize) {
 /// Writes the synced INSTALL.md, or with `check` only reports whether it differs.
 fn sync_rules(root: &Path, check: bool) -> Result<String, String> {
     let read = |name: &str| {
-        fs::read_to_string(root.join(name)).map_err(|e| format!("cannot read {name}: {e}"))
+        fs::read_to_string(root.join(name))
+            .map(|text| lf(&text))
+            .map_err(|e| format!("cannot read {name}: {e}"))
     };
     let body = rules_body(&read("rules/laconic.md")?)?;
     let words = body.split_whitespace().count();
@@ -62,7 +70,7 @@ fn sync_rules(root: &Path, check: bool) -> Result<String, String> {
             "rules/laconic.md has {words} words; it is loaded into every session, so keep it to {MAX_WORDS}"
         ));
     }
-    let install = read("INSTALL.md")?.replace("\r\n", "\n");
+    let install = read("INSTALL.md")?;
     let (updated, count) = synced(&install, &body);
     if count != SNIPPETS {
         return Err(format!(
@@ -119,11 +127,24 @@ mod tests {
 
     #[test]
     fn rules_body_drops_the_title_and_surrounding_space() {
+        assert_eq!(lf("a\r\nb\rc\n"), "a\nb\nc\n");
         assert_eq!(
-            rules_body("# Clear prose\r\n\r\nOne.\r\nTwo.\r\n"),
+            rules_body(&lf("# Clear prose\r\n\r\nOne.\r\nTwo.\r\n")),
             Ok("One.\nTwo.".into())
         );
         assert!(rules_body("# Title only").is_err());
+    }
+
+    #[test]
+    fn a_closing_fence_does_not_open_the_next_snippet() {
+        // The Python regex consumed the closing fence, so this holds 1 snippet, not 2.
+        let install = format!("{OPEN}old\n{OPEN}old{CLOSE}");
+        let (out, count) = synced(&install, "new");
+        assert_eq!(count, 1);
+        assert_eq!(
+            out,
+            format!("{OPEN}new{CLOSE}markdown\n## Output style\n\nold{CLOSE}")
+        );
     }
 
     #[test]
