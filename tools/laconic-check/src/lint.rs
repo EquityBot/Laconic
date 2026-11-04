@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 
 /// Rules that report a pattern worth a look but never fail `lint`.
-pub const ADVISORY: &[&str] = &["clause-dashes", "stacked-hedge"];
+pub const ADVISORY: &[&str] = &["clause-dashes", "stacked-hedge", "bold-label"];
 
 #[derive(Debug, PartialEq)]
 pub struct Finding {
@@ -294,6 +294,8 @@ pub fn lint(text: &str) -> Vec<Finding> {
     let mut paragraph = Paragraph::default();
     let mut fence: Option<&str> = None;
     let mut in_list = false;
+    // The indent and length of the current run of bold-label bullets.
+    let mut labels = (0, 0);
     // A leading YAML frontmatter block is metadata, not prose.
     let mut in_frontmatter = text.starts_with("---\n") || text.starts_with("---\r\n");
     for (index, raw) in text.lines().enumerate() {
@@ -344,6 +346,25 @@ pub fn lint(text: &str) -> Vec<Finding> {
         if single_line || list_item {
             paragraph.flush(&mut findings);
         }
+        // Bullets nested under a run leave it open; a sibling without a label ends it.
+        if list_item && (labels.1 == 0 || indent <= labels.0) {
+            let continues = labels.1 > 0 && indent == labels.0;
+            labels = match (opens_bold_label(trimmed), continues) {
+                (true, true) => (indent, labels.1 + 1),
+                (true, false) => (indent, 1),
+                (false, _) => (0, 0),
+            };
+            if labels.1 == 3 {
+                findings.push(Finding {
+                    line: line_no,
+                    column: indent + 1,
+                    rule: "bold-label",
+                    message: "3 or more bullets in a row open with a bold label (advisory); use prose or plain bullets unless a template requires the labels".into(),
+                });
+            }
+        } else if !list_item && (single_line || !in_list) {
+            labels = (0, 0);
+        }
         paragraph.push(raw, line_no);
         // A hard line break (two trailing spaces or a backslash) also ends the run.
         if single_line || raw.ends_with("  ") || raw.trim_end().ends_with('\\') {
@@ -369,6 +390,18 @@ fn starts_list_item(trimmed: &str) -> bool {
             && [". ", ") "]
                 .iter()
                 .any(|m| trimmed[digits..].starts_with(m)))
+}
+
+/// True for a bullet that opens with a bold label: `- **Cause:** ...` or `- **Cause**: ...`.
+fn opens_bold_label(trimmed: &str) -> bool {
+    ["- ", "* ", "+ "]
+        .iter()
+        .find_map(|marker| trimmed.strip_prefix(marker))
+        .and_then(|item| item.trim_start().strip_prefix("**"))
+        .and_then(|bold| bold.split_once("**"))
+        .is_some_and(|(label, rest)| {
+            !label.trim().is_empty() && (label.ends_with(':') || rest.starts_with(':'))
+        })
 }
 
 /// Consecutive prose lines joined with single spaces, so a phrase split by a line wrap
@@ -847,7 +880,7 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
             _ => {}
         }
     }
-    check_dates_times_latin(&lower, line, findings);
+    check_style_manual_forms(&lower, line, findings);
     // Serial comma candidates: ", and" or ", or" with another comma earlier in the same clause.
     for (k, window) in lower_chars.windows(6).enumerate() {
         let text: String = window.iter().collect();
@@ -1141,8 +1174,20 @@ fn starts_sentence_at(chars: &[char], at: usize) -> bool {
         .is_none_or(|c| matches!(c, '.' | '!' | '?'))
 }
 
-/// Dates, times and Latin abbreviations that break the Style Manual forms.
-fn check_dates_times_latin(lower: &str, line: usize, findings: &mut Vec<Finding>) {
+/// True for a year ending in 0 with an apostrophe s, as in `1980's` or `mid-1980's.`.
+fn apostrophe_decade(word: &str) -> bool {
+    word.split(['-', '\u{2013}']).any(|part| {
+        let part = part.trim_end_matches(|c: char| !c.is_alphanumeric());
+        part.strip_suffix("'s")
+            .or_else(|| part.strip_suffix("\u{2019}s"))
+            .is_some_and(|year| {
+                year.len() == 4 && year.ends_with('0') && year.chars().all(|c| c.is_ascii_digit())
+            })
+    })
+}
+
+/// Dates, times, number symbols and Latin abbreviations that break the Style Manual forms.
+fn check_style_manual_forms(lower: &str, line: usize, findings: &mut Vec<Finding>) {
     let tokens: Vec<(usize, &str)> = lower
         .split_whitespace()
         .map(|w| (w.as_ptr() as usize - lower.as_ptr() as usize, w))
@@ -1156,6 +1201,14 @@ fn check_dates_times_latin(lower: &str, line: usize, findings: &mut Vec<Finding>
         ["st", "nd", "rd", "th"]
             .iter()
             .any(|s| w.strip_suffix(s).is_some_and(digits))
+    };
+    // Whole amounts only ('27.99', '1,000'), so '$ 2x + 1 $' and a closing '$ (1)' in maths
+    // are not money.
+    let amount = |raw: &str| {
+        raw.starts_with(|c: char| c.is_ascii_digit())
+            && core(raw)
+                .chars()
+                .all(|c| c.is_ascii_digit() || matches!(c, ',' | '.'))
     };
     let mut push = |at: usize, rule: &'static str, message: &str| {
         findings.push(Finding {
@@ -1197,6 +1250,49 @@ fn check_dates_times_latin(lower: &str, line: usize, findings: &mut Vec<Finding>
         if time || dotted || period_separator {
             push(at, "time", "write times as 9:30 am or 9 am");
         }
+        // A digit after the sign is a remainder ('5 % 3'), and a 4-digit number before it a
+        // year, as in the table heading '2020 % change': the house writes 1,000%.
+        let percent_sign = word.starts_with('%') && !word[1..].contains(char::is_alphanumeric);
+        if percent_sign
+            && prev.as_deref().is_some_and(|p| {
+                p.ends_with(|c: char| c.is_ascii_digit())
+                    && !p.contains(char::is_alphabetic)
+                    && !(digits(p) && p.len() == 4)
+            })
+            && !next
+                .as_deref()
+                .is_some_and(|n| n.starts_with(|c: char| c.is_ascii_digit()))
+        {
+            push(
+                at,
+                "symbol-space",
+                "no space before the percentage sign: write 12%",
+            );
+        }
+        let currency = word
+            .strip_suffix('$')
+            .is_some_and(|code| code.chars().all(char::is_alphabetic));
+        if currency && tokens.get(i + 1).is_some_and(|t| amount(t.1)) {
+            push(
+                at,
+                "symbol-space",
+                "no space after a currency symbol: write $27.99",
+            );
+        }
+        // A year's possessive ('2020's budget') has a noun after it and no 'the' before it.
+        // shortcut: so a bare decade before a noun ('1980's music') passes; telling the 2 apart
+        // needs a parser.
+        let noun_follows = next.is_some()
+            && !raw
+                .trim_end_matches(['*', '_', ')', ']', '\'', '"'])
+                .ends_with(['.', ',', ';', ':', '!', '?']);
+        let decade_word = word.contains(['-', '\u{2013}'])
+            || prev
+                .as_deref()
+                .is_some_and(|p| matches!(p, "the" | "early" | "mid" | "late" | "those" | "these"));
+        if apostrophe_decade(&word) && (decade_word || !noun_follows) {
+            push(at, "date", "decades take no apostrophe: write 1980s");
+        }
         if MONTHS.contains(&word.trim_end_matches('.')) {
             let month = word.trim_end_matches('.');
             // A month that ends a clause ('20 October; 14 new') takes no year or day after it.
@@ -1205,7 +1301,13 @@ fn check_dates_times_latin(lower: &str, line: usize, findings: &mut Vec<Finding>
                     .ends_with(['.', ';', ':', '!', '?'])
             });
             let prev_day = prev.as_deref().filter(|p| digits(p) || ordinal(p));
-            if prev_day.is_some_and(ordinal) {
+            let ordinal_of = prev.as_deref() == Some("of")
+                && i.checked_sub(2)
+                    .is_some_and(|j| ordinal(&core(tokens[j].1)));
+            // 'Friday the 13th may be rooted in fear': a verb, not the month.
+            let modal = month == "may"
+                && next.is_some_and(|n| !n.starts_with(|c: char| c.is_ascii_digit()));
+            if (prev_day.is_some_and(ordinal) && !modal) || ordinal_of {
                 push(at, "date", "no ordinal in dates: write 19 October 2026");
             }
             if prev_day.is_some()
@@ -1749,6 +1851,148 @@ mod tests {
         ];
         for sentence in not_lists {
             assert!(rules(sentence).is_empty(), "should not flag: {sentence}");
+        }
+    }
+
+    #[test]
+    fn flags_a_space_beside_a_number_symbol() {
+        for text in [
+            "Prices rose 5 %.",
+            "A rise of 0.4 % over the year.",
+            "Up by 5\u{a0}%, then down.",
+            "Costs (up 1,000 %) rose.",
+            "A band of 5-10 % applies.",
+            "| 12 % |",
+            "It fell -3 %!",
+            "It cost $ 27.99.",
+            "It cost $ 1,000, then rose.",
+            "It cost US$ 20,000 in all.",
+            "It cost **$ 5** at most.",
+        ] {
+            assert_eq!(rules(text), vec!["symbol-space"], "{text}");
+        }
+        assert_eq!(rules("From 5 % to $ 27.99."), vec!["symbol-space"; 2]);
+        let found = lint("Caf\u{e9} rose 5 %.");
+        assert_eq!((found[0].line, found[0].column), (1, 13));
+        assert_eq!(
+            found[0].message,
+            "no space before the percentage sign: write 12%"
+        );
+        assert_eq!(
+            lint("It cost $ 27.99.")[0].message,
+            "no space after a currency symbol: write $27.99"
+        );
+        for text in [
+            "Prices rose 5% to $27.99, or US$20,000 for 20c.",
+            "The remainder of 5 % 3 is 2.",
+            "The 2020 % change was small.",
+            "The Q4 % column and the CPU % column.",
+            "Print 5 %d items.",
+            "A $ sign, the US$ and $ signs.",
+            "Solve $ 2x + 1 = 3 $ for x.",
+            "Close the sum with $ (1) as its number.",
+            "Set `x = 5 %` and `$ 27.99`.",
+            "She quoted '5 %' and '$ 27.99' as faults.",
+        ] {
+            assert!(rules(text).is_empty(), "{text}: {:?}", rules(text));
+        }
+    }
+
+    #[test]
+    fn flags_decades_with_an_apostrophe_but_not_a_year_possessive() {
+        for text in [
+            "The 1980's were loud.",
+            "In the 1980\u{2019}s music was loud.",
+            "It began in the mid-1980's.",
+            "A 1980's-style fit.",
+            "By the late 1990's prices fell.",
+            "It dates from 1980's.",
+            "After 1980's, it changed.",
+        ] {
+            assert_eq!(rules(text), vec!["date"], "{text}");
+        }
+        assert_eq!(
+            lint("The 1980's were loud.")[0].message,
+            "decades take no apostrophe: write 1980s"
+        );
+        for text in [
+            "The 1980s were loud.",
+            "In the mid-1980s and the '80s, it was loud.",
+            "2020's budget raised the rate.",
+            "It matched 1990's growth.",
+            "The 2021's total is wrong, but not in this rule.",
+            "The 198's and 19800's are not years.",
+            "Quote '1980's' in the guide.",
+        ] {
+            assert!(rules(text).is_empty(), "{text}: {:?}", rules(text));
+        }
+    }
+
+    #[test]
+    fn flags_an_ordinal_joined_to_its_month_by_of() {
+        for text in [
+            "Lodge it by the 21st of September.",
+            "Lodge it by the **21st** of September 2026.",
+            "The 1st of May was a Friday.",
+            "It fell on the 1st May.",
+            "It fell on 1st May 2026.",
+        ] {
+            assert_eq!(rules(text), vec!["date"], "{text}");
+        }
+        for text in [
+            "Lodge it by 21 September.",
+            "She will leave by the 20th.",
+            "On the 21st of the month.",
+            "A 3rd of them may fail.",
+            "Fear of Friday the 13th may be rooted in belief.",
+            "The 2nd of 3 reports came in September.",
+            "Of the 21 of us, 5 left in September.",
+        ] {
+            assert!(rules(text).is_empty(), "{text}: {:?}", rules(text));
+        }
+    }
+
+    #[test]
+    fn flags_a_run_of_3_bold_label_bullets_as_advice() {
+        let at = |text: &str| -> Vec<(usize, usize, &'static str)> {
+            lint(text)
+                .into_iter()
+                .map(|f| (f.line, f.column, f.rule))
+                .collect()
+        };
+        assert!(ADVISORY.contains(&"bold-label"));
+        let three = "- **Cause:** a bad key.\n- **Fix:** replace it.\n- **Risk:** low.";
+        assert_eq!(at(three), vec![(3, 1, "bold-label")]);
+        // Each marker, the colon outside the bold, and one finding however long the run.
+        assert_eq!(
+            at("* **A**: x\n+ **B**: y\n- **C:** z\n- **D:** w\n- **E:** v"),
+            vec![(3, 1, "bold-label")]
+        );
+        // Wrapped lines, blank lines, indented paragraphs and nested bullets stay in the run.
+        assert_eq!(
+            at("- **A:** x\n  wrapped\n\n- **B:** y\n\n  More on B.\n\n  - detail\n- **C:** z"),
+            vec![(9, 1, "bold-label")]
+        );
+        // A nested list has its own run, and each list its own finding.
+        assert_eq!(
+            at("- Parent\n  - **A:** x\n  - **B:** y\n  - **C:** z"),
+            vec![(4, 3, "bold-label")]
+        );
+        assert_eq!(at(&format!("{three}\n\nBetween.\n\n{three}")).len(), 2);
+        for text in [
+            "- **A:** x\n- **B:** y",
+            "- **A** x\n- **B** y\n- **C** z",
+            "- A: x\n- B: y\n- C: z",
+            "- ****: x\n- **  **: y\n- ****: z",
+            "1. **A:** x\n2. **B:** y\n3. **C:** z",
+            "**A:** x\n\n**B:** y\n\n**C:** z",
+            "- **A:** x\n- **B:** y\n- plain\n- **C:** z",
+            "- **A:** x\n- **B:** y\n\nBetween.\n\n- **C:** z",
+            "- **A:** x\n- **B:** y\n# Heading\n- **C:** z",
+            "> - **A:** x\n> - **B:** y\n> - **C:** z",
+            "```\n- **A:** x\n- **B:** y\n- **C:** z\n```",
+        ] {
+            assert!(rules(text).is_empty(), "{text}: {:?}", rules(text));
         }
     }
 
