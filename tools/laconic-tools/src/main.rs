@@ -3,6 +3,10 @@
 //!
 //!   laconic-tools sync-rules [--check]   copy rules/laconic.md into every
 //!                                        always-on snippet in INSTALL.md
+//!   laconic-tools check-pi [--runtime pi|omp]
+//!                                        smoke-test the Pi or OMP package over RPC
+
+mod pi_check;
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -19,7 +23,12 @@ const RUN: &str = "cargo run --manifest-path tools/laconic-tools/Cargo.toml -- s
 
 /// The repository root: two levels above this crate.
 fn root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
+    let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
+    manifest
+        .ancestors()
+        .nth(2)
+        .unwrap_or(manifest)
+        .to_path_buf()
 }
 
 /// `text` with CRLF and lone CR line endings as LF, as the Python script read it.
@@ -95,7 +104,11 @@ fn main() -> ExitCode {
     let result = match args.iter().map(String::as_str).collect::<Vec<_>>()[..] {
         ["sync-rules"] => sync_rules(&root(), false),
         ["sync-rules", "--check"] => sync_rules(&root(), true),
-        _ => Err("usage: laconic-tools sync-rules [--check]".into()),
+        ["check-pi"] => pi_check::run(&root(), "pi"),
+        ["check-pi", "--runtime", runtime] => pi_check::run(&root(), runtime),
+        _ => {
+            Err("usage: laconic-tools <sync-rules [--check] | check-pi [--runtime pi|omp]>".into())
+        }
     };
     match result {
         Ok(message) => {
