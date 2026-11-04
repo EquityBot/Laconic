@@ -1,3 +1,6 @@
+# Copyright 2026 Ryan Duguid
+# SPDX-License-Identifier: FSL-1.1-ALv2
+
 """Checks for evals/agent_bench.py with the Claude CLI stubbed: no network or paid calls."""
 
 import json

@@ -1,3 +1,6 @@
+// Copyright 2026 Ryan Duguid
+// SPDX-License-Identifier: FSL-1.1-ALv2
+
 //! Candidate findings in the original prose of a Markdown file.
 //!
 //! Code (fenced and inline), URLs, link targets, HTML lines and quoted spans are

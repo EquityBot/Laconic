@@ -1,3 +1,6 @@
+# Copyright 2026 Ryan Duguid
+# SPDX-License-Identifier: FSL-1.1-ALv2
+
 """Checks that every plugin manifest declares one version and CHANGELOG.md names it."""
 
 import json

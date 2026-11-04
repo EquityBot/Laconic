@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright 2026 Ryan Duguid
+# SPDX-License-Identifier: FSL-1.1-ALv2
+
 """Fetch rival skills at pinned commits and write the fact-survival runner config.
 
 Run: python -I evals/fact_setups.py evals/results/<new folder>

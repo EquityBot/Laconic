@@ -1,3 +1,6 @@
+// Copyright 2026 Ryan Duguid
+// SPDX-License-Identifier: FSL-1.1-ALv2
+
 //! `preserve` exit statuses: a drop fails, an addition fails only with `--strict`.
 
 use std::path::PathBuf;

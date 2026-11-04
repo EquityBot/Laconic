@@ -1,3 +1,6 @@
+# Copyright 2026 Ryan Duguid
+# SPDX-License-Identifier: FSL-1.1-ALv2
+
 """Dictionary annotations must not turn local generation into an unbounded scan."""
 
 import importlib.util

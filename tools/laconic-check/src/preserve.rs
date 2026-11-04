@@ -1,3 +1,6 @@
+// Copyright 2026 Ryan Duguid
+// SPDX-License-Identifier: FSL-1.1-ALv2
+
 //! Protected items an edit must keep: numbers, quantities, dated months, inline code,
 //! URLs and the words that carry negation, modality, certainty, condition, order and
 //! scope. Reports what the original had and the edit lost, and what the edit added. A
