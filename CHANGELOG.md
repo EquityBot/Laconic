@@ -107,8 +107,8 @@ The manifests still declare plugin 0.5.0, so a build from `main` carries that ve
 
 For versions before 0.5.0, see the history from tag `v0.4.1`.
 
-[Unreleased]: https://github.com/EquityBot/laconic/commits/main
-[laconic-check 0.3.0]: https://github.com/EquityBot/laconic/releases/tag/laconic-check-v0.3.0
-[laconic-check 0.2.0]: https://github.com/EquityBot/laconic/releases/tag/laconic-check-v0.2.0
-[laconic-check 0.1.0]: https://github.com/EquityBot/laconic/releases/tag/laconic-check-v0.1.0
-[plugin 0.5.0]: https://github.com/EquityBot/laconic/commit/3eb0a03
+[Unreleased]: https://github.com/yungSNAT/laconic/commits/main
+[laconic-check 0.3.0]: https://github.com/yungSNAT/laconic/releases/tag/laconic-check-v0.3.0
+[laconic-check 0.2.0]: https://github.com/yungSNAT/laconic/releases/tag/laconic-check-v0.2.0
+[laconic-check 0.1.0]: https://github.com/yungSNAT/laconic/releases/tag/laconic-check-v0.1.0
+[plugin 0.5.0]: https://github.com/yungSNAT/laconic/commit/3eb0a03

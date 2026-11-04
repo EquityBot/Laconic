@@ -6,7 +6,7 @@
 ### Install
 
 ```bash
-agy plugin install https://github.com/EquityBot/laconic
+agy plugin install https://github.com/yungSNAT/laconic
 ```
 
 ### Verify
@@ -19,7 +19,7 @@ agy plugin list
 
 ```bash
 agy plugin uninstall laconic
-agy plugin install https://github.com/EquityBot/laconic
+agy plugin install https://github.com/yungSNAT/laconic
 ```
 
 ### Uninstall
@@ -66,7 +66,7 @@ this skill. Check the exported instructions before enabling it.
 
 ### Install
 
-1. Download the [canonical SKILL.md](https://raw.githubusercontent.com/EquityBot/laconic/main/skills/laconic/SKILL.md) and save it as `SKILL.md`. Review its contents before uploading.
+1. Download the [canonical SKILL.md](https://raw.githubusercontent.com/yungSNAT/laconic/main/skills/laconic/SKILL.md) and save it as `SKILL.md`. Review its contents before uploading.
 2. In AstronClaw, open **我的技能 (My skills)**, choose **新建 (New)** and upload that `.md` file.
 3. Check that the imported skill is named `laconic`. Use **启用/禁用 (Enable/Disable)** to control its availability.
 
@@ -121,7 +121,7 @@ new conversation. To keep the imported copy for later, choose **Disable** instea
 ### Install
 
 ```bash
-claude plugin marketplace add EquityBot/laconic
+claude plugin marketplace add yungSNAT/laconic
 claude plugin install laconic@laconic
 ```
 
@@ -186,7 +186,7 @@ Use either this hook or the compact rules in `~/.claude/rules/laconic.md`, not b
 ### Install
 
 ```bash
-codex plugin marketplace add EquityBot/laconic --ref main
+codex plugin marketplace add yungSNAT/laconic --ref main
 codex plugin add laconic@laconic
 ```
 
@@ -247,7 +247,7 @@ Grok loads the repository's existing plugin and skill files; no separate Grok ma
 ### Install
 
 ```bash
-grok plugin install EquityBot/laconic --trust
+grok plugin install yungSNAT/laconic --trust
 grok plugin enable laconic
 ```
 
@@ -309,7 +309,7 @@ Gemini CLI has no plugin marketplace, so there are 2 native routes: a **custom c
 
 ```bash
 mkdir -p ~/.gemini/commands
-curl -fsSL https://raw.githubusercontent.com/EquityBot/laconic/main/skills/laconic/agents/gemini.toml \
+curl -fsSL https://raw.githubusercontent.com/yungSNAT/laconic/main/skills/laconic/agents/gemini.toml \
   -o ~/.gemini/commands/laconic.toml
 ```
 
@@ -318,7 +318,7 @@ Start a new session, type `/laconic`. It stays on for that session.
 ### Install (extension, always-on)
 
 ```bash
-gemini extensions install https://github.com/EquityBot/laconic
+gemini extensions install https://github.com/yungSNAT/laconic
 ```
 
 The extension loads `GEMINI.md`, which imports the full skill, so the rules apply from message one. `git` must be installed.
@@ -356,14 +356,14 @@ Copilot reads Agent Skills natively: the same `SKILL.md`, no conversion. It scan
 ### Install
 
 ```bash
-npx skills add EquityBot/laconic -a github-copilot        # this project
-npx skills add EquityBot/laconic -a github-copilot -g     # all projects
+npx skills add yungSNAT/laconic -a github-copilot        # this project
+npx skills add yungSNAT/laconic -a github-copilot -g     # all projects
 ```
 
 Without the CLI, copy the skill folder into any directory Copilot scans:
 
 ```bash
-git clone https://github.com/EquityBot/laconic
+git clone https://github.com/yungSNAT/laconic
 mkdir -p ~/.copilot/skills
 cp -R laconic/skills/laconic ~/.copilot/skills/
 cp -R laconic/skills/laconic-prose ~/.copilot/skills/
@@ -429,8 +429,8 @@ This is enough for routine chat, comments, handoffs, emails, short repository pr
 ### Install
 
 ```bash
-hermes skills install EquityBot/laconic/skills/laconic
-hermes skills install EquityBot/laconic/skills/laconic-prose
+hermes skills install yungSNAT/laconic/skills/laconic
+hermes skills install yungSNAT/laconic/skills/laconic-prose
 ```
 
 Type `/laconic`. The skill installs into `~/.hermes/skills/` and is exposed as a slash command at the next session start.
@@ -438,10 +438,10 @@ Type `/laconic`. The skill installs into `~/.hermes/skills/` and is exposed as a
 Prefer to browse first? Add this repo as a skill source (a 'tap'), then search and install:
 
 ```bash
-hermes skills tap add EquityBot/laconic
+hermes skills tap add yungSNAT/laconic
 hermes skills search laconic
-hermes skills install EquityBot/laconic/skills/laconic
-hermes skills install EquityBot/laconic/skills/laconic-prose
+hermes skills install yungSNAT/laconic/skills/laconic
+hermes skills install yungSNAT/laconic/skills/laconic-prose
 ```
 
 ### Verify
@@ -462,7 +462,7 @@ hermes skills update laconic
 hermes skills uninstall laconic
 ```
 
-Or remove the tap too: `hermes skills tap remove EquityBot/laconic`.
+Or remove the tap too: `hermes skills tap remove yungSNAT/laconic`.
 
 ### Always-on (optional)
 
@@ -497,7 +497,7 @@ Start a Kimi Code session, then:
 
 1. Run `/plugins`.
 2. Choose **Custom**.
-3. Paste `https://github.com/EquityBot/laconic` and press `Enter`.
+3. Paste `https://github.com/yungSNAT/laconic` and press `Enter`.
 4. Choose **Trust and install**.
 
 Use slash command `/skill:laconic` to invoke the skill explicitly.
@@ -523,7 +523,7 @@ The plugin supports OpenCode V1 **1.18.29+** and V2. It registers the skill and 
 For use across projects:
 
 ```bash
-git clone https://github.com/EquityBot/laconic ~/.config/opencode/vendor/laconic
+git clone https://github.com/yungSNAT/laconic ~/.config/opencode/vendor/laconic
 mkdir -p ~/.config/opencode/plugins
 cat > ~/.config/opencode/plugins/laconic.js <<'EOF'
 export { default } from '../vendor/laconic/.opencode/plugins/laconic.mjs';
@@ -587,7 +587,7 @@ Pi discovers this repository as a native package: `extensions/` provides the ses
 ### Install
 
 ```bash
-pi install https://github.com/EquityBot/laconic
+pi install https://github.com/yungSNAT/laconic
 ```
 
 Start a new Pi session. Toggle Laconic output for the current session:
@@ -629,7 +629,7 @@ Confirm the GitHub package is listed, then type `/laconic` and check that `● L
 ### Update
 
 ```bash
-pi update https://github.com/EquityBot/laconic
+pi update https://github.com/yungSNAT/laconic
 ```
 
 Or update every unpinned Pi package with `pi update --extensions`.
@@ -637,7 +637,7 @@ Or update every unpinned Pi package with `pi update --extensions`.
 ### Uninstall
 
 ```bash
-pi remove https://github.com/EquityBot/laconic
+pi remove https://github.com/yungSNAT/laconic
 ```
 
 ### Always-on (optional)
@@ -683,7 +683,7 @@ If `PI_CODING_AGENT_DIR` is set, put `.laconic-always` in that directory instead
 ### Install
 
 ```bash
-omp plugin marketplace add EquityBot/laconic
+omp plugin marketplace add yungSNAT/laconic
 omp plugin install --scope user laconic@laconic
 ```
 
@@ -712,7 +712,7 @@ omp plugin marketplace remove laconic
 ### Install
 
 ```bash
-qwen extensions install EquityBot/laconic
+qwen extensions install yungSNAT/laconic
 ```
 
 Qwen Code supports the GitHub shorthand and installs the repository as a
@@ -759,7 +759,7 @@ Zed's Agent reads Agent Skills natively using the same SKILL.md format without c
 In the Agent Panel, open the Skills manager and choose **Create skill from URL** (also in the command palette as `agent: create skill from url`), then paste:
 
 ```
-https://github.com/EquityBot/laconic/blob/main/skills/laconic/SKILL.md
+https://github.com/yungSNAT/laconic/blob/main/skills/laconic/SKILL.md
 ```
 
 Save it in **User** scope for every project, or **Project** scope for one. Then type `/laconic` in the Agent Panel.
@@ -767,7 +767,7 @@ Save it in **User** scope for every project, or **Project** scope for one. Then 
 The URL import brings only the session skill's `SKILL.md`, without the `laconic-prose` writing skill, its references, `LICENSE` or `NOTICE`. For the complete set, clone the repo and copy both skill folders into your user skills directory:
 
 ```bash
-git clone https://github.com/EquityBot/laconic
+git clone https://github.com/yungSNAT/laconic
 mkdir -p ~/.agents/skills
 cp -R laconic/skills/laconic ~/.agents/skills/
 cp -R laconic/skills/laconic-prose ~/.agents/skills/
@@ -817,10 +817,10 @@ Works with any harness that reads agent skills. Swap `-a <agent>` for yours.
 ### Install
 
 ```bash
-npx skills add EquityBot/laconic                  # this workspace
-npx skills add EquityBot/laconic -g               # all projects
-npx skills add EquityBot/laconic -a cursor -y     # one agent only
-npx skills add EquityBot/laconic -a opencode -y
+npx skills add yungSNAT/laconic                  # this workspace
+npx skills add yungSNAT/laconic -g               # all projects
+npx skills add yungSNAT/laconic -a cursor -y     # one agent only
+npx skills add yungSNAT/laconic -a opencode -y
 ```
 
 New agent chat, type `/laconic`.
@@ -828,7 +828,7 @@ New agent chat, type `/laconic`.
 Without the CLI, copy the skill folder into whatever path your agent scans:
 
 ```bash
-git clone https://github.com/EquityBot/laconic
+git clone https://github.com/yungSNAT/laconic
 mkdir -p ~/.cursor/skills     # Cursor. Use .agents/skills for OpenCode, or your agent's own path
 cp -R laconic/skills/laconic ~/.cursor/skills/
 cp -R laconic/skills/laconic-prose ~/.cursor/skills/
