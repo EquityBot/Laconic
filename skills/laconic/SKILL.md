@@ -4,7 +4,7 @@ description: 'Concise, answer-first output in correct Australian English. Leads 
 disable-model-invocation: true
 license: FSL-1.1-ALv2 AND MIT
 allowed-tools:
-  - Bash(laconic-check lint *)
+  - Bash(laconic-check lint --warn -)
   - mcp__laconic-check__lint
 metadata:
   tags: "Output Style, Concision, Australian English, Writing, Editing"

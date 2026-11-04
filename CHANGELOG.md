@@ -16,7 +16,7 @@ The manifests still declare plugin 0.5.0, so a build from `main` carries that ve
 - A README badge row, CodeQL, `CITATION.cff` and `llms.txt` (#37).
 - Calibrate the eval judge with `judge.py --calibrate` against 10 hand-labelled responses; add a social post venue and 10 frozen holdout cases (#55).
 - Report each response's length as a share of its case's `target_words` in `run_evals.py checks`, with 2 drafting cases that ask for about 400 and 150 words.
-- `allowed-tools` in both skills pre-approves the `laconic-check` calls each one asks for (`lint`, and `preserve` for `laconic-prose`, as a command or MCP tool), so headless and dontAsk runs can make them. Claude Code clears the grant at the next message; tools not listed keep their usual permissions.
+- `allowed-tools` in both skills pre-approves the `laconic-check` checks that read only the prose they are given: `laconic-check lint --warn -` on standard input and the MCP `lint` tool, plus the MCP `preserve` tool for `laconic-prose`. A `laconic-check` command that names files still asks. Claude Code clears the grant at the next message; tools not listed keep their usual permissions.
 
 ### Plugin: changed
 
