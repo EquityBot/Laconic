@@ -6,7 +6,7 @@ on:
       - extensions/**
       - skills/**
       - package.json
-      - scripts/check_pi_extension.py
+      - tools/laconic-tools/**
       - .github/ci/pi/**
       - .github/workflows/pi-load-check.yml
   push:
@@ -15,7 +15,7 @@ on:
       - extensions/**
       - skills/**
       - package.json
-      - scripts/check_pi_extension.py
+      - tools/laconic-tools/**
       - .github/ci/pi/**
       - .github/workflows/pi-load-check.yml
 
@@ -29,7 +29,7 @@ concurrency:
 jobs:
   load:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -42,4 +42,4 @@ jobs:
           npm ci --ignore-scripts --prefix .github/ci/pi
           echo "$GITHUB_WORKSPACE/.github/ci/pi/node_modules/.bin" >> "$GITHUB_PATH"
       - name: Verify the Pi package, commands, status, and persisted mode
-        run: python3 scripts/check_pi_extension.py
+        run: cargo run --locked --quiet --manifest-path tools/laconic-tools/Cargo.toml -- check-pi
