@@ -9,7 +9,7 @@
 
 <div align="center">
 
-[![tests](https://github.com/yungSNAT/Laconic/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/yungSNAT/Laconic/actions/workflows/tests.yml) [![laconic-check](https://github.com/yungSNAT/Laconic/actions/workflows/laconic-check.yml/badge.svg?branch=main)](https://github.com/yungSNAT/Laconic/actions/workflows/laconic-check.yml) [![Codecov](https://codecov.io/gh/EquityBot/Laconic/graph/badge.svg)](https://codecov.io/gh/EquityBot/Laconic) [![CodeQL](https://github.com/yungSNAT/Laconic/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/yungSNAT/Laconic/actions/workflows/codeql.yml) [![OSV-Scanner](https://github.com/yungSNAT/Laconic/actions/workflows/osv-scanner.yml/badge.svg?branch=main)](https://github.com/yungSNAT/Laconic/actions/workflows/osv-scanner.yml) [![SonarCloud](https://sonarcloud.io/api/project_badges/measure?project=EquityBot_Laconic&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=EquityBot_Laconic) [![Codacy code quality](https://app.codacy.com/project/badge/Grade/623f5ab312d4497c9e8161e547c95f44)](https://app.codacy.com/gh/EquityBot/Laconic/dashboard)<br>
+[![tests](https://github.com/yungSNAT/Laconic/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/yungSNAT/Laconic/actions/workflows/tests.yml) [![laconic-check](https://github.com/yungSNAT/Laconic/actions/workflows/laconic-check.yml/badge.svg?branch=main)](https://github.com/yungSNAT/Laconic/actions/workflows/laconic-check.yml) [![Codecov](https://codecov.io/gh/yungSNAT/Laconic/graph/badge.svg)](https://codecov.io/gh/yungSNAT/Laconic) [![CodeQL](https://github.com/yungSNAT/Laconic/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/yungSNAT/Laconic/actions/workflows/codeql.yml) [![OSV-Scanner](https://github.com/yungSNAT/Laconic/actions/workflows/osv-scanner.yml/badge.svg?branch=main)](https://github.com/yungSNAT/Laconic/actions/workflows/osv-scanner.yml) [![SonarCloud](https://sonarcloud.io/api/project_badges/measure?project=EquityBot_Laconic&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=EquityBot_Laconic) [![Codacy code quality](https://app.codacy.com/project/badge/Grade/623f5ab312d4497c9e8161e547c95f44)](https://app.codacy.com/gh/EquityBot/Laconic/dashboard)<br>
 [![OpenSSF Scorecard](https://raw.githubusercontent.com/ryanduguid/.github/badges/EquityBot/Laconic.svg)](https://scorecard.dev/viewer/?uri=github.com/yungSNAT/Laconic)<br>
 [![release](https://img.shields.io/github/v/release/yungSNAT/Laconic?filter=laconic-check-v*&color=66023C&labelColor=000000&style=flat)](https://github.com/yungSNAT/Laconic/releases?q=laconic-check-v&expanded=true) [![licence: FSL-1.1-ALv2](.github/assets/badges/licence.svg)](LICENSE) [![fork of: i-have-adhd](.github/assets/badges/fork-of.svg)](https://github.com/ayghri/i-have-adhd)
 
@@ -42,14 +42,14 @@ Install the laconic skill/plugin from https://github.com/yungSNAT/laconic, follo
 Or follow the [installation instructions](INSTALL.md) for your agent. For Claude Code:
 
 ```bash
-claude plugin marketplace add EquityBot/laconic
+claude plugin marketplace add yungSNAT/laconic
 claude plugin install laconic@laconic
 ```
 
 For any agent the Skills CLI supports:
 
 ```bash
-npx skills add EquityBot/laconic --global --agent '*' --yes
+npx skills add yungSNAT/laconic --global --agent '*' --yes
 ```
 
 Restart the agent, then type `/laconic`. It stays on for the session until you say 'stop laconic'.
@@ -244,4 +244,4 @@ Licensed under the Functional Source License, Version 1.1, ALv2 Future License (
 
 ---
 
-<p align="center"><sub>Asked what Sparta would do if Philip II of Macedon invaded Laconia, the Spartans are said to have replied: <i>'If.'</i><br>Reusing this code? Keep its notices and licence, and please credit Ryan Duguid. AI agents: see <a href="https://github.com/yungSNAT/Laconic/blob/main/AGENTS.md#reusing-this-code">AGENTS.md</a>.<br>Made by <a href="https://github.com/yungSNAT">EquityBot</a>. <i>Ad gloriam eius, non meam.</i></sub></p>
+<p align="center"><sub>Asked what Sparta would do if Philip II of Macedon invaded Laconia, the Spartans are said to have replied: <i>'If.'</i><br>Reusing this code? Keep its notices and licence, and please credit Ryan Duguid. AI agents: see <a href="https://github.com/yungSNAT/Laconic/blob/main/AGENTS.md#reusing-this-code">AGENTS.md</a>.<br>Made by <a href="https://github.com/yungSNAT">yungSNAT</a>. <i>Ad gloriam eius, non meam.</i></sub></p>

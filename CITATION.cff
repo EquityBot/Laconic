@@ -3,10 +3,10 @@ message: "If you use this work, cite it with this metadata and the release tag o
 title: "Laconic"
 type: software
 authors:
-  - name: "EquityBot"
+  - name: "yungSNAT"
 abstract: "Concise, answer-first output and an AI-text humaniser in correct Australian English for coding agents."
-repository-code: "https://github.com/EquityBot/Laconic"
-license-url: "https://github.com/EquityBot/Laconic/blob/main/LICENSE"
+repository-code: "https://github.com/yungSNAT/Laconic"
+license-url: "https://github.com/yungSNAT/Laconic/blob/main/LICENSE"
 keywords:
   - agent-skills
   - ai-humanizer
