@@ -1250,14 +1250,14 @@ fn check_style_manual_forms(lower: &str, line: usize, findings: &mut Vec<Finding
         if time || dotted || period_separator {
             push(at, "time", "write times as 9:30 am or 9 am");
         }
-        // A digit after the sign is a remainder ('5 % 3'), and a 4-digit number before it a
-        // year, as in the table heading '2020 % change': the house writes 1,000%.
+        // A digit after the sign is a remainder ('5 % 3'), and a year before it a table
+        // heading ('2020 % change').
         let percent_sign = word.starts_with('%') && !word[1..].contains(char::is_alphanumeric);
         if percent_sign
             && prev.as_deref().is_some_and(|p| {
                 p.ends_with(|c: char| c.is_ascii_digit())
                     && !p.contains(char::is_alphabetic)
-                    && !(digits(p) && p.len() == 4)
+                    && !(digits(p) && p.len() == 4 && (p.starts_with("19") || p.starts_with("20")))
             })
             && !next
                 .as_deref()
@@ -1304,9 +1304,12 @@ fn check_style_manual_forms(lower: &str, line: usize, findings: &mut Vec<Finding
             let ordinal_of = prev.as_deref() == Some("of")
                 && i.checked_sub(2)
                     .is_some_and(|j| ordinal(&core(tokens[j].1)));
-            // 'Friday the 13th may be rooted in fear': a verb, not the month.
+            // 'Friday the 13th may be rooted in fear': a verb, not the month. Case is gone by
+            // here, so the next word decides, and 'the 1st May meeting' is still a date.
             let modal = month == "may"
-                && next.is_some_and(|n| !n.starts_with(|c: char| c.is_ascii_digit()));
+                && next.is_some_and(|n| {
+                    matches!(n, "be" | "have" | "not" | "also" | "well" | "never")
+                });
             if (prev_day.is_some_and(ordinal) && !modal) || ordinal_of {
                 push(at, "date", "no ordinal in dates: write 19 October 2026");
             }
@@ -1868,6 +1871,7 @@ mod tests {
             "It cost $ 1,000, then rose.",
             "It cost US$ 20,000 in all.",
             "It cost **$ 5** at most.",
+            "A 1200 % rise.",
         ] {
             assert_eq!(rules(text), vec!["symbol-space"], "{text}");
         }
@@ -1936,6 +1940,7 @@ mod tests {
             "The 1st of May was a Friday.",
             "It fell on the 1st May.",
             "It fell on 1st May 2026.",
+            "The 1st May meeting went ahead.",
         ] {
             assert_eq!(rules(text), vec!["date"], "{text}");
         }
@@ -1945,6 +1950,7 @@ mod tests {
             "On the 21st of the month.",
             "A 3rd of them may fail.",
             "Fear of Friday the 13th may be rooted in belief.",
+            "The 13th may not come.",
             "The 2nd of 3 reports came in September.",
             "Of the 21 of us, 5 left in September.",
         ] {
