@@ -742,7 +742,8 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
             message: "clause dashes in 2 or more sentences of one paragraph (advisory); use a comma, colon or full stop where one reads as well".into(),
         });
     }
-    let lower: String = masked.iter().collect::<String>().to_lowercase();
+    let text: String = masked.iter().collect();
+    let lower = text.to_lowercase();
     let lower_chars: Vec<char> = lower.chars().collect();
     for phrase in CLOSERS {
         let mut from = 0;
@@ -880,7 +881,7 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
             _ => {}
         }
     }
-    check_style_manual_forms(&lower, line, findings);
+    check_style_manual_forms(&lower, &text, line, findings);
     // Serial comma candidates: ", and" or ", or" with another comma earlier in the same clause.
     for (k, window) in lower_chars.windows(6).enumerate() {
         let text: String = window.iter().collect();
@@ -1187,7 +1188,7 @@ fn apostrophe_decade(word: &str) -> bool {
 }
 
 /// Dates, times, number symbols and Latin abbreviations that break the Style Manual forms.
-fn check_style_manual_forms(lower: &str, line: usize, findings: &mut Vec<Finding>) {
+fn check_style_manual_forms(lower: &str, text: &str, line: usize, findings: &mut Vec<Finding>) {
     let tokens: Vec<(usize, &str)> = lower
         .split_whitespace()
         .map(|w| (w.as_ptr() as usize - lower.as_ptr() as usize, w))
@@ -1304,12 +1305,13 @@ fn check_style_manual_forms(lower: &str, line: usize, findings: &mut Vec<Finding
             let ordinal_of = prev.as_deref() == Some("of")
                 && i.checked_sub(2)
                     .is_some_and(|j| ordinal(&core(tokens[j].1)));
-            // 'Friday the 13th may be rooted in fear': a verb, not the month. Case is gone by
-            // here, so the next word decides, and 'the 1st May meeting' is still a date.
+            // 'Friday the 13th may be rooted in fear': the month takes a capital, the verb
+            // doesn't, so 'the 1st May meeting' is still a date. `lower` has lost the case.
             let modal = month == "may"
-                && next.is_some_and(|n| {
-                    matches!(n, "be" | "have" | "not" | "also" | "well" | "never")
-                });
+                && text
+                    .split_whitespace()
+                    .nth(i)
+                    .is_some_and(|w| w.contains("may"));
             if (prev_day.is_some_and(ordinal) && !modal) || ordinal_of {
                 push(at, "date", "no ordinal in dates: write 19 October 2026");
             }
@@ -1951,6 +1953,7 @@ mod tests {
             "A 3rd of them may fail.",
             "Fear of Friday the 13th may be rooted in belief.",
             "The 13th may not come.",
+            "The 13th may fall on a Friday.",
             "The 2nd of 3 reports came in September.",
             "Of the 21 of us, 5 left in September.",
         ] {
