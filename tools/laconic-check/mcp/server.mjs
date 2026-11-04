@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// Copyright 2026 Ryan Duguid
+// SPDX-License-Identifier: FSL-1.1-ALv2
+
 // MCP server (stdio) exposing laconic-check as two tools: lint and preserve.
 // No dependencies: it speaks newline-delimited JSON-RPC 2.0 and runs the
 // laconic-check binary, found on PATH or through LACONIC_CHECK.

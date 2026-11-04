@@ -1,3 +1,6 @@
+# Copyright 2026 Ryan Duguid
+# SPDX-License-Identifier: FSL-1.1-ALv2
+
 """Scores humanising responses with deterministic checkers, without a judge.
 
 For each response to a case in humanise-cases.jsonl, it measures the rewrite

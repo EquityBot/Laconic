@@ -1,3 +1,6 @@
+# Copyright 2026 Ryan Duguid
+# SPDX-License-Identifier: FSL-1.1-ALv2
+
 """Smoke tests for the laconic-check MCP servers over stdio: `laconic-check mcp` and the
 deprecated Node `mcp/server.mjs`."""
 

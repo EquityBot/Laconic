@@ -1,3 +1,6 @@
+// Copyright 2026 Ryan Duguid
+// SPDX-License-Identifier: FSL-1.1-ALv2
+
 //! laconic-check: deterministic candidates for Laconic's house style.
 //!
 //! `lint` reports candidates in the original prose of Markdown files; a match is a

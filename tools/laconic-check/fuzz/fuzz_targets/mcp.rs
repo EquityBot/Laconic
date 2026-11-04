@@ -1,3 +1,6 @@
+// Copyright 2026 Ryan Duguid
+// SPDX-License-Identifier: FSL-1.1-ALv2
+
 #![no_main]
 //! The MCP server on any request line, and the JSON reader and writer on any text.
 

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright 2026 Ryan Duguid
+# SPDX-License-Identifier: FSL-1.1-ALv2
+
 """Measure whether rewrites keep each fact and qualifier in a source text.
 
 Ledgers (`fact-ledgers.jsonl`) are written from the sources alone, before any

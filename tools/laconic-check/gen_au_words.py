@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright 2026 Ryan Duguid
+# SPDX-License-Identifier: FSL-1.1-ALv2
+
 """Generate src/us_words.txt: US spellings with their Australian form, from ESDB.
 
 ESDB (the English Speller Database, formerly SCOWL, https://github.com/en-wl/wordlist)
