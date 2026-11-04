@@ -98,6 +98,10 @@ def validate_cases(cases: list[dict[str, Any]]) -> list[str]:
             errors.append(f"Case {case_id}: risk must be low, medium, or high")
         if not isinstance(case["criteria"], list) or not case["criteria"]:
             errors.append(f"Case {case_id}: criteria must be a non-empty list")
+        if "target_words" in case:
+            target = case["target_words"]
+            if isinstance(target, bool) or not isinstance(target, int) or target < 1:
+                errors.append(f"Case {case_id}: target_words must be a positive integer")
         if "checks" in case:
             errors.extend(f"Case {case_id}: {error}" for error in _validate_checks(case["checks"]))
     return errors
@@ -145,22 +149,36 @@ def check_response(checks: dict[str, Any], text: str) -> list[str]:
 
 
 def summarize_checks(cases: list[dict[str, Any]], responses: list[dict[str, Any]]) -> dict[str, Any]:
-    """Pass rate per condition on the cases that carry regex checks. No judge is involved,
-    so the same responses always get the same result."""
+    """Pass rate per condition on the cases that carry regex checks, and each response's
+    length in words as a share of its case's `target_words`. No judge is involved, so the
+    same responses always get the same result."""
     checks = {case["id"]: case["checks"] for case in cases if "checks" in case}
+    targets = {case["id"]: case["target_words"] for case in cases if "target_words" in case}
     summary: dict[str, Any] = {}
     for row in responses:
-        if row.get("case_id") not in checks:
+        case_id = row.get("case_id")
+        if case_id not in checks and case_id not in targets:
             continue
         entry = summary.setdefault(row["condition"], {"checked": 0, "passed": 0, "failures": []})
-        failed = check_response(checks[row["case_id"]], row.get("response", ""))
+        text = row.get("response", "")
+        if case_id in targets:
+            words = len(text.split())
+            entry.setdefault("target_length", []).append(
+                {"case_id": case_id, "trial": row.get("trial"), "words": words, "share": round(words / targets[case_id], 3)}
+            )
+        if case_id not in checks:
+            continue
+        failed = check_response(checks[case_id], text)
         entry["checked"] += 1
         if failed:
-            entry["failures"].append({"case_id": row["case_id"], "trial": row.get("trial"), "failed": failed})
+            entry["failures"].append({"case_id": case_id, "trial": row.get("trial"), "failed": failed})
         else:
             entry["passed"] += 1
     for entry in summary.values():
-        entry["pass_rate"] = entry["passed"] / entry["checked"]
+        entry["pass_rate"] = entry["passed"] / entry["checked"] if entry["checked"] else None
+        if "target_length" in entry:
+            shares = [item["share"] for item in entry["target_length"]]
+            entry["mean_target_share"] = round(sum(shares) / len(shares), 3)
     return summary
 
 

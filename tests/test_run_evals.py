@@ -72,6 +72,27 @@ class EvaluationHarnessTest(unittest.TestCase):
         self.assertEqual((2, 1, 0.5), (summary["checked"], summary["passed"], summary["pass_rate"]))
         self.assertEqual(["contains 'percent'"], summary["failures"][0]["failed"])
 
+    def test_summarize_checks_reports_length_as_a_share_of_the_target(self):
+        cases = [{"id": "draft", "target_words": 4}, {"id": "free"}]
+        responses = [
+            {"case_id": "draft", "trial": 1, "condition": "candidate", "response": "one two three"},
+            {"case_id": "draft", "trial": 2, "condition": "candidate", "response": "one two three four five"},
+            {"case_id": "free", "trial": 1, "condition": "candidate", "response": "anything"},
+        ]
+
+        summary = run_evals.summarize_checks(cases, responses)["candidate"]
+
+        self.assertEqual([3, 5], [item["words"] for item in summary["target_length"]])
+        self.assertEqual([0.75, 1.25], [item["share"] for item in summary["target_length"]])
+        self.assertEqual(1.0, summary["mean_target_share"])
+        self.assertEqual((0, None), (summary["checked"], summary["pass_rate"]))
+
+    def test_validate_cases_rejects_a_target_that_is_not_a_positive_integer(self):
+        base = {"id": "draft", "category": "prose-draft", "prompt": "Write.", "risk": "low", "criteria": ["Lands near the target."]}
+        self.assertEqual([], run_evals.validate_cases([{**base, "target_words": 400}]))
+        for bad in (0, -5, 4.5, "400", True):
+            self.assertTrue(run_evals.validate_cases([{**base, "target_words": bad}]), bad)
+
 
     def test_parse_response_tolerates_output_after_the_json_document(self):
         """The CLI can emit a notice after its JSON result; the first document still wins."""

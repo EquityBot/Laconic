@@ -15,6 +15,7 @@ The manifests still declare plugin 0.5.0, so a build from `main` carries that ve
 - A revisit trigger for each shortcut marker (#24).
 - A README badge row, CodeQL, `CITATION.cff` and `llms.txt` (#37).
 - Calibrate the eval judge with `judge.py --calibrate` against 10 hand-labelled responses; add a social post venue and 10 frozen holdout cases (#55).
+- Report each response's length as a share of its case's `target_words` in `run_evals.py checks`, with 2 drafting cases that ask for about 400 and 150 words.
 
 ### Plugin: changed
 
