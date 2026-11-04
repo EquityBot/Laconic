@@ -20,7 +20,7 @@ fn usage() -> ExitCode {
     eprintln!(
         "usage:\n  laconic-check lint [--warn] <file.md | ->...\n  laconic-check preserve [--strict] <original> <edited>\n  laconic-check mcp\n\n\
          lint exits 1 when it finds candidates, unless --warn is given; advisory\n\
-         findings (clause-dashes, stacked-hedge) never fail it.\n\
+         findings (clause-dashes, stacked-hedge, bold-label) never fail it.\n\
          preserve exits 1 when the edit dropped a protected item. It also lists items the\n\
          edit added, which fail only with --strict (for a rewrite that must add nothing),\n\
          and names to check, which never fail. A clean result does not check meaning.\n\

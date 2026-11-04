@@ -27,6 +27,7 @@ The manifests still declare plugin 0.5.0, so a build from `main` carries that ve
 - Point repository links at EquityBot (#31).
 - Keep figurative language in fiction, judging only its density (#55).
 - State the fact-keeping promise as an aim until the fact-survival benchmark reports, and name 'humanizer' and 'no AI slop' in the README.
+- Date the Style Manual rules with a 'rules last checked' line.
 
 ### Plugin: fixed
 
@@ -42,6 +43,12 @@ The manifests still declare plugin 0.5.0, so a build from `main` carries that ve
 ### laconic-check: added
 
 - Advise, without failing `lint`, on stacked hedges such as 'could potentially' and 'may possibly'.
+- Flag a space in '5 %' and '$ 27.99', the decade form '1980's' and the date form '21st of September'.
+- Advise, without failing `lint`, on 3 or more bullets in a row that open with a bold label; `humanise_metrics.py` reports these runs.
+
+### laconic-check: fixed
+
+- Stop reading 'may' after an ordinal as the month in 'the 13th may be rooted', found by a run over 150 human articles.
 - End `preserve`'s report with both lengths in words and the edit's as a share of the original's.
 
 ## [laconic-check 0.3.0] - 2026-11-04

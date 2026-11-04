@@ -2,6 +2,8 @@
 
 This required reference keeps the mechanics used in ordinary Australian English prose. [style-manual-detail.md](style-manual-detail.md) restates the seventh edition's rules and examples in more detail, under the same headings, as the manual stood on 13 September 2026. Source: [Australian Government Style Manual](https://www.stylemanual.gov.au/), copyright Commonwealth of Australia, which is not published under an open licence. Laconic restates its rules in its own words and includes no copy of it.
 
+Rules last checked: 5 November 2026 for 4 rules only (no space in `12%` or `$27.99`, no ordinal in a date, no apostrophe in a decade), compared with the manual's live Percentages, Currency, and Dates and time pages, which agreed. Every other rule stands as the manual did on 13 September 2026.
+
 ## When to apply it
 
 Apply the mechanics below to all Australian English prose. Read and apply [style-manual-detail.md](style-manual-detail.md) in full for Australian Government, public sector or Australian corporate content, requested Style Manual compliance or plain language. This includes its register, structure, inclusive language and accessibility rules.

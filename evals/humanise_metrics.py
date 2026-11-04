@@ -9,6 +9,7 @@ against the source text in the prompt:
 - length: rewrite words as a share of source words;
 - laconic-check lint findings and `preserve` drops (numbers, code, URLs and
   meaning words such as 'not' that the rewrite lost);
+- runs of bold-label bullets, counted amongst the lint findings;
 - optionally, the avoid-ai-writing detector's 0 to 100 score and finding count
   (--avoid <path to bin/avoid-ai-writing.js>), and dslop's finding count
   (--dslop, run through uvx with evals/humanise-dslop.toml).
@@ -37,6 +38,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import run_evals  # noqa: E402
 
 FINDING =re.compile(r"^\S.*:\d+:\d+: ", re.MULTILINE)
+BOLD_LABEL = re.compile(r"^\S.*:\d+:\d+: bold-label: ", re.MULTILINE)
 # Pattern findings carry a position ('<stdin>:1:17 em-dash'); whole-text rhythm
 # metrics do not ('<stdin> sentence-length-cv=0.19 (threshold 0.30)').
 DSLOP_FINDING = re.compile(r"<stdin>(?::\d+:\d+)? [a-z]")
@@ -65,8 +67,16 @@ def _run(cmd: list[str], text: str | None = None, findings: re.Pattern[str] | No
     return done.stdout
 
 
+def lint_output(text: str) -> str:
+    return _run(["laconic-check", "lint", "--warn", "-"], text)
+
+
 def lint_count(text: str) -> int:
-    return len(FINDING.findall(_run(["laconic-check", "lint", "--warn", "-"], text)))
+    return len(FINDING.findall(lint_output(text)))
+
+
+def bold_label_runs(text: str) -> int:
+    return len(BOLD_LABEL.findall(lint_output(text)))
 
 
 def preserve_drops(source: str, rewrite: str) -> int:
@@ -88,7 +98,7 @@ def checker_metrics(avoid: Path | None, dslop: bool, dslop_config: Path = DSLOP_
         tomllib.loads(dslop_config.read_text(encoding="utf-8"))
 
     def measure(text: str) -> dict[str, float]:
-        result: dict[str, float] = {"lint": lint_count(text)}
+        result: dict[str, float] = {"lint": lint_count(text), "bold_label_runs": bold_label_runs(text)}
         if avoid:
             report = json.loads(_run(["node", str(avoid), "--context", "general"], text))
             result["avoid_score"] = report["score"]

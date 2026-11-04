@@ -75,6 +75,13 @@ class HumaniseMetricsTest(unittest.TestCase):
         out = "  <stdin>:1:17 em-dash\n  <stdin> sentence-length-cv=0.19 (threshold 0.30)\n\nfix:\n  em-dash: rewrite\n"
         self.assertEqual(2, len(humanise_metrics.DSLOP_FINDING.findall(out)))
 
+    def test_bold_label_runs_are_counted_apart_from_other_findings(self):
+        out = "-:1:5: em-dash: em dash in original prose\n-:3:1: bold-label: 3 or more bullets\n"
+        done = subprocess.CompletedProcess(args=["x"], returncode=0, stdout=out, stderr="")
+        with mock.patch.object(humanise_metrics.subprocess, "run", return_value=done):
+            self.assertEqual(1, humanise_metrics.bold_label_runs("text"))
+            self.assertEqual({"lint": 2, "bold_label_runs": 1}, humanise_metrics.checker_metrics(None, False)("text"))
+
     @unittest.skipUnless(shutil.which("laconic-check"), "laconic-check is not on the PATH")
     def test_lint_count_reads_laconic_check_findings(self):
         self.assertGreaterEqual(humanise_metrics.lint_count("We analyzed the color.\n"), 2)
