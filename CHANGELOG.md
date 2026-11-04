@@ -41,6 +41,7 @@ The manifests still declare plugin 0.5.0, so a build from `main` carries that ve
 ### laconic-check: added
 
 - Advise, without failing `lint`, on stacked hedges such as 'could potentially' and 'may possibly'.
+- End `preserve`'s report with both lengths in words and the edit's as a share of the original's.
 
 ## [laconic-check 0.3.0] - 2026-11-04
 

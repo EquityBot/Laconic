@@ -37,7 +37,7 @@ fn an_invented_figure_is_advisory_unless_strict() {
     assert_eq!(code, 0);
     assert_eq!(
         out,
-        "No tracked items dropped; meaning not checked.\nadded meaning word: 'must' (0 before, 1 after)\nadded number: 1,200\n"
+        "No tracked items dropped; meaning not checked.\nadded meaning word: 'must' (0 before, 1 after)\nadded number: 1,200\nlength: 3 to 6 words (200% of the original)\n"
     );
     assert_eq!(preserve(&["--strict"], &pair).0, 1);
 }
@@ -46,7 +46,13 @@ fn an_invented_figure_is_advisory_unless_strict() {
 fn a_dropped_figure_fails_with_or_without_strict() {
     let pair = files("dropped", "Refund the $1,200 fee.", "Refund the fee.");
     let (code, out) = preserve(&[], &pair);
-    assert_eq!((code, out.as_str()), (1, "dropped number: 1,200\n"));
+    assert_eq!(
+        (code, out.as_str()),
+        (
+            1,
+            "dropped number: 1,200\nlength: 4 to 3 words (75% of the original)\n"
+        )
+    );
     assert_eq!(preserve(&["--strict"], &pair).0, 1);
 }
 
@@ -59,7 +65,11 @@ fn a_faithful_edit_passes_strict() {
     );
     assert_eq!(
         preserve(&["--strict"], &pair),
-        (0, "No tracked items dropped; meaning not checked.\n".into())
+        (
+            0,
+            "No tracked items dropped; meaning not checked.\nlength: 8 to 8 words (100% of the original)\n"
+                .into()
+        )
     );
 }
 
@@ -74,7 +84,7 @@ fn a_dropped_name_is_advisory_even_with_strict() {
         preserve(&["--strict"], &pair),
         (
             0,
-            "No tracked items dropped; meaning not checked.\ncheck name: Priya Nair\n".into()
+            "No tracked items dropped; meaning not checked.\ncheck name: Priya Nair\nlength: 5 to 4 words (80% of the original)\n".into()
         )
     );
 }
@@ -160,7 +170,7 @@ fn mixed_drops_and_additions_report_both_and_fail() {
     assert_eq!(code, 1);
     assert_eq!(
         out,
-        "dropped number: 3\nadded meaning word: 'must' (0 before, 1 after)\nadded number: 4\n"
+        "dropped number: 3\nadded meaning word: 'must' (0 before, 1 after)\nadded number: 4\nlength: 6 to 8 words (133% of the original)\n"
     );
 }
 
@@ -175,7 +185,7 @@ fn a_repeated_value_is_not_new_but_a_repeated_meaning_word_is() {
     assert_eq!(code, 1);
     assert_eq!(
         out,
-        "No tracked items dropped; meaning not checked.\nadded meaning word: 'must' (1 before, 2 after)\n"
+        "No tracked items dropped; meaning not checked.\nadded meaning word: 'must' (1 before, 2 after)\nlength: 6 to 12 words (200% of the original)\n"
     );
 }
 

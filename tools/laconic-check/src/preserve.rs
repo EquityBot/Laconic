@@ -213,7 +213,7 @@ fn name_runs(text: &str) -> Vec<String> {
 /// What `preserve` reports, as the CLI prints it.
 pub struct Report {
     /// A line for each item the edit dropped, then each it added and each name to check,
-    /// after a clean line when nothing was dropped.
+    /// after a clean line when nothing was dropped, and last the change in length.
     pub lines: Vec<String>,
     /// The edit dropped a protected item.
     pub dropped: bool,
@@ -239,11 +239,33 @@ pub fn report(original: &str, edited: &str) -> Report {
             .into_iter()
             .map(|name| format!("check name: {name}")),
     );
+    lines.push(length(original, edited));
     Report {
         lines,
         dropped: !missing.is_empty(),
         added: !added.is_empty(),
     }
+}
+
+/// The edit's length in whitespace-separated words against the original's, as a rounded
+/// share of it.
+fn length(original: &str, edited: &str) -> String {
+    let (before, after) = (
+        original.split_whitespace().count(),
+        edited.split_whitespace().count(),
+    );
+    if before == 0 {
+        return format!("length: 0 to {after} words");
+    }
+    let share = share(before, after);
+    format!("length: {before} to {after} words ({share}% of the original)")
+}
+
+/// `after` as a percentage of a non-zero `before`, rounded half up; u128 keeps any count
+/// from overflowing, including on 32-bit targets.
+fn share(before: usize, after: usize) -> u128 {
+    let (before, after) = (before as u128, after as u128);
+    (after * 100 + before / 2) / before
 }
 
 /// Items the original had and the edit lost.
@@ -685,6 +707,26 @@ fn count(words: &[String], phrase: &str) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reports_the_length_change_last_as_a_rounded_share() {
+        let report = report("one two three", "one  two\nthree four");
+        assert_eq!(
+            report.lines.last().unwrap(),
+            "length: 3 to 4 words (133% of the original)"
+        );
+        assert_eq!(
+            length("a b c d e f", "a b c d"),
+            "length: 6 to 4 words (67% of the original)"
+        );
+        assert_eq!(length("", "Some words."), "length: 0 to 2 words");
+        assert_eq!(
+            length("Keep it.", ""),
+            "length: 2 to 0 words (0% of the original)"
+        );
+        assert_eq!(share(usize::MAX, usize::MAX), 100);
+        assert_eq!(share(1, usize::MAX), usize::MAX as u128 * 100);
+    }
 
     #[test]
     fn reports_dropped_numbers_code_urls_and_negations() {
