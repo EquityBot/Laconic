@@ -37,6 +37,10 @@ The manifests still declare plugin 0.5.0, so a build from `main` carries that ve
 - Pin CI agent installs and disable lifecycle scripts (#28).
 - Keep scenario prompts out of Claude CLI arguments and reject model values that could become options (#30).
 
+### laconic-check: added
+
+- Advise, without failing `lint`, on stacked hedges such as 'could potentially' and 'may possibly'.
+
 ## [laconic-check 0.3.0] - 2026-11-04
 
 ### Added

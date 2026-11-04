@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 
 /// Rules that report a pattern worth a look but never fail `lint`.
-pub const ADVISORY: &[&str] = &["clause-dashes"];
+pub const ADVISORY: &[&str] = &["clause-dashes", "stacked-hedge"];
 
 #[derive(Debug, PartialEq)]
 pub struct Finding {
@@ -61,6 +61,28 @@ const STOCK_PHRASES: &[&str] = &[
     "since time immemorial",
     "has fascinated people",
     "have fascinated people",
+];
+
+/// Stacked hedges: a modal followed at once by a second qualifier. Advisory, as human
+/// writers stack them too; 'can possibly' is left out, as it is usually emphatic ('how can
+/// we possibly').
+const STACKED_HEDGES: &[&str] = &[
+    "could potentially",
+    "could possibly",
+    "could perhaps",
+    "could conceivably",
+    "could arguably",
+    "may potentially",
+    "may possibly",
+    "may perhaps",
+    "may conceivably",
+    "may arguably",
+    "might potentially",
+    "might possibly",
+    "might perhaps",
+    "might conceivably",
+    "might arguably",
+    "can potentially",
 ];
 
 /// Unnecessary hyphens: set phrases the house writes open and established compounds
@@ -725,6 +747,24 @@ fn check_line(masked: &[char], line: usize, findings: &mut Vec<Finding>) {
                     column: plain[..at].chars().count() + 1,
                     rule: "stock-phrase",
                     message: format!("stock phrase '{phrase}'; state the point directly"),
+                });
+            }
+            from = end;
+        }
+    }
+    for phrase in STACKED_HEDGES {
+        let mut from = 0;
+        while let Some(pos) = plain[from..].find(phrase) {
+            let at = from + pos;
+            let end = at + phrase.len();
+            if !plain[..at].ends_with(|c: char| c.is_alphanumeric())
+                && !plain[end..].starts_with(|c: char| c.is_alphanumeric())
+            {
+                findings.push(Finding {
+                    line,
+                    column: plain[..at].chars().count() + 1,
+                    rule: "stacked-hedge",
+                    message: format!("stacked hedge '{phrase}' (advisory); keep one qualifier at the confidence the source supports"),
                 });
             }
             from = end;

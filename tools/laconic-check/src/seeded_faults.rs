@@ -19,6 +19,7 @@ const CLEAN: &[&str] = &[
     "She said 'the licence is current' and left for the centre.",
     "Two reviewers checked the catalogue, for example the colour plates.",
     "It may 5 times fail before it passes.",
+    "The delay may affect the suppliers and possibly the buyers.",
     "Andy wrote to the state senate every week for 6 years.",
     "The patterns credit [humanizer](https://github.com/blader/humanizer) and [the house guide](https://example.com/guide).",
 ];
@@ -82,6 +83,11 @@ const SEEDS: &[(&str, &str, &str)] = &[
         "clause-dashes",
         "and stayed low for a while.",
         "and stayed low - for a while. Supply rose - slowly.",
+    ),
+    (
+        "stacked-hedge",
+        "delay may affect",
+        "delay could potentially affect",
     ),
     ("hyphen", "the program", "the open-source program"),
     ("hyphen", "left for the centre", "e-mailed the centre"),
@@ -161,8 +167,10 @@ const HUMAN_CORPUS: &[&str] = &[
 /// not against every new false finding.
 const HUMAN_CORPUS_CEILING: usize = 2246;
 /// Advisory findings have their own ceiling: 41 paragraphs put clause dashes in 2 or more
-/// sentences when the corpus was calibrated on 2 November 2026.
-const HUMAN_CORPUS_ADVISORY_CEILING: usize = 41;
+/// sentences when the corpus was calibrated on 2 November 2026, and the stacked-hedge rule
+/// added 8 human uses on 4 November ('could potentially' 5 times, 'can potentially' twice,
+/// 'may potentially' once).
+const HUMAN_CORPUS_ADVISORY_CEILING: usize = 49;
 /// AI-tell findings at calibration, all human uses: 'it is important to note' 3 times,
 /// 'innovative', 'deep dive', 'not just X, but Y' and 'time-frame'.
 const HUMAN_CORPUS_TELL_CEILING: usize = 7;
@@ -213,6 +221,7 @@ fn every_rule_has_a_seed() {
         "number-word",
         "closer",
         "stock-phrase",
+        "stacked-hedge",
         "staged-contrast",
         "reveal-question",
         "hyphen",
