@@ -210,7 +210,7 @@ Prebuilt binaries for Linux (x86_64, static), Windows (x86_64) and macOS (Apple 
 claude mcp add --scope user laconic-check -- laconic-check mcp
 ```
 
-It is in builds from `main` and will be in the next release. A laconic-check 0.2.0 binary needs the earlier Node server, `tools/laconic-check/mcp/server.mjs`, which runs the binary once a call; it is deprecated and will be removed in a later release:
+It is in laconic-check 0.3.0 and later. A laconic-check 0.2.0 binary needs the earlier Node server, `tools/laconic-check/mcp/server.mjs`, which runs the binary once a call; it is deprecated and will be removed in a later release:
 
 ```bash
 claude mcp add --scope user laconic-check -- node /path/to/laconic/tools/laconic-check/mcp/server.mjs

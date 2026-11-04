@@ -2,7 +2,7 @@
 
 This file follows the shape of [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and is built from `git log`. The plugin and `laconic-check` are versioned separately. Dates are commit dates. Numbers in brackets are pull requests.
 
-The manifests still declare plugin 0.5.0, so a build from `main` carries that version plus the Unreleased changes. `v0.4.1`, `laconic-check-v0.1.0` and `laconic-check-v0.2.0` are tagged; plugin 0.5.0 has no tag or release.
+The manifests still declare plugin 0.5.0, so a build from `main` carries that version plus the Unreleased changes. `v0.4.1`, `laconic-check-v0.1.0`, `laconic-check-v0.2.0` and `laconic-check-v0.3.0` are tagged; plugin 0.5.0 has no tag or release.
 
 ## [Unreleased]
 
@@ -36,6 +36,17 @@ The manifests still declare plugin 0.5.0, so a build from `main` carries that ve
 
 - Pin CI agent installs and disable lifecycle scripts (#28).
 - Keep scenario prompts out of Claude CLI arguments and reject model values that could become options (#30).
+
+## [laconic-check 0.3.0] - 2026-11-04
+
+### Added
+
+- Serve `lint` and `preserve` as MCP tools with `laconic-check mcp`, with nothing else to install (#65).
+- Flag hidden Unicode tag runs and bidirectional embeddings, overrides and isolates as residue, leaving the England, Scotland and Wales flags alone (#66).
+
+### Deprecated
+
+- The Node MCP server, `tools/laconic-check/mcp/server.mjs`, kept for 0.2.0 binaries; it will be removed in a later release (#65).
 
 ## [laconic-check 0.2.0] - 2026-11-02
 
@@ -90,6 +101,7 @@ The manifests still declare plugin 0.5.0, so a build from `main` carries that ve
 For versions before 0.5.0, see the history from tag `v0.4.1`.
 
 [Unreleased]: https://github.com/EquityBot/laconic/commits/main
+[laconic-check 0.3.0]: https://github.com/EquityBot/laconic/releases/tag/laconic-check-v0.3.0
 [laconic-check 0.2.0]: https://github.com/EquityBot/laconic/releases/tag/laconic-check-v0.2.0
 [laconic-check 0.1.0]: https://github.com/EquityBot/laconic/releases/tag/laconic-check-v0.1.0
 [plugin 0.5.0]: https://github.com/EquityBot/laconic/commit/3eb0a03
