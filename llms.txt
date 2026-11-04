@@ -28,3 +28,7 @@ ships prebuilt `laconic-check` binaries. For Claude Code, install with
 
 - [EquityBot](https://github.com/EquityBot): other EquityBot tools.
 - [i-have-adhd](https://github.com/ayghri/i-have-adhd): the upstream project Laconic is forked from.
+
+## Reuse
+
+- [Reusing this code](https://github.com/EquityBot/Laconic/blob/main/AGENTS.md#reusing-this-code): Ryan Duguid's changes to those projects, under FSL-1.1-ALv2; keep the notices and licences; public credit is requested.
