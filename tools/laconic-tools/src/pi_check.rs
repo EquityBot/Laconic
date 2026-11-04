@@ -5,7 +5,7 @@ use serde_json::{Value, json};
 use std::fs;
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Child, ChildStdin, Command, Stdio};
+use std::process::{Child, ChildStdin, Command, ExitStatus, Stdio};
 use std::sync::mpsc::{Receiver, RecvTimeoutError, channel};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -116,6 +116,11 @@ impl TempDir {
         let path = std::env::temp_dir().join(format!("{prefix}{}-{nanos}", std::process::id()));
         fs::create_dir(&path).map_err(|e| format!("cannot create {}: {e}", path.display()))?;
         Ok(Self(path))
+    }
+
+    /// Removes the directory, reporting the failure that `Drop` would ignore.
+    fn remove(&self) -> Result<(), String> {
+        fs::remove_dir_all(&self.0).map_err(|e| format!("cannot remove {}: {e}", self.0.display()))
     }
 }
 
@@ -233,40 +238,90 @@ impl Rpc {
         }
     }
 
-    /// Closes stdin and waits up to 5 seconds for the agent to exit, then stops it.
-    fn close(mut self) -> Result<(), String> {
+    /// Closes stdin and waits 5 seconds for the agent to exit; then, as the Python check did,
+    /// stops it and waits 5 more. An agent that is still running is killed and fails the check.
+    fn close(self) -> Result<(), String> {
+        self.close_within(Duration::from_secs(5))
+    }
+
+    fn close_within(mut self, grace: Duration) -> Result<(), String> {
         drop(self.stdin.take());
-        let deadline = Instant::now() + Duration::from_secs(5);
-        let status = loop {
-            match self.child.try_wait() {
-                Ok(Some(status)) => break Some(status),
-                Ok(None) if Instant::now() < deadline => thread::sleep(Duration::from_millis(50)),
-                Ok(None) => break None,
-                Err(e) => return Err(format!("cannot wait for the agent RPC: {e}")),
+        let status = match self.wait_for(grace)? {
+            Some(status) => status,
+            None => {
+                terminate(&mut self.child)?;
+                let Some(status) = self.wait_for(grace)? else {
+                    self.child
+                        .kill()
+                        .map_err(|e| format!("cannot kill the agent RPC: {e}"))?;
+                    self.child
+                        .wait()
+                        .map_err(|e| format!("cannot wait for the agent RPC: {e}"))?;
+                    return Err(format!(
+                        "Agent RPC ignored the end of its input and SIGTERM, so it was killed: {}",
+                        self.stderr()
+                    ));
+                };
+                status
             }
         };
-        let Some(status) = status else {
-            // Stopped by this check after the grace period, as the Python check's terminate() was.
-            let _ = self.child.kill();
-            let _ = self.child.wait();
-            return Ok(());
-        };
-        if status.success() || terminated(&status) {
-            Ok(())
-        } else {
-            Err(format!("Agent RPC exited with {status}: {}", self.stderr()))
+        ensure!(
+            status.success() || terminated(&status),
+            "Agent RPC exited with {status}: {}",
+            self.stderr()
+        );
+        Ok(())
+    }
+
+    fn wait_for(&mut self, grace: Duration) -> Result<Option<ExitStatus>, String> {
+        let deadline = Instant::now() + grace;
+        loop {
+            match self.child.try_wait() {
+                Ok(Some(status)) => return Ok(Some(status)),
+                Ok(None) if Instant::now() < deadline => thread::sleep(Duration::from_millis(50)),
+                Ok(None) => return Ok(None),
+                Err(e) => return Err(format!("cannot wait for the agent RPC: {e}")),
+            }
         }
     }
 }
 
+impl Drop for Rpc {
+    /// For early returns: an agent that is still running is killed and reaped.
+    fn drop(&mut self) {
+        let _ = self.child.kill();
+        let _ = self.child.wait();
+    }
+}
+
+/// Sends SIGTERM, as Python's `terminate()` did; std can only send SIGKILL.
 #[cfg(unix)]
-fn terminated(status: &std::process::ExitStatus) -> bool {
+fn terminate(child: &mut Child) -> Result<(), String> {
+    let pid = child.id().to_string();
+    let status = Command::new("kill")
+        .args(["-TERM", &pid])
+        .status()
+        .map_err(|e| format!("cannot run kill: {e}"))?;
+    ensure!(status.success(), "kill -TERM {pid} failed with {status}");
+    Ok(())
+}
+
+/// Python's `terminate()` is TerminateProcess here: the agent exits 1, which fails the check.
+#[cfg(not(unix))]
+fn terminate(child: &mut Child) -> Result<(), String> {
+    child
+        .kill()
+        .map_err(|e| format!("cannot stop the agent RPC: {e}"))
+}
+
+#[cfg(unix)]
+fn terminated(status: &ExitStatus) -> bool {
     use std::os::unix::process::ExitStatusExt;
     status.signal() == Some(15)
 }
 
 #[cfg(not(unix))]
-fn terminated(_: &std::process::ExitStatus) -> bool {
+fn terminated(_: &ExitStatus) -> bool {
     false
 }
 
@@ -329,11 +384,18 @@ fn latest_enabled(response: &Value) -> Result<bool, String> {
         .ok_or_else(|| "No persisted laconic state found".to_owned())
 }
 
-fn command_names(commands: &Value) -> Vec<&str> {
+/// Every command's name; a list that is missing or holds a command without one is an error.
+fn command_names(commands: &Value) -> Result<Vec<&str>, String> {
     commands
         .as_array()
-        .map(|list| list.iter().filter_map(|c| c["name"].as_str()).collect())
-        .unwrap_or_default()
+        .ok_or_else(|| format!("Agent RPC sent no command list: {commands}"))?
+        .iter()
+        .map(|c| {
+            c["name"]
+                .as_str()
+                .ok_or_else(|| format!("Agent RPC listed a command without a name: {c}"))
+        })
+        .collect()
 }
 
 fn prompt(message: &str) -> Value {
@@ -351,7 +413,7 @@ fn succeeded(response: &Value, step: &str) -> Result<(), String> {
 /// The Pi session: startup, reload, toggles, the skill alias, the stop phrase and passthrough.
 fn pi_session(rpc: &mut Rpc, passthrough_flag: &Path) -> Result<(), String> {
     let (commands, events) = rpc.request("commands", json!({"type": "get_commands"}))?;
-    let names = command_names(&commands["data"]["commands"]);
+    let names = command_names(&commands["data"]["commands"])?;
     ensure!(
         names.contains(&"laconic"),
         "Pi lists no /laconic command: {names:?}"
@@ -480,7 +542,7 @@ fn pi_session(rpc: &mut Rpc, passthrough_flag: &Path) -> Result<(), String> {
 fn omp_session(rpc: &mut Rpc) -> Result<(), String> {
     let events = rpc.events_until(|e| e["type"] == "available_commands_update")?;
     let last = events.last().cloned().unwrap_or_default();
-    let names = command_names(&last["commands"]);
+    let names = command_names(&last["commands"])?;
     ensure!(
         names.contains(&"laconic"),
         "OMP lists no /laconic command: {names:?}"
@@ -501,16 +563,30 @@ pub fn run(root: &Path, runtime: &str) -> Result<String, String> {
     validate_package_manifest(root)?;
     let executable =
         which(runtime).ok_or_else(|| format!("{runtime} executable is not available"))?;
-
     let work = TempDir::new(&format!("laconic-{runtime}-"))?;
-    let agent_dir = work.0.join("agent");
+    let result = smoke_test(root, runtime, &executable, &work.0);
+    match (result, work.remove()) {
+        (Ok(passed), removed) => removed.map(|()| passed),
+        (Err(e), Ok(())) => Err(e),
+        (Err(e), Err(removed)) => Err(format!("{e}\nThen, {removed}")),
+    }
+}
+
+/// The smoke test proper, in the throwaway directory `work`.
+fn smoke_test(
+    root: &Path,
+    runtime: &str,
+    executable: &Path,
+    work: &Path,
+) -> Result<String, String> {
+    let agent_dir = work.join("agent");
     fs::create_dir(&agent_dir)
         .map_err(|e| format!("cannot create {}: {e}", agent_dir.display()))?;
     let mut env = isolated_env(&agent_dir);
     if runtime == "omp" {
         env.retain(|(key, _)| key != "PI_CODING_AGENT_DIR");
     } else {
-        let install = Command::new(&executable)
+        let install = Command::new(executable)
             .arg("install")
             .arg(root)
             .current_dir(root)
@@ -551,13 +627,7 @@ pub fn run(root: &Path, runtime: &str) -> Result<String, String> {
         reload_probe.display().to_string(),
         "--laconic".to_owned(),
     ]);
-    let rpc = Rpc::start(
-        &executable,
-        root,
-        &env,
-        work.0.join("session.stderr"),
-        &args,
-    )?;
+    let rpc = Rpc::start(executable, root, &env, work.join("session.stderr"), &args)?;
     if runtime == "omp" {
         with_agent(rpc, omp_session)?;
         return Ok("omp extension smoke test passed".into());
@@ -568,13 +638,7 @@ pub fn run(root: &Path, runtime: &str) -> Result<String, String> {
         .map_err(|e| format!("cannot create .laconic-always: {e}"))?;
     let mut args = vec!["--no-session".to_owned()];
     args.extend(extension_args);
-    let rpc = Rpc::start(
-        &executable,
-        root,
-        &env,
-        work.0.join("always-on.stderr"),
-        &args,
-    )?;
+    let rpc = Rpc::start(executable, root, &env, work.join("always-on.stderr"), &args)?;
     with_agent(rpc, |rpc| {
         let (_, events) = rpc.request("always-on", json!({"type": "get_state"}))?;
         ensure!(
@@ -650,5 +714,59 @@ mod tests {
             std::env::remove_var("LACONIC_TEST_API_KEY");
             std::env::remove_var("ANTHROPIC_AUTH_TOKEN");
         }
+    }
+
+    #[test]
+    fn a_command_without_a_name_is_an_error() {
+        let commands = json!([{"name": "laconic"}, {"name": "skill:laconic"}]);
+        assert_eq!(
+            command_names(&commands).unwrap(),
+            ["laconic", "skill:laconic"]
+        );
+        let malformed = json!([{"name": "laconic"}, {"name": "skill:laconic"}, {}]);
+        assert!(command_names(&malformed).is_err());
+        assert!(command_names(&Value::Null).is_err());
+    }
+
+    #[test]
+    fn removing_the_work_directory_reports_failure() {
+        let work = TempDir::new("laconic-test-").unwrap();
+        fs::write(work.0.join("file"), "x").unwrap();
+        work.remove().unwrap();
+        assert!(!work.0.exists());
+        assert!(work.remove().unwrap_err().starts_with("cannot remove"));
+    }
+
+    /// An agent script for `Rpc::start`, which passes `--mode rpc` that `sh` ignores here.
+    #[cfg(unix)]
+    fn agent(work: &TempDir, script: &str) -> Rpc {
+        use std::os::unix::fs::PermissionsExt;
+        let path = work.0.join("agent.sh");
+        fs::write(&path, format!("#!/bin/sh\n{script}\n")).unwrap();
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+        Rpc::start(&path, &work.0, &[], work.0.join("stderr"), &[]).unwrap()
+    }
+
+    /// One test, so no other test forks whilst a script is written and run ('text file busy').
+    #[cfg(unix)]
+    #[test]
+    fn closing_accepts_end_of_input_or_sigterm_and_fails_an_agent_that_ignores_both() {
+        let work = TempDir::new("laconic-test-").unwrap();
+        let grace = Duration::from_millis(300);
+        agent(&work, "exec /bin/cat > /dev/null")
+            .close_within(grace)
+            .unwrap();
+        agent(&work, "exec /bin/sleep 30")
+            .close_within(grace)
+            .unwrap();
+        let error = agent(&work, "exit 3").close_within(grace).unwrap_err();
+        assert!(error.starts_with("Agent RPC exited with"), "{error}");
+        let error = agent(&work, "trap '' TERM\nexec /bin/sleep 30")
+            .close_within(grace)
+            .unwrap_err();
+        assert!(
+            error.contains("ignored the end of its input and SIGTERM"),
+            "{error}"
+        );
     }
 }
