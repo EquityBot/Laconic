@@ -257,8 +257,15 @@ fn length(original: &str, edited: &str) -> String {
     if before == 0 {
         return format!("length: 0 to {after} words");
     }
-    let share = (after * 100 + before / 2) / before;
+    let share = share(before, after);
     format!("length: {before} to {after} words ({share}% of the original)")
+}
+
+/// `after` as a percentage of a non-zero `before`, rounded half up; u128 keeps any count
+/// from overflowing, including on 32-bit targets.
+fn share(before: usize, after: usize) -> u128 {
+    let (before, after) = (before as u128, after as u128);
+    (after * 100 + before / 2) / before
 }
 
 /// Items the original had and the edit lost.
@@ -717,6 +724,8 @@ mod tests {
             length("Keep it.", ""),
             "length: 2 to 0 words (0% of the original)"
         );
+        assert_eq!(share(usize::MAX, usize::MAX), 100);
+        assert_eq!(share(1, usize::MAX), usize::MAX as u128 * 100);
     }
 
     #[test]
