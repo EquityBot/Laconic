@@ -87,9 +87,14 @@ fn which(name: &str) -> Option<PathBuf> {
         .find(|candidate| candidate.is_file())
 }
 
-/// This process's environment without model credentials, pointed at a throwaway agent directory.
-fn isolated_env(agent_dir: &Path) -> Vec<(String, String)> {
-    let mut env: Vec<(String, String)> = std::env::vars()
+/// `vars`, this process's environment, without model credentials and pointed at a throwaway
+/// agent directory.
+fn isolated_env(
+    vars: impl IntoIterator<Item = (String, String)>,
+    agent_dir: &Path,
+) -> Vec<(String, String)> {
+    let mut env: Vec<(String, String)> = vars
+        .into_iter()
         .filter(|(key, _)| {
             !key.ends_with("_API_KEY")
                 && key != "ANTHROPIC_AUTH_TOKEN"
@@ -105,7 +110,8 @@ fn isolated_env(agent_dir: &Path) -> Vec<(String, String)> {
     env
 }
 
-/// A directory under the system temporary directory, removed when dropped.
+/// A directory under the system temporary directory, removed when dropped. Like Python's
+/// `tempfile.mkdtemp`, creation fails on an existing path and the directory is private on Unix.
 struct TempDir(PathBuf);
 
 impl TempDir {
@@ -114,7 +120,12 @@ impl TempDir {
             .duration_since(std::time::UNIX_EPOCH)
             .map_or(0, |d| d.subsec_nanos());
         let path = std::env::temp_dir().join(format!("{prefix}{}-{nanos}", std::process::id()));
-        fs::create_dir(&path).map_err(|e| format!("cannot create {}: {e}", path.display()))?;
+        #[cfg(unix)]
+        let created =
+            std::os::unix::fs::DirBuilderExt::mode(&mut fs::DirBuilder::new(), 0o700).create(&path);
+        #[cfg(not(unix))]
+        let created = fs::create_dir(&path);
+        created.map_err(|e| format!("cannot create {}: {e}", path.display()))?;
         Ok(Self(path))
     }
 
@@ -587,7 +598,7 @@ fn smoke_test(
     let agent_dir = work.join("agent");
     fs::create_dir(&agent_dir)
         .map_err(|e| format!("cannot create {}: {e}", agent_dir.display()))?;
-    let mut env = isolated_env(&agent_dir);
+    let mut env = isolated_env(std::env::vars(), &agent_dir);
     if runtime == "omp" {
         env.retain(|(key, _)| key != "PI_CODING_AGENT_DIR");
     } else {
@@ -703,22 +714,33 @@ mod tests {
 
     #[test]
     fn the_isolated_environment_drops_model_credentials() {
-        // SAFETY: tests in this crate do not read these variables concurrently.
-        unsafe {
-            std::env::set_var("LACONIC_TEST_API_KEY", "x");
-            std::env::set_var("ANTHROPIC_AUTH_TOKEN", "x");
-        }
-        let env = isolated_env(Path::new("/tmp/agent"));
-        assert!(
-            !env.iter()
-                .any(|(k, _)| k == "LACONIC_TEST_API_KEY" || k == "ANTHROPIC_AUTH_TOKEN")
+        let vars = [
+            ("LACONIC_TEST_API_KEY", "x"),
+            ("ANTHROPIC_AUTH_TOKEN", "x"),
+            ("OPENAI_ACCESS_TOKEN", "x"),
+            ("HOME", "/home/user"),
+        ]
+        .map(|(k, v)| (k.to_string(), v.to_string()));
+        let env = isolated_env(vars, Path::new("/tmp/agent"));
+        assert_eq!(
+            env,
+            [
+                ("HOME", "/home/user"),
+                ("PI_CODING_AGENT_DIR", "/tmp/agent"),
+                ("PI_SKIP_VERSION_CHECK", "1"),
+                ("PI_TELEMETRY", "0"),
+            ]
+            .map(|(k, v)| (k.to_string(), v.to_string()))
         );
-        assert!(env.contains(&("PI_CODING_AGENT_DIR".into(), "/tmp/agent".into())));
-        assert!(env.contains(&("PI_TELEMETRY".into(), "0".into())));
-        unsafe {
-            std::env::remove_var("LACONIC_TEST_API_KEY");
-            std::env::remove_var("ANTHROPIC_AUTH_TOKEN");
-        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn the_work_directory_is_private() {
+        use std::os::unix::fs::PermissionsExt;
+        let work = TempDir::new("laconic-test-").unwrap();
+        let mode = fs::metadata(&work.0).unwrap().permissions().mode();
+        assert_eq!(mode & 0o777, 0o700);
     }
 
     #[test]
