@@ -297,12 +297,17 @@ impl Drop for Rpc {
 /// Sends SIGTERM, as Python's `terminate()` did; std can only send SIGKILL.
 #[cfg(unix)]
 fn terminate(child: &mut Child) -> Result<(), String> {
-    let pid = child.id().to_string();
-    let status = Command::new("kill")
-        .args(["-TERM", &pid])
-        .status()
-        .map_err(|e| format!("cannot run kill: {e}"))?;
-    ensure!(status.success(), "kill -TERM {pid} failed with {status}");
+    unsafe extern "C" {
+        // kill(2) from the C library std links; pid_t is i32 on every Unix Rust supports.
+        safe fn kill(pid: i32, signal: i32) -> i32;
+    }
+    const SIGTERM: i32 = 15;
+    let pid = i32::try_from(child.id()).map_err(|e| format!("agent RPC pid: {e}"))?;
+    ensure!(
+        kill(pid, SIGTERM) == 0,
+        "cannot send SIGTERM to the agent RPC: {}",
+        std::io::Error::last_os_error()
+    );
     Ok(())
 }
 
