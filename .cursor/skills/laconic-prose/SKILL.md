@@ -1,6 +1,10 @@
 ---
 name: laconic-prose
 license: FSL-1.1-ALv2 AND MIT
+allowed-tools:
+  - Bash(laconic-check lint --warn -)
+  - mcp__laconic-check__lint
+  - mcp__laconic-check__preserve
 description: Write, edit, humanise or audit prose in concise, correct Australian English while preserving meaning and the writer's voice. Use when asked to humanise ('humanize') AI-written text, to audit prose or flag AI-like writing, to edit a supplied draft, or to write substantial prose such as reports, documentation, UI copy and PR text. Routine chat, emails, comments, handoffs and small edits need only the compact Laconic rules.
 ---
 
