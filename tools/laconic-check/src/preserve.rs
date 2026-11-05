@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: FSL-1.1-ALv2
 
 //! Protected items an edit must keep: numbers, quantities, dated months, inline code,
-//! URLs and the words that carry negation, modality, certainty, condition, order and
+//! URLs, quotations and the words that carry negation, modality, certainty, condition, order and
 //! scope. Reports what the original had and the edit lost, and what the edit added. A
 //! clean result does not prove the meaning survived; it only rules out these losses. An
 //! addition is a reason to check the edit invented nothing, not proof that it did.
@@ -277,7 +277,7 @@ pub fn missing(original: &str, edited: &str) -> BTreeMap<&'static str, Vec<Strin
 }
 
 /// Items the edit has and the original did not, such as an invented figure or `must`.
-/// Numbers, quantities, months, code and URLs count as added only when the value is
+/// Numbers, quantities, months, code, URLs and quotations count as added only when the value is
 /// new, not when an existing one repeats; a meaning word counts when it appears more often.
 pub fn added(original: &str, edited: &str) -> BTreeMap<&'static str, Vec<String>> {
     only_in(edited, original, |had, has| (has, had))
@@ -298,6 +298,7 @@ fn only_in(
         ("month", months),
         ("code", code_spans),
         ("url", urls),
+        ("quotation", quotations),
     ] {
         let key = |x: &String| {
             if kind == "number" {
@@ -636,6 +637,65 @@ fn urls(text: &str) -> Vec<String> {
         .collect()
 }
 
+/// Quoted spans outside code, without their marks, so a quotation has to survive word for word
+/// but restyling its marks or reflowing its line changes nothing. A mark opens only at the start
+/// of a word and closes only at the end of one, so an apostrophe does neither, and a stray
+/// opening mark runs no further than its paragraph.
+fn quotations(text: &str) -> Vec<String> {
+    let outside = split_code(text).1.replace("\r\n", "\n");
+    let mut found = Vec::new();
+    for paragraph in outside.split("\n\n") {
+        let chars: Vec<char> = paragraph.chars().collect();
+        let mut open = None;
+        for (i, &c) in chars.iter().enumerate() {
+            let before = i.checked_sub(1).map(|p| chars[p]);
+            let after = chars.get(i + 1);
+            match open {
+                None => {
+                    let at_start = before.is_none_or(|b| b.is_whitespace() || "([{*_".contains(b));
+                    if at_start && after.is_some_and(|a| !a.is_whitespace()) {
+                        open = closing_mark(c).map(|close| (i, close));
+                    }
+                }
+                Some((start, close)) => {
+                    let at_end = before.is_some_and(|b| !b.is_whitespace())
+                        && !after.is_some_and(|a| a.is_alphanumeric());
+                    if c == close && at_end {
+                        open = None;
+                        found.push(quoted_words(&chars[start + 1..i]));
+                    }
+                }
+            }
+        }
+    }
+    found.retain(|q| !q.is_empty());
+    found
+}
+
+fn closing_mark(opening: char) -> Option<char> {
+    match opening {
+        '"' | '\'' => Some(opening),
+        '\u{201C}' => Some('\u{201D}'),
+        '\u{2018}' => Some('\u{2019}'),
+        _ => None,
+    }
+}
+
+/// A quotation's words in one form: straight marks inside it, single spaces, and no trailing
+/// comma or full stop, which styles put on either side of the closing mark.
+fn quoted_words(chars: &[char]) -> String {
+    let text: String = chars
+        .iter()
+        .map(|c| match c {
+            '\u{2018}' | '\u{2019}' => '\'',
+            '\u{201C}' | '\u{201D}' => '"',
+            other => *other,
+        })
+        .collect();
+    let spaced = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    spaced.trim_end_matches([',', '.', ';', ':']).to_string()
+}
+
 /// The text without code spans and URLs, so `--all` or a path is not a meaning word.
 /// A link label before its URL, as in `[all](https://...)`, is kept.
 fn prose(text: &str) -> String {
@@ -729,6 +789,55 @@ mod tests {
         );
         assert_eq!(share(usize::MAX, usize::MAX), 100);
         assert_eq!(share(1, usize::MAX), usize::MAX as u128 * 100);
+    }
+
+    #[test]
+    fn a_quotation_has_to_survive_word_for_word() {
+        let original = "The minister said 'we will not proceed' on Tuesday.";
+        let edited = "The minister said 'we will proceed' on Tuesday.";
+        assert_eq!(
+            missing(original, edited)["quotation"],
+            vec!["we will not proceed"]
+        );
+        assert_eq!(
+            added(original, edited)["quotation"],
+            vec!["we will proceed"]
+        );
+    }
+
+    #[test]
+    fn restyling_or_reflowing_a_quotation_changes_nothing() {
+        let original = "He said \"it isn't over,\" and left.";
+        for edited in [
+            "He said 'it isn't over', and left.",
+            "He said \u{201C}it isn\u{2019}t over\u{201D}, and left.",
+            "He said \u{2018}it isn\u{2019}t\nover\u{2019}, and left.",
+        ] {
+            assert!(
+                !missing(original, edited).contains_key("quotation"),
+                "{edited}"
+            );
+        }
+    }
+
+    #[test]
+    fn an_apostrophe_is_no_quotation_mark() {
+        let plain: Vec<String> = Vec::new();
+        assert_eq!(quotations("It's the dogs' bowl, and 5\" wide."), plain);
+        assert_eq!(quotations("Says 'don't stop' twice."), vec!["don't stop"]);
+    }
+
+    #[test]
+    fn a_stray_mark_stops_at_its_paragraph_and_code_is_left_out() {
+        assert_eq!(
+            quotations("He said 'hello\n\nThen 'bye' came."),
+            vec!["bye"]
+        );
+        assert_eq!(
+            quotations("He said 'hello\r\n\r\nThen 'bye' came."),
+            vec!["bye"]
+        );
+        assert_eq!(quotations("Use `'x'` here, and ''."), Vec::<String>::new());
     }
 
     #[test]
