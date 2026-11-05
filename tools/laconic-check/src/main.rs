@@ -5,7 +5,7 @@
 //!
 //! `lint` reports candidates in the original prose of Markdown files; a match is a
 //! reason to look, not proof of a defect. `preserve` compares an original and an
-//! edit and reports numbers, quantities, months, code spans, URLs, meaning words and
+//! edit and reports numbers, quantities, months, code spans, URLs, quotations, meaning words and
 //! bounds the edit
 //! dropped, and, as advice, those it added. `mcp` serves both as MCP tools on standard
 //! input and output.
