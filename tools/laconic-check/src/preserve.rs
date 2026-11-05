@@ -657,7 +657,7 @@ fn quotations(text: &str) -> Vec<String> {
                         .is_none_or(|b| b.is_whitespace() || "([{*_:\u{2013}\u{2014}".contains(b));
                     if at_start
                         && after.is_some_and(|a| !a.is_whitespace())
-                        && !(c != '"' && is_decade(&chars[i + 1..]))
+                        && !(matches!(c, '\'' | '\u{2018}') && is_decade(&chars[i + 1..]))
                     {
                         open = closing_mark(c).map(|close| (i, close));
                     }
@@ -845,6 +845,10 @@ mod tests {
         assert_eq!(
             quotations("Said \"90s music\" and '90 per cent'."),
             vec!["90s music", "90 per cent"]
+        );
+        assert_eq!(
+            quotations("Said \u{201C}90s music\u{201D}."),
+            vec!["90s music"]
         );
     }
 
