@@ -655,7 +655,10 @@ fn quotations(text: &str) -> Vec<String> {
                 None => {
                     let at_start = before
                         .is_none_or(|b| b.is_whitespace() || "([{*_:\u{2013}\u{2014}".contains(b));
-                    if at_start && after.is_some_and(|a| !a.is_whitespace()) {
+                    if at_start
+                        && after.is_some_and(|a| !a.is_whitespace())
+                        && !(c != '"' && is_decade(&chars[i + 1..]))
+                    {
                         open = closing_mark(c).map(|close| (i, close));
                     }
                 }
@@ -672,6 +675,12 @@ fn quotations(text: &str) -> Vec<String> {
     }
     found.retain(|q| q.chars().nth(1).is_some());
     found
+}
+
+/// The digits and `s` of a decade, as in '90s, whose apostrophe opens nothing.
+fn is_decade(after_mark: &[char]) -> bool {
+    let digits = after_mark.iter().take_while(|c| c.is_ascii_digit()).count();
+    digits > 0 && after_mark.get(digits) == Some(&'s')
 }
 
 fn closing_mark(opening: char) -> Option<char> {
@@ -828,6 +837,15 @@ mod tests {
         assert_eq!(quotations("It's the dogs' bowl, and 5\" wide."), plain);
         assert_eq!(quotations("Says 'don't stop' twice."), vec!["don't stop"]);
         assert!(missing("It was rock 'n' roll.", "It was rock and roll.").is_empty());
+        let (decade, edit) = (
+            "The '90s inspired the artists' work.",
+            "The '90s shaped the artists' work.",
+        );
+        assert!(!missing(decade, edit).contains_key("quotation"));
+        assert_eq!(
+            quotations("Said \"90s music\" and '90 per cent'."),
+            vec!["90s music", "90 per cent"]
+        );
     }
 
     #[test]
