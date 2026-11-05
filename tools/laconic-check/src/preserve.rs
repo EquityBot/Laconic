@@ -640,7 +640,8 @@ fn urls(text: &str) -> Vec<String> {
 /// Quoted spans outside code, without their marks, so a quotation has to survive word for word
 /// but restyling its marks or reflowing its line changes nothing. A mark opens only at the start
 /// of a word and closes only at the end of one, so an apostrophe does neither, and a stray
-/// opening mark runs no further than its paragraph.
+/// opening mark runs no further than its paragraph. One character, as in rock 'n' roll, is
+/// an elision or a label rather than a quotation.
 fn quotations(text: &str) -> Vec<String> {
     let outside = split_code(text).1.replace("\r\n", "\n");
     let mut found = Vec::new();
@@ -652,7 +653,8 @@ fn quotations(text: &str) -> Vec<String> {
             let after = chars.get(i + 1);
             match open {
                 None => {
-                    let at_start = before.is_none_or(|b| b.is_whitespace() || "([{*_".contains(b));
+                    let at_start = before
+                        .is_none_or(|b| b.is_whitespace() || "([{*_:\u{2013}\u{2014}".contains(b));
                     if at_start && after.is_some_and(|a| !a.is_whitespace()) {
                         open = closing_mark(c).map(|close| (i, close));
                     }
@@ -668,7 +670,7 @@ fn quotations(text: &str) -> Vec<String> {
             }
         }
     }
-    found.retain(|q| !q.is_empty());
+    found.retain(|q| q.chars().nth(1).is_some());
     found
 }
 
@@ -825,6 +827,16 @@ mod tests {
         let plain: Vec<String> = Vec::new();
         assert_eq!(quotations("It's the dogs' bowl, and 5\" wide."), plain);
         assert_eq!(quotations("Says 'don't stop' twice."), vec!["don't stop"]);
+        assert!(missing("It was rock 'n' roll.", "It was rock and roll.").is_empty());
+    }
+
+    #[test]
+    fn a_quotation_can_follow_a_colon_or_dash() {
+        assert_eq!(quotations("He said:\u{201C}stop\u{201D}"), vec!["stop"]);
+        assert_eq!(
+            quotations("Then\u{2014}'stop now'\u{2014}he left."),
+            vec!["stop now"]
+        );
     }
 
     #[test]
